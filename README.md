@@ -1,2 +1,2 @@
-# hyperloglog_sketch_estimation_paper
+# hyperloglog-sketch-estimation-paper
 Paper about the estimation of cardinalities from HyperLogLog sketches
