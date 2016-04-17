@@ -88,8 +88,11 @@ task runBenchmark(type: Exec) {
 
 task updateCpuInfo(type: Exec) {
 	workingDir project.cppDir
-	standardOutput = new FileOutputStream("$project.dataDir/cpu_info.dat")
 	commandLine 'lshw','-C','cpu'
+	outputs.files "$project.dataDir/cpu_info.dat"
+	doFirst {
+		standardOutput = new FileOutputStream("$project.dataDir/cpu_info.dat")
+	}
 }
 
 //#########################
