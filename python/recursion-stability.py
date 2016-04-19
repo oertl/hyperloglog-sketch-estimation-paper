@@ -12,9 +12,9 @@ def h(x):
         return 1 - x/expm1(x)
         
 def f(x):
-	return -((2*h(x)*(1-2*h(x)))/(x+2*h(x)*(1-h(x)))) - 2*h(x)/(x+2*(1-h(x)))
-	
-	
+    return -((2*h(x)*(1-2*h(x)))/(x+2*h(x)*(1-h(x)))) - 2*h(x)/(x+2*(1-h(x)))
+    
+    
 res = minimize(f, 1)
 
 out = open('../paper/max_errror_propagation_factor.txt', 'w')

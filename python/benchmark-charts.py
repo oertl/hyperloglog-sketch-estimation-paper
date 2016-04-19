@@ -15,11 +15,11 @@ filename_12_20 = '../data/benchmark_results_12_20.dat'
 filename_12_52 = '../data/benchmark_results_12_52.dat'
 
 def readData(filename):
-	csv.field_size_limit(sys.maxsize)
-	with open(filename , 'r') as file:
-		reader = csv.reader(file, skipinitialspace=True,delimiter=' ')
-		return numpy.array([[float(e) for e in r] for r in reader])
-		
+    csv.field_size_limit(sys.maxsize)
+    with open(filename , 'r') as file:
+        reader = csv.reader(file, skipinitialspace=True,delimiter=' ')
+        return numpy.array([[float(e) for e in r] for r in reader])
+        
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
