@@ -4,10 +4,10 @@
 
 
 project.ext {
-	paperDir = 'paper'
-	pythonDir = 'python'
-	cppDir = 'c++'
-	dataDir = 'data'
+    paperDir = 'paper'
+    pythonDir = 'python'
+    cppDir = 'c++'
+    dataDir = 'data'
 }
 
 //#########################
@@ -15,54 +15,54 @@ project.ext {
 //#########################
 
 task buildCardinalitiesGenerator(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/definecardinalities.cpp"
-	outputs.files "$project.cppDir/definecardinalities"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'g++','-std=c++11','definecardinalities.cpp','-o','definecardinalities'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/definecardinalities.cpp"
+    outputs.files "$project.cppDir/definecardinalities"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','definecardinalities.cpp','-o','definecardinalities'
 }
 
 task buildHyperLogLogDataGenerator(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
-	outputs.files "$project.cppDir/hyperloglog_data_generator"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'g++','-std=c++11','hyperloglog_data_generator.cpp','-Ofast','-march=native','-fopenmp','-o','hyperloglog_data_generator'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
+    outputs.files "$project.cppDir/hyperloglog_data_generator"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','hyperloglog_data_generator.cpp','-Ofast','-march=native','-fopenmp','-o','hyperloglog_data_generator'
 }
 
 task generateSimulatedCardinalities(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/definecardinalities"
-	outputs.files "$project.dataDir/cardinalities.dat"
-	doFirst {
-		standardOutput = new FileOutputStream("$project.dataDir/cardinalities.dat")
-	}
-	commandLine './definecardinalities'
-	dependsOn 'buildCardinalitiesGenerator'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/definecardinalities"
+    outputs.files "$project.dataDir/cardinalities.dat"
+    doFirst {
+        standardOutput = new FileOutputStream("$project.dataDir/cardinalities.dat")
+    }
+    commandLine './definecardinalities'
+    dependsOn 'buildCardinalitiesGenerator'
 }
 
 task generateRandomHyperLogLogData(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/hyperloglog_data_generator","$project.dataDir/cardinalities.dat"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine './hyperloglog_data_generator'
-	dependsOn 'buildHyperLogLogDataGenerator','generateSimulatedCardinalities'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/hyperloglog_data_generator","$project.dataDir/cardinalities.dat"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine './hyperloglog_data_generator'
+    dependsOn 'buildHyperLogLogDataGenerator','generateSimulatedCardinalities'
 }
 
 task buildJointHyperLogLogDataGenerator(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
-	outputs.files "$project.cppDir/joint_hyperloglog_data_generator"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'g++','-std=c++11','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
+    outputs.files "$project.cppDir/joint_hyperloglog_data_generator"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
 }
 
 task generateJointHyperLogLogData(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/joint_hyperloglog_data_generator","$project.dataDir/cardinalities.dat"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine './joint_hyperloglog_data_generator'
-	dependsOn 'buildJointHyperLogLogDataGenerator','generateSimulatedCardinalities'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/joint_hyperloglog_data_generator","$project.dataDir/cardinalities.dat"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine './joint_hyperloglog_data_generator'
+    dependsOn 'buildJointHyperLogLogDataGenerator','generateSimulatedCardinalities'
 }
 
 
@@ -71,28 +71,28 @@ task generateJointHyperLogLogData(type: Exec) {
 //##################################
 
 task buildBenchmark(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/benchmark.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
-	outputs.files "$project.cppDir/benchmark"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'g++','-std=c++11','benchmark.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','benchmark'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/benchmark.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
+    outputs.files "$project.cppDir/benchmark"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','benchmark.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','benchmark'
 }
 
 task runBenchmark(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/benchmark"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine './benchmark'
-	dependsOn 'buildBenchmark','updateCpuInfo'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/benchmark"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine './benchmark'
+    dependsOn 'buildBenchmark','updateCpuInfo'
 }
 
 task updateCpuInfo(type: Exec) {
-	workingDir project.cppDir
-	commandLine 'lshw','-C','cpu'
-	outputs.files "$project.dataDir/cpu_info.dat"
-	doFirst {
-		standardOutput = new FileOutputStream("$project.dataDir/cpu_info.dat")
-	}
+    workingDir project.cppDir
+    commandLine 'lshw','-C','cpu'
+    outputs.files "$project.dataDir/cpu_info.dat"
+    doFirst {
+        standardOutput = new FileOutputStream("$project.dataDir/cpu_info.dat")
+    }
 }
 
 //#########################
@@ -100,85 +100,85 @@ task updateCpuInfo(type: Exec) {
 //#########################
 
 task buildSimulation(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/simulator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
-	outputs.files "$project.cppDir/simulator"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'g++','-std=c++11','simulator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','simulator'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/simulator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
+    outputs.files "$project.cppDir/simulator"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','simulator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','simulator'
 }
 
 task doSimulation(type: Exec) {
-	workingDir project.cppDir
-	inputs.files "$project.cppDir/simulator", "$project.cppDir/param.txt", "$project.dataDir/cardinalities.dat"
-	outputs.files "$project.dataDir/12_20_flajolet_estimates.dat",
-		"$project.dataDir/12_20_flajolet_small_range_estimates.dat",
-		"$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
-		"$project.dataDir/12_20_max_likelihood_estimates.dat",
-		"$project.dataDir/12_14_max_likelihood_estimates.dat",
-		"$project.dataDir/8_24_max_likelihood_estimates.dat",
-		"$project.dataDir/16_16_max_likelihood_estimates.dat",
-		"$project.dataDir/20_12_max_likelihood_estimates.dat",
-		"$project.dataDir/12_52_max_likelihood_estimates.dat",
-		"$project.dataDir/cardinalities.dat"
-	standardOutput = new FileOutputStream("$project.cppDir/simulator.out")
-	commandLine './simulator'
-	dependsOn 'buildSimulation','generateSimulatedCardinalities'
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/simulator", "$project.cppDir/param.txt", "$project.dataDir/cardinalities.dat"
+    outputs.files "$project.dataDir/12_20_flajolet_estimates.dat",
+        "$project.dataDir/12_20_flajolet_small_range_estimates.dat",
+        "$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
+        "$project.dataDir/12_20_max_likelihood_estimates.dat",
+        "$project.dataDir/12_14_max_likelihood_estimates.dat",
+        "$project.dataDir/8_24_max_likelihood_estimates.dat",
+        "$project.dataDir/16_16_max_likelihood_estimates.dat",
+        "$project.dataDir/20_12_max_likelihood_estimates.dat",
+        "$project.dataDir/12_52_max_likelihood_estimates.dat",
+        "$project.dataDir/cardinalities.dat"
+    standardOutput = new FileOutputStream("$project.cppDir/simulator.out")
+    commandLine './simulator'
+    dependsOn 'buildSimulation','generateSimulatedCardinalities'
 }
 
 task helperFunctionFig(type: Exec) {
-	workingDir project.pythonDir
-	inputs.files "$project.pythonDir/helper-function.py"
-	outputs.files "$project.paperDir/helper.svg"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'python3', 'helper-function.py'
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/helper-function.py"
+    outputs.files "$project.paperDir/helper.svg"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'helper-function.py'
 }
 
 task createBenchmarkCharts(type: Exec) {
-	workingDir project.pythonDir
-	inputs.files "$project.pythonDir/benchmark-charts.py",
-		"$project.dataDir/benchmark_results_12_20.dat",
-		"$project.dataDir/benchmark_results_12_52.dat"
-	outputs.files "$project.paperDir/avg_exec_time.svg",
-		"$project.paperDir/avg_exec_time.svg",
-		"$project.paperDir/avg_outer_loop_iterations.svg",
-		"$project.paperDir/avg_inner_loop_1_iterations.svg",
-		"$project.paperDir/avg_inner_loop_2_iterations.svg",
-		"$project.paperDir/avg_number_log_evaluations.svg"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'python3', 'benchmark-charts.py'
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/benchmark-charts.py",
+        "$project.dataDir/benchmark_results_12_20.dat",
+        "$project.dataDir/benchmark_results_12_52.dat"
+    outputs.files "$project.paperDir/avg_exec_time.svg",
+        "$project.paperDir/avg_exec_time.svg",
+        "$project.paperDir/avg_outer_loop_iterations.svg",
+        "$project.paperDir/avg_inner_loop_1_iterations.svg",
+        "$project.paperDir/avg_inner_loop_2_iterations.svg",
+        "$project.paperDir/avg_number_log_evaluations.svg"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'benchmark-charts.py'
 }
 
 task createDistributionCharts(type: Exec) {
-	workingDir project.pythonDir
-	inputs.files "$project.pythonDir/distribution_charts.py",
-		"$project.dataDir/12_20_flajolet_estimates.dat",
-		"$project.dataDir/12_20_flajolet_small_range_estimates.dat",
-		"$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
-		"$project.dataDir/12_20_max_likelihood_estimates.dat",
-		"$project.dataDir/12_14_max_likelihood_estimates.dat",
-		"$project.dataDir/8_24_max_likelihood_estimates.dat",
-		"$project.dataDir/16_16_max_likelihood_estimates.dat",
-		"$project.dataDir/20_12_max_likelihood_estimates.dat",
-		"$project.dataDir/12_52_max_likelihood_estimates.dat",
-		"$project.dataDir/cardinalities.dat"
-	outputs.files "$project.paperDir/original_estimate.svg",
-		"$project.paperDir/raw_estimate.svg",
-		"$project.paperDir/small_range_estimate.svg",
-		"$project.paperDir/max_likelihood_estimate_12_20.svg",
-		"$project.paperDir/max_likelihood_estimate_12_14.svg",
-		"$project.paperDir/max_likelihood_estimate_8_24.svg",
-		"$project.paperDir/max_likelihood_estimate_16_16.svg",
-		"$project.paperDir/max_likelihood_estimate_20_12.svg",
-		"$project.paperDir/max_likelihood_estimate_12_52.svg"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'python3', 'distribution_charts.py'
-	dependsOn 'generateSimulatedCardinalities','doSimulation'
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/distribution_charts.py",
+        "$project.dataDir/12_20_flajolet_estimates.dat",
+        "$project.dataDir/12_20_flajolet_small_range_estimates.dat",
+        "$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
+        "$project.dataDir/12_20_max_likelihood_estimates.dat",
+        "$project.dataDir/12_14_max_likelihood_estimates.dat",
+        "$project.dataDir/8_24_max_likelihood_estimates.dat",
+        "$project.dataDir/16_16_max_likelihood_estimates.dat",
+        "$project.dataDir/20_12_max_likelihood_estimates.dat",
+        "$project.dataDir/12_52_max_likelihood_estimates.dat",
+        "$project.dataDir/cardinalities.dat"
+    outputs.files "$project.paperDir/original_estimate.svg",
+        "$project.paperDir/raw_estimate.svg",
+        "$project.paperDir/small_range_estimate.svg",
+        "$project.paperDir/max_likelihood_estimate_12_20.svg",
+        "$project.paperDir/max_likelihood_estimate_12_14.svg",
+        "$project.paperDir/max_likelihood_estimate_8_24.svg",
+        "$project.paperDir/max_likelihood_estimate_16_16.svg",
+        "$project.paperDir/max_likelihood_estimate_20_12.svg",
+        "$project.paperDir/max_likelihood_estimate_12_52.svg"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'distribution_charts.py'
+    dependsOn 'generateSimulatedCardinalities','doSimulation'
 }
 
 task figures {
-	dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts'
-	doLast {
-	}
+    dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts'
+    doLast {
+    }
 }
 
 //#########################
@@ -186,118 +186,114 @@ task figures {
 //#########################
 
 task pdflatex1(type: Exec) {
-	workingDir project.paperDir
-	inputs.files "$project.paperDir/paper.tex"
-	outputs.files "$project.paperDir/paper.aux"
-	outputs.upToDateWhen { false }
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'pdflatex','--shell-escape','paper'
+    workingDir project.paperDir
+    inputs.files "$project.paperDir/paper.tex"
+    outputs.files "$project.paperDir/paper.aux"
+    outputs.upToDateWhen { false }
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'pdflatex','--shell-escape','paper'
 }
 
 task bibtex(type: Exec) {
-	workingDir project.paperDir
-	inputs.files "$project.paperDir/paper.aux","$project.paperDir/bibliography.bib"
-	outputs.files "$project.paperDir/paper.bbl", "$project.paperDir/paper.blg"
-	outputs.upToDateWhen { false }
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'bibtex', 'paper'
-	dependsOn 'pdflatex1'
+    workingDir project.paperDir
+    inputs.files "$project.paperDir/paper.aux","$project.paperDir/bibliography.bib"
+    outputs.files "$project.paperDir/paper.bbl", "$project.paperDir/paper.blg"
+    outputs.upToDateWhen { false }
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'bibtex', 'paper'
+    dependsOn 'pdflatex1'
 }
 
 task pdflatex2(type: Exec) {
-	workingDir project.paperDir
-	inputs.files "$project.paperDir/paper.bbl",
-		"$project.paperDir/paper.blg",
-		"$project.paperDir/paper.tex",
-		"$project.paperDir/helper.svg",
-		"$project.paperDir/avg_exec_time.svg", 
-		"$project.paperDir/orignal_estimate.svg",
-		"$project.paperDir/raw_estimate.svg", 
-		"$project.paperDir/small_range_estimate.svg", 
-		"$project.paperDir/max_likelihood_estimate_8_24.svg", 
-		"$project.paperDir/max_likelihood_estimate_12_20.svg", 
-		"$project.paperDir/max_likelihood_estimate_12_14.svg", 
-		"$project.paperDir/max_likelihood_estimate_16_16.svg", 
-		"$project.paperDir/max_likelihood_estimate_20_12.svg", 
-		"$project.paperDir/max_likelihood_estimate_12_52.svg"
-	outputs.files "$project.paperDir/paper.aux",
-		"$project.paperDir/helper.pdf",
-		"$project.paperDir/helper.pdf_tex",
-		"$project.paperDir/avg_exec_time.pdf",
-		"$project.paperDir/avg_exec_time.pdf_tex",
-		"$project.paperDir/orignal_estimate.pdf",
-		"$project.paperDir/orignal_estimate.pdf_tex",
-		"$project.paperDir/raw_estimate.pdf", 
-		"$project.paperDir/raw_estimate.pdf_tex",
-		"$project.paperDir/small_range_estimate.pdf", 
-		"$project.paperDir/small_range_estimate.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_8_24.pdf", 
-		"$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_20.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_14.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_16_16.pdf", 
-		"$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_20_12.pdf", 
-		"$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_52.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_52.pdf_tex"
-	outputs.upToDateWhen { false }
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'pdflatex','--shell-escape','paper'
-	dependsOn 'bibtex'
+    workingDir project.paperDir
+    inputs.files "$project.paperDir/paper.bbl",
+        "$project.paperDir/paper.blg",
+        "$project.paperDir/paper.tex",
+        "$project.paperDir/helper.svg",
+        "$project.paperDir/avg_exec_time.svg", 
+        "$project.paperDir/orignal_estimate.svg",
+        "$project.paperDir/raw_estimate.svg", 
+        "$project.paperDir/small_range_estimate.svg", 
+        "$project.paperDir/max_likelihood_estimate_8_24.svg", 
+        "$project.paperDir/max_likelihood_estimate_12_20.svg", 
+        "$project.paperDir/max_likelihood_estimate_12_14.svg", 
+        "$project.paperDir/max_likelihood_estimate_16_16.svg", 
+        "$project.paperDir/max_likelihood_estimate_20_12.svg", 
+        "$project.paperDir/max_likelihood_estimate_12_52.svg"
+    outputs.files "$project.paperDir/paper.aux",
+        "$project.paperDir/helper.pdf",
+        "$project.paperDir/helper.pdf_tex",
+        "$project.paperDir/avg_exec_time.pdf",
+        "$project.paperDir/avg_exec_time.pdf_tex",
+        "$project.paperDir/orignal_estimate.pdf",
+        "$project.paperDir/orignal_estimate.pdf_tex",
+        "$project.paperDir/raw_estimate.pdf", 
+        "$project.paperDir/raw_estimate.pdf_tex",
+        "$project.paperDir/small_range_estimate.pdf", 
+        "$project.paperDir/small_range_estimate.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf", 
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf", 
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf", 
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf_tex"
+    outputs.upToDateWhen { false }
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'pdflatex','--shell-escape','paper'
+    dependsOn 'bibtex'
 }
 
 task pdflatex3(type: Exec) {
-	workingDir project.paperDir
-	inputs.files "$project.paperDir/paper.bbl",
-		"$project.paperDir/paper.blg",
-		"$project.paperDir/paper.tex",
-		"$project.paperDir/helper.pdf", 
-		"$project.paperDir/helper.pdf_tex", 
-		"$project.paperDir/avg_exec_time.pdf", 
-		"$project.paperDir/avg_exec_time.pdf_tex", 
-		"$project.paperDir/orignal_estimate.pdf", 
-		"$project.paperDir/orignal_estimate.pdf_tex",
-		"$project.paperDir/raw_estimate.pdf", 
-		"$project.paperDir/raw_estimate.pdf_tex",
-		"$project.paperDir/small_range_estimate.pdf", 
-		"$project.paperDir/small_range_estimate.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_8_24.pdf", 
-		"$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_20.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_14.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_16_16.pdf", 
-		"$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_20_12.pdf", 
-		"$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
-		"$project.paperDir/max_likelihood_estimate_12_52.pdf", 
-		"$project.paperDir/max_likelihood_estimate_12_52.pdf_tex",
-		"$project.paperDir/max_errror_propagation_factor.txt"
-	outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
-	outputs.upToDateWhen { false }
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'pdflatex','--shell-escape','paper'
-	dependsOn 'pdflatex2', 'calculateMaxErrorPropagationFactor'
+    workingDir project.paperDir
+    inputs.files "$project.paperDir/paper.bbl",
+        "$project.paperDir/paper.blg",
+        "$project.paperDir/paper.tex",
+        "$project.paperDir/helper.pdf", 
+        "$project.paperDir/helper.pdf_tex", 
+        "$project.paperDir/avg_exec_time.pdf", 
+        "$project.paperDir/avg_exec_time.pdf_tex", 
+        "$project.paperDir/orignal_estimate.pdf", 
+        "$project.paperDir/orignal_estimate.pdf_tex",
+        "$project.paperDir/raw_estimate.pdf", 
+        "$project.paperDir/raw_estimate.pdf_tex",
+        "$project.paperDir/small_range_estimate.pdf", 
+        "$project.paperDir/small_range_estimate.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf", 
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf", 
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf", 
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf", 
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf_tex",
+        "$project.paperDir/max_errror_propagation_factor.txt"
+    outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
+    outputs.upToDateWhen { false }
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'pdflatex','--shell-escape','paper'
+    dependsOn 'pdflatex2', 'calculateMaxErrorPropagationFactor'
 }
 
 task calculateMaxErrorPropagationFactor(type: Exec) {
-	workingDir project.pythonDir
-	inputs.files "$project.pythonDir/recursion-stability.py"
-	outputs.files "$project.paperDir/max_errror_propagation_factor.txt"
-	standardOutput = new ByteArrayOutputStream()
-	commandLine 'python3', 'recursion-stability.py'
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/recursion-stability.py"
+    outputs.files "$project.paperDir/max_errror_propagation_factor.txt"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'recursion-stability.py'
 }
 
 task paper {
-	dependsOn 'pdflatex3'
-	doLast {
-	}
+    dependsOn 'pdflatex3'
+    doLast {
+    }
 }
-
-
-
-
