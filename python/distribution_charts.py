@@ -67,6 +67,7 @@ def createFigure(p, q, dataSource, figureName):
     plt.plot([], [], color='#dddddd', linewidth=10, label=label3)
     ax1.legend(loc=2,prop={'size':12})
     fig1.savefig('../paper/' + figureName + '.svg', format='svg', dpi=600)
+    fig1.savefig('../paper/' + figureName + '.png', format='png', dpi=100)
     plt.close(fig1)
 
 createFigure(12, 20, 'flajolet_estimates', 'original_estimate')

@@ -169,7 +169,16 @@ task createDistributionCharts(type: Exec) {
         "$project.paperDir/max_likelihood_estimate_8_24.svg",
         "$project.paperDir/max_likelihood_estimate_16_16.svg",
         "$project.paperDir/max_likelihood_estimate_20_12.svg",
-        "$project.paperDir/max_likelihood_estimate_12_52.svg"
+        "$project.paperDir/max_likelihood_estimate_12_52.svg",
+        "$project.paperDir/original_estimate.png",
+        "$project.paperDir/raw_estimate.png",
+        "$project.paperDir/small_range_estimate.png",
+        "$project.paperDir/max_likelihood_estimate_12_20.png",
+        "$project.paperDir/max_likelihood_estimate_12_14.png",
+        "$project.paperDir/max_likelihood_estimate_8_24.png",
+        "$project.paperDir/max_likelihood_estimate_16_16.png",
+        "$project.paperDir/max_likelihood_estimate_20_12.png",
+        "$project.paperDir/max_likelihood_estimate_12_52.png"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'distribution_charts.py'
     dependsOn 'generateSimulatedCardinalities','doSimulation'
