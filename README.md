@@ -1,5 +1,5 @@
 # Maximum likelihood estimation of cardinalities from HyperLogLog sketches
-[Paper](https://github.com/oertl/hyperloglog-sketch-estimation-paper/blob/master/paper/paper.pdf) about the estimation of cardinalities from HyperLogLog sketches.
+[Paper](https://github.com/oertl/hyperloglog-sketch-estimation-paper/blob/master/paper/paper.pdf) about the estimation of cardinalities from HyperLogLog sketches. (Work is still in progress.)
 
 ## Abstract
 This paper presents a new method to estimate the cardinality of a multiset recorded by HyperLogLog sketches. The maximum likelihood method is applied to the probability mass function under the Poisson model. A numerical algorithm is presented that is able to calculate the estimate efficiently. Simulations finally show that this new estimation procedure works well and is inherently unbiased over a wide range of cardinalities.
