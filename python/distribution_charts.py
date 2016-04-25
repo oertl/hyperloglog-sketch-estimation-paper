@@ -52,9 +52,7 @@ def createFigure(p, q, dataSource, figureName):
     datap2s = numpy.divide(numpy.percentile(data, pp2s*100., axis=1), cardinalities)-1.
     datam1s = numpy.divide(numpy.percentile(data, pm1s*100., axis=1), cardinalities)-1.
     datap1s = numpy.divide(numpy.percentile(data, pp1s*100., axis=1), cardinalities)-1.
-    data05 = numpy.divide(numpy.percentile(data, 5, axis=1), cardinalities)-1.
     data50 = numpy.divide(numpy.percentile(data, 50, axis=1), cardinalities)-1.
-    data95 = numpy.divide(numpy.percentile(data, 95, axis=1), cardinalities)-1.
     ax1.plot(cardinalities, data50, color='black', linewidth=1.0, label='median')
     ax1.fill_between(cardinalities, datam3s, datap3s, facecolor='#dddddd', edgecolor='none')
     ax1.fill_between(cardinalities, datam2s, datap2s, facecolor='#bbbbbb', edgecolor='none')
