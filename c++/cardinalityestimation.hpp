@@ -30,7 +30,7 @@ int getPFromCounts(const std::vector<int>& c) {
     return getPFromNumberRegisters(m);
 }
 
-double maxLikelihoodEstimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount) {
+double maxLikelihoodEstimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount, int& kMin, int& kMax) {
 
     const double eps = 1e-2;
     
@@ -41,11 +41,9 @@ double maxLikelihoodEstimate(const std::vector<int>& c, int& outerLoopIterations
     
     int q = c.size() - 2;
 
-    int kMin;
     for(kMin=0; c[kMin]==0; ++kMin);
     int kMinPrime = std::max(1, kMin);
     
-    int kMax;
     for(kMax=q+1; c[kMax]==0; --kMax);
     int kMaxPrime = std::min(q, kMax);
 
@@ -127,8 +125,10 @@ double maxLikelihoodEstimate(const std::vector<int>& c) {
     int innerLoop1IterationsCount;
     int innerLoop2IterationsCount;
     int logEvaluationCount;
+    int kMin;
+    int kMax;
     
-    return maxLikelihoodEstimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount);
+    return maxLikelihoodEstimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
 }
 
 double flajoletSmallRangeEstimate(const std::vector<int>& c, int m) {

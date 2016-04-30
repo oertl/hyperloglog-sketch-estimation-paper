@@ -208,7 +208,7 @@ For $\symPrecision \geq 4$ theses values can be approximated as follows
 \,\text{for}\,\symNumReg\geq 64 
 \end{equation}
 
-\autoref{fig:raw_estimate} shows the distribution of the relative error of the \emph{raw} estimate for $10000$ randomly generated HyperLogLog sketches over the number of distinct element insertions. Obviously, the \emph{raw} estimate is biased for small and large cardinalities and fails to return accurate estimates. As a consequence, to cover the entire range of cardinalities, a small and a large correction have been proposed, respectively.
+\autoref{fig:raw_estimate} shows the distribution of the relative error of the \emph{raw} estimate for 10\,000 randomly generated HyperLogLog sketches over the number of distinct element insertions. Obviously, the \emph{raw} estimate is biased for small and large cardinalities and fails to return accurate estimates. As a consequence, to cover the entire range of cardinalities, a small and a large correction have been proposed, respectively.
 
 For small cardinalities the same estimator as used by the linear probabilistic counting algorithm \cite{Whang1990} which only incorporates the number of registers equal to 0 denoted by $\symCount_0$:
 \begin{equation}
@@ -257,7 +257,7 @@ The relative estimation error for the original method is shown in \autoref{fig:o
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{raw_estimate}
-\caption{The distribution of the relative estimation error over the cardinality as obtained by the raw estimation method \cite{Flajolet2007}. 10000 randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$ have been evaluated.}
+\caption{The distribution of the relative estimation error over the cardinality as obtained by the raw estimation method \cite{Flajolet2007}. 10\,000 randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$ have been evaluated.}
 \label{fig:raw_estimate}
 \end{figure}
 
@@ -271,7 +271,7 @@ The relative estimation error for the original method is shown in \autoref{fig:o
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{original_estimate}
-\caption{The distribution of the relative estimation error over the cardinality as obtained by the original estimation method \cite{Flajolet2007}. 10000 randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$ have been evaluated.}
+\caption{The distribution of the relative estimation error over the cardinality as obtained by the original estimation method \cite{Flajolet2007}. 10\,000 randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$ have been evaluated.}
 \label{fig:original_estimate}
 \end{figure}
 
@@ -600,9 +600,9 @@ The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cd
 In order to get a fast cardinality estimation algorithm, it is crucial to minimize the evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of the computational effort:
 \begin{itemize}
 \item Only a fraction of all count values $\symCount_\symRegVal$ is non-zero. If we denote $\symRegVal_\text{min}:=\min\lbrace \symRegVal\vert\symCount_\symRegVal>0\rbrace$ and $\symRegVal_\text{max}:=\max\lbrace \symRegVal\vert\symCount_\symRegVal>0\rbrace$,  it is sufficient to loop over all indices in the range $[\symRegVal_\text{min}, \symRegVal_\text{max}]$.
-\item It is sufficient to calculate the coefficient of the linear term $\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}$ once and reuse it for any further iterations of the secant method.
+\item The coefficient of the linear term $\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}$ can be precalculated and reused for all function evaluations.
 \item Many programming languages allow the efficient multiplication and division by any integral power of 2 using special functions, such as \texttt{ldexp} in C/C++ or \texttt{scalb} in Java.
-\item The function $\symHelper(\symX)$ only needs to be evaluated at values $\lbrace\frac{\symX}{2^{\symRegVal'_\text{max}}},\frac{\symX}{2^{\symRegVal'_\text{max}-1}}\ldots,\frac{\symX}{2^{\symRegVal_\text{min}}}\rbrace$ where $\symRegVal'_\text{max} := \min(\symRegVal_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio 2. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we know $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
+\item The function $\symHelper(\symX)$ only needs to be evaluated at values $\lbrace\frac{\symX}{2^{\symRegVal'_\text{max}}},\frac{\symX}{2^{\symRegVal'_\text{max}-1}}\ldots,\frac{\symX}{2^{\symRegVal_\text{min}}}\rbrace$ where $\symRegVal'_\text{max} := \min(\symRegVal_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio 2. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we already know $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
 \begin{equation}
 \label{equ:helper_recursion1}
 \symHelper\left(2\symX\right) = \frac{\symX+2\symHelper\left(\symX\right)\left(1-\symHelper\left(\symX\right)\right)}{\symX+2\left(1-\symHelper\left(\symX\right)\right)}
@@ -722,17 +722,28 @@ All these optimizations together finally give the new cardinality estimation alg
 \section{Results}
 
 \subsection{Estimation error}
-\begin{figure}
-\centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_8_24}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
-\label{fig:estimation_error_8_24}
-\end{figure}
+In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLog sketches and inserted up to 50 billion unique elements. Element hash values have been mocked by random numbers. For the following results we used the Mersenne Twister random number generator with 19937 bit state size from the C++ standard library.
+
+\autoref{fig:estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \algoref{alg:estimate_ml} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the median shows, the error is essentially unbiased over the entire cardinality range except for very small values. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is an order of magnitude larger than the operating range upper bound of the \emph{raw} estimate (\autoref{fig:raw_estimate}) or the original method (\autoref{fig:original_estimate}).
+
+
+
+
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_12_20}
 \caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:estimation_error_12_20}
+\end{figure}
+
+
+
+
+\begin{figure}
+\centering
+\includesvg[width=1\textwidth]{max_likelihood_estimate_8_24}
+\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
+\label{fig:estimation_error_8_24}
 \end{figure}
 \begin{figure}
 \centering
@@ -779,9 +790,9 @@ All these optimizations together finally give the new cardinality estimation alg
 
 \section{Cardinality estimation of set intersections and differences}
 Assume two different sets $\symSetS_1$ and $\symSetS_2$ that have been recorded by two HyperLogLog sketches with same parameters $(\symPrecision,\symRegRange)$. Given the corresponding register values $\vec{\symRegVal}_1$ and
-$\vec{\symRegVal}_2$ we attempt to estimate the cardinalities of the pair-wise disjoint sets $\symSetX = \symSetS_1\cap\symSetS_2$, $\symSetA = \symSetS_1\setminus\symSetS_2$, and $\symSetB = \symSetS_2\setminus\symSetS_1$. Motivated by the good results we have obtained for cardinality estimation of a single HyperLogLog sketch, we want to get these estimates using the maximum likelihood method applied to the joint probability distribution of $\vec{\symRegVal}_1$ and $\vec{\symRegVal}_2$.
+$\vec{\symRegVal}_2$, we attempt to estimate the cardinalities of the pair-wise disjoint sets $\symSetX = \symSetS_1\cap\symSetS_2$, $\symSetA = \symSetS_1\setminus\symSetS_2$, and $\symSetB = \symSetS_2\setminus\symSetS_1$. Motivated by the good results we have obtained for cardinality estimation of a single HyperLogLog sketch, we want to get these estimates using the maximum likelihood method applied to the joint probability distribution of $\vec{\symRegVal}_1$ and $\vec{\symRegVal}_2$.
 
-Under the Poisson model the register values are independent and identically distributed. Therefore, we first consider a single register and derive the joint probability distribution for its values in both sketches. 
+Under the Poisson model the register values are independent and identically distributed. Therefore, we first derive the joint probability distribution for a single register that has value $\symRegValVariate_1$ in the first HyperLogLog sketch representing $\symSetS_1$ and value $\symRegValVariate_2$ in the second HyperLogLog sketch representing $\symSetS_2$. 
 
 The HyperLogLog sketch that represents $\symSetS_1$ could have also been obtained by constructing two HyperLogLog sketches from sets $\symSetA$ and $\symSetX$ and by merging both by taking for each register the maximum value of both sketches. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let us consider the register values $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ at a certain position of the HyperLogLog sketches for $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
 \begin{equation}
@@ -1112,14 +1123,14 @@ e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPois
 \left[1\leq\symRegVal_1=\symRegVal_2\right]
 \end{align}
 
-Since under the Poisson model, the values for different registers are independent we are now able to write the joint probability mass function for the joint state of both HyperLogLog sketches.
+Since under the Poisson model, the values for different registers are independent we are now able to write the joint probability mass function for the joint state of both HyperLogLog sketches
 \begin{equation}
 \symProbabilityMass(\vec{\symRegVal}_1,\vec{\symRegVal}_2)
 =
 \prod_{\symRegVal_1 = 0}^{\symRegRange+1}
 \prod_{\symRegVal_2 = 0}^{\symRegRange+1}
 \symProbabilityMass(\symRegVal_1,\symRegVal_2)
-^{\symCount_{\symRegVal_1\symRegVal_2}}
+^{\symCount_{\symRegVal_1\symRegVal_2}}.
 \end{equation}
 Here we have used the multiplicity matrix $\symCountMatrix = \left(\symCount_{\symRegVal_1\symRegVal_2}\right)_{\symRegVal_1\symRegVal_2\in[0,\symRegRange+1]}$ defined by
 \begin{equation}
@@ -1363,9 +1374,9 @@ If $\symHelper_1$ is approximated by $\tilde{\symHelper}_1 = \symHelper_1\left(1
 The corresponding relative error $\symError_2$ is given by
 \begin{equation}
 \label{equ:h2_relative_error}
-\symError_2 = \frac{\tilde{\symHelper}_2}{\symHelper_2}-1
+\symError_2 = \frac{\tilde{\symHelper}_2}{\symHelper_2}-1.
 \end{equation}
-Putting \eqref{equ:h2} and \eqref{equ:h2_approx} into \eqref{equ:h2_relative_error} and using first-order approximations 
+Putting \eqref{equ:h2} and \eqref{equ:h2_approx} into \eqref{equ:h2_relative_error} and using the first-order approximations 
 \begin{equation}
 \frac{\symX+2\tilde{\symHelper}_1(1-\tilde{\symHelper}_1)}
 {\symX+2\symHelper_1(1-\symHelper_1)}
@@ -1386,7 +1397,7 @@ and
 +
 \symError_1
 \frac{2\symHelper_1}{x+2\left(1-\symHelper_1\right)}
-+\symBigO(\symError_1^2)
++\symBigO(\symError_1^2),
 \end{equation}
 we obtain
 \begin{equation}
@@ -1401,7 +1412,7 @@ we obtain
 \right)
 +\symBigO(\symError_1^2)
 \end{equation}
-By numerical means it can be easily shown that
+By numerical means it is easy to show that
 \begin{equation}
 0\leq\frac{2\symHelper(\symX)\left(1-2\symHelper(\symX)\right)}
 {\symX + 2\symHelper(\symX)\left(1-\symHelper(\symX)\right)}
