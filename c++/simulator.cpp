@@ -131,7 +131,6 @@ int main(int argc, char* argv[])
     
     const vector<parameter> parameters = readParameters();
     
-    //#pragma omp parallel for
     for (size_t parameterIdx = 0; parameterIdx < parameters.size(); ++parameterIdx) { 
         
         const parameter& par = parameters[parameterIdx];
@@ -148,16 +147,14 @@ int main(int argc, char* argv[])
         vector<int> innerLoop1IterationsCount(resultBufferSize);
         vector<int> innerLoop2IterationsCount(resultBufferSize);
         vector<int> logEvaluationCount(resultBufferSize);
-        vector<int> kMin(resultBufferSize);
-        vector<int> kMax(resultBufferSize);
         
         vector<double> strongLowerBoundEstimates(resultBufferSize);
         vector<double> weakLowerBoundEstimates(resultBufferSize);
         vector<double> strongUpperBoundEstimates(resultBufferSize);
         vector<double> weakUpperBoundEstimates(resultBufferSize);
         
-        vector<double> kMinSum(cardinalities.size(), 0.);
-        vector<double> kMaxSum(cardinalities.size(), 0.);
+        vector<int> kMinSum(cardinalities.size());
+        vector<int> kMaxSum(cardinalities.size());
 
         #pragma omp parallel for
         for(size_t seedCounter = 0; seedCounter < seeds.size(); ++seedCounter) {
@@ -190,14 +187,20 @@ int main(int argc, char* argv[])
                 weakUpperBoundEstimates[resultPos] = weakUpperBoundEstimate(c);
                 strongUpperBoundEstimates[resultPos] = strongUpperBoundEstimate(c);
                 
+                #pragma omp atomic
                 kMinSum[cardinalityIdx] += kMin;
+                
+                #pragma omp atomic
                 kMaxSum[cardinalityIdx] += kMax;
             }
         }
         
+        vector<double> kMinAvg(cardinalities.size());
+        vector<double> kMaxAvg(cardinalities.size());
+
         for(size_t cardinalityIdx = 0; cardinalityIdx < cardinalities.size(); ++cardinalityIdx) {
-            kMinSum[cardinalityIdx] /= seeds.size();
-            kMaxSum[cardinalityIdx] /= seeds.size();
+            kMinAvg[cardinalityIdx] = kMinSum[cardinalityIdx] / (double) seeds.size();
+            kMaxAvg[cardinalityIdx] = kMaxSum[cardinalityIdx] / (double) seeds.size();
         }
         
         const string filePrefix = getFilePrefix(par);
@@ -211,8 +214,8 @@ int main(int argc, char* argv[])
         printToFile(filePrefix + "inner_loop_1_iterations_count.dat", &innerLoop1IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "inner_loop_2_iterations_count.dat", &innerLoop2IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "log_evaluation_count.dat", &logEvaluationCount[0], seeds.size(), cardinalities.size());
-        printToFile(filePrefix + "kMin.dat", &kMinSum[0], 1, cardinalities.size());
-        printToFile(filePrefix + "kMax.dat", &kMaxSum[0], 1, cardinalities.size());
+        printToFile(filePrefix + "kMin.dat", &kMinAvg[0], 1, cardinalities.size());
+        printToFile(filePrefix + "kMax.dat", &kMaxAvg[0], 1, cardinalities.size());
         
         printToFile(filePrefix + "weak_lower_bound_estimates.dat", &weakLowerBoundEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "strong_lower_bound_estimates.dat", &strongLowerBoundEstimates[0], seeds.size(), cardinalities.size());
