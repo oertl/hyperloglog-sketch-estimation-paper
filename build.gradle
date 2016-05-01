@@ -99,7 +99,7 @@ task updateCpuInfo(type: Exec) {
 // figures
 //#########################
 
-task buildSimulation(type: Exec) {
+task buildCardinalityCalculation(type: Exec) {
     workingDir project.cppDir
     inputs.files "$project.cppDir/cardinality_calculator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/cardinality_calculator"
@@ -122,7 +122,7 @@ task doCardinalityCalculation(type: Exec) {
         "$project.dataDir/cardinalities.dat"
     standardOutput = new FileOutputStream("$project.cppDir/cardinality_calculator.out")
     commandLine './cardinality_calculator'
-    dependsOn 'buildSimulation','generateSimulatedCardinalities'
+    dependsOn 'buildCardinalityCalculation','generateSimulatedCardinalities'
 }
 
 task helperFunctionFig(type: Exec) {
