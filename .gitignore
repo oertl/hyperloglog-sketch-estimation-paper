@@ -13,6 +13,10 @@ data/*_*_strong_lower_bound_estimates.dat
 data/*_*_strong_upper_bound_estimates.dat
 data/*_*_weak_lower_bound_estimates.dat
 data/*_*_weak_upper_bound_estimates.dat
+data/*_*_kMax.dat
+data/*_*_kMin.dat
+data/*.min_error
+data/*.max_error
 data/hll/*.dat
 data/hll_joint/*.dat
 c++/definecardinalities

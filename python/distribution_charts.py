@@ -38,7 +38,6 @@ def createFigure(p, q, dataSource, figureName):
     ax1.set_xlabel("cardinality")
     ax1.set_ylabel("relative error")
 
-
     pm3s = (1.-erf(3./sqrt(2.)))/2.
     pp3s = (1.+erf(3./sqrt(2.)))/2.
     pm2s = (1.-erf(2./sqrt(2.)))/2.
@@ -46,12 +45,14 @@ def createFigure(p, q, dataSource, figureName):
     pm1s = (1.-erf(1./sqrt(2.)))/2.
     pp1s = (1.+erf(1./sqrt(2.)))/2.
 
+    datamin = numpy.divide(data.min(axis=1), cardinalities)-1.
     datam3s = numpy.divide(numpy.percentile(data, pm3s*100., axis=1), cardinalities)-1.
     datap3s = numpy.divide(numpy.percentile(data, pp3s*100., axis=1), cardinalities)-1.
     datam2s = numpy.divide(numpy.percentile(data, pm2s*100., axis=1), cardinalities)-1.
     datap2s = numpy.divide(numpy.percentile(data, pp2s*100., axis=1), cardinalities)-1.
     datam1s = numpy.divide(numpy.percentile(data, pm1s*100., axis=1), cardinalities)-1.
     datap1s = numpy.divide(numpy.percentile(data, pp1s*100., axis=1), cardinalities)-1.
+    datamax = numpy.divide(data.max(axis=1), cardinalities)-1.
     data50 = numpy.divide(numpy.percentile(data, 50, axis=1), cardinalities)-1.
     ax1.plot(cardinalities, data50, color='black', linewidth=1.0, label='median')
     ax1.fill_between(cardinalities, datam3s, datap3s, facecolor='#dddddd', edgecolor='none')
@@ -67,6 +68,9 @@ def createFigure(p, q, dataSource, figureName):
     fig1.savefig('../paper/' + figureName + '.svg', format='svg', dpi=600)
     fig1.savefig('../paper/' + figureName + '.png', format='png', dpi=100)
     plt.close(fig1)
+    
+    numpy.savetxt(dataDir + figureName + ".min_error", datamin, delimiter=',')
+    numpy.savetxt(dataDir + figureName + ".max_error", datamax, delimiter=',')
 
 createFigure(12, 20, 'flajolet_estimates', 'original_estimate')
 createFigure(12, 20, 'flajolet_mid_range_estimates', 'raw_estimate')
