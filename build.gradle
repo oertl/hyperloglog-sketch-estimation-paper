@@ -101,15 +101,15 @@ task updateCpuInfo(type: Exec) {
 
 task buildSimulation(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/simulator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
-    outputs.files "$project.cppDir/simulator"
+    inputs.files "$project.cppDir/cardinality_calculator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
+    outputs.files "$project.cppDir/cardinality_calculator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','simulator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','simulator'
+    commandLine 'g++','-std=c++11','cardinality_calculator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','cardinality_calculator'
 }
 
-task doSimulation(type: Exec) {
+task doCardinalityCalculation(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/simulator", "$project.cppDir/param.txt", "$project.dataDir/cardinalities.dat"
+    inputs.files "$project.cppDir/cardinality_calculator", "$project.cppDir/param.txt", "$project.dataDir/cardinalities.dat"
     outputs.files "$project.dataDir/12_20_flajolet_estimates.dat",
         "$project.dataDir/12_20_flajolet_small_range_estimates.dat",
         "$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
@@ -120,8 +120,8 @@ task doSimulation(type: Exec) {
         "$project.dataDir/20_12_max_likelihood_estimates.dat",
         "$project.dataDir/12_52_max_likelihood_estimates.dat",
         "$project.dataDir/cardinalities.dat"
-    standardOutput = new FileOutputStream("$project.cppDir/simulator.out")
-    commandLine './simulator'
+    standardOutput = new FileOutputStream("$project.cppDir/cardinality_calculator.out")
+    commandLine './cardinality_calculator'
     dependsOn 'buildSimulation','generateSimulatedCardinalities'
 }
 
@@ -181,7 +181,7 @@ task createDistributionCharts(type: Exec) {
         "$project.paperDir/max_likelihood_estimate_12_52.png"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'distribution_charts.py'
-    dependsOn 'generateSimulatedCardinalities','doSimulation'
+    dependsOn 'generateSimulatedCardinalities','doCardinalityCalculation'
 }
 
 task figures {

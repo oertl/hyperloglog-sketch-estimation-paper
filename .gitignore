@@ -18,10 +18,10 @@ data/hll_joint/*.dat
 c++/definecardinalities
 c++/hyperloglog_data_generator
 c++/joint_hyperloglog_data_generator
-c++/simulator
+c++/cardinality_calculator
 c++/benchmark
 c++/hyperlogloggeneration.out
-c++/simulator.out
+c++/cardinality_calculator.out
 paper/helper.pdf
 paper/helper.pdf_tex
 paper/avg_exec_time.pdf
