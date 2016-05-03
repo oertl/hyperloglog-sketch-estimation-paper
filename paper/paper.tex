@@ -775,10 +775,10 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \label{fig:estimation_error_12_14}
 \end{figure}
 
-
-
 \subsection{Performance}
-\autoref{fig:avg_exec_time}
+In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \autoref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
+
+The numbers do not yet include the required processing time to calculate the multiplicity vector from the HyperLogLog sketch, which requires a complete scan over all registers and counting the different register values into an array. A theoretical lower bound for this processing time can be derived using the maximum memory bandwidth of the CPU, which is 21\,GB/s for an Intel Core i5-2500K. For precision $\symPrecision=12$ there are 4096 registers, each of them requires at least 5 bits. Hence, the total data size of the HyperLogLog sketch is 2.5\,kB minimum and transfer time from main memory to CPU will be at least 120\,ns. Having this value in mind, the presented processing time numbers are quite satisfying.
 
 \begin{figure}
 \centering
@@ -786,7 +786,6 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
 \label{fig:avg_exec_time}
 \end{figure}
-
 
 \section{Cardinality estimation of set intersections and differences}
 Assume two different sets $\symSetS_1$ and $\symSetS_2$ that have been recorded by two HyperLogLog sketches with same parameters $(\symPrecision,\symRegRange)$. Given the corresponding register values $\vec{\symRegVal}_1$ and
