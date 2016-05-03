@@ -7,8 +7,9 @@ This paper presents a new method to estimate the cardinality of a multiset recor
 ## Key results
 The following two figures show how the new algorithm improves cardinality estimation for a HyperLogLog sketch with 4096 registers using 32-bit hash values as input.
 * The relative estimation error for the cardinality when using the original HyperLogLog algorithm:
-![original](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/original_estimate.png)
+![original algorithm relative error chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/original_estimate.png)
 * The relative estimation error when using the new estimation algorithm based on maximumm likelihood estimation under the Poisson  model:
-![new algorithm](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/max_likelihood_estimate_12_20.png)
+![new algorithm relative error chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/max_likelihood_estimate_12_20.png)
 
-
+The new algorithm is also fast. The following figure shows the average computation time for the cardinality estimate from HyperLogLog sketches with 4096 registers working with a 32-bit (q=20) or 64-bit (q=52) hash function, respectively.
+![performance chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/avg_exec_time.png)
