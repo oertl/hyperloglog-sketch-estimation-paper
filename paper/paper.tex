@@ -766,14 +766,7 @@ replacing the 32-bit hash function by a 64-bit hash function. \autoref{fig:estim
 \label{fig:estimation_error_12_52}
 \end{figure}
 
-\autoref{fig:estimation_error_12_14}
-
-
-
-
-
-
-
+We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is interesting, because the register values are limited to the range $[0, 15]$. As a consequence, 4 bits are sufficient for representing a single register value. This allows two registers to share a single byte, which is beneficial from a performance perspective. Nevertheless, this configuration still allows the estimation of cardinalities up to 100 millions as shown in \autoref{fig:estimation_error_12_14}, which could be enough for many applications.
 
 \begin{figure}
 \centering
