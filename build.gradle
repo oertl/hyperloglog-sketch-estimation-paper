@@ -139,7 +139,7 @@ task createBenchmarkCharts(type: Exec) {
         "$project.dataDir/benchmark_results_12_20.dat",
         "$project.dataDir/benchmark_results_12_52.dat"
     outputs.files "$project.paperDir/avg_exec_time.svg",
-        "$project.paperDir/avg_exec_time.svg",
+        "$project.paperDir/avg_exec_time.png",
         "$project.paperDir/avg_outer_loop_iterations.svg",
         "$project.paperDir/avg_inner_loop_1_iterations.svg",
         "$project.paperDir/avg_inner_loop_2_iterations.svg",

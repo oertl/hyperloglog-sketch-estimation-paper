@@ -58,6 +58,7 @@ ax_time.plot(cardinalities_12_52, avg_exec_time_nanos_12_52, color='blue', lines
 
 ax_time.legend(loc=2,prop={'size':12})
 
+fig_time.savefig('../paper/avg_exec_time.png', format='png', dpi=100)
 fig_time.savefig('../paper/avg_exec_time.svg', format='svg', dpi=600)
 plt.close(fig_time)
 
