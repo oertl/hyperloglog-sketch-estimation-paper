@@ -141,7 +141,8 @@ double flajoletSmallRangeEstimate(const std::vector<int>& c) {
 }
 
 double getAlpha(int m) {
-    assert(m >= 16);
+    return 1./(2.*std::log(2));
+    /*assert(m >= 16);
     double alpha;
     if (m == 16) {
         alpha = 0.673;
@@ -155,7 +156,7 @@ double getAlpha(int m) {
     else {
         alpha = 0.7213/(1. + 1.079/m);
     }
-    return alpha;
+    return alpha;*/
 }
 
 double flajoletRawEstimate(const std::vector<int>& c, int m) {
@@ -165,6 +166,55 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
     }
     double alpha = getAlpha(m);   
     return (alpha*m)*m/z;
+}
+
+double flajoletRawEstimateCorrected(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) {
+    numSmallCorrectionIterations = 0;
+    numLargeCorrectionIterations = 0;
+    const int m = std::accumulate(c.begin(), c.end(), 0);
+    const int q = c.size()-2;
+    
+    if (c[0] == m) {
+        return 0.;
+    }
+    
+    if (c[q+1] == m) {
+        return std::numeric_limits<double>::infinity();
+    }
+    
+    double z = 0;
+    for (int i = q+1; i >= 0; --i) {
+        z += ldexp(c[i], -i);
+    }
+    
+    // small range correction
+    double c0 = 0;
+    double x = c[0]/(double)m;  
+    double factor = m;
+    double c0old;
+    do {
+        numSmallCorrectionIterations += 1;
+        x *= x;
+        c0old = c0;
+        c0 += x * factor;
+        factor += factor;
+    } while(c0old < c0);
+    
+    // large range correction
+    double cqp1 = 0;
+    double factor2 = ldexp(m, -(q+1));
+    double cqp1old;
+    double y = (m-c[q+1])/(double)m;
+    do {
+        numLargeCorrectionIterations += 1;
+        y = std::sqrt(y);
+        factor2 *= 0.5;
+        cqp1old = cqp1;
+        cqp1 += (y-1.)*factor2;
+    } while (cqp1old > cqp1);
+    
+    double alpha = getAlpha(m);
+    return (alpha*m)*m/(z + c0 + cqp1);
 }
 
 double flajoletRawEstimate(const std::vector<int>& c) {

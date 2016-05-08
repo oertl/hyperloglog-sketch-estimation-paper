@@ -141,6 +141,9 @@ int main(int argc, char* argv[])
         const size_t resultBufferSize = seeds.size()*cardinalities.size();
         vector<double> flajoletSmallRangeEstimates(resultBufferSize);
         vector<double> flajoletMidRangeEstimates(resultBufferSize);
+        vector<double> flajoletMidRangeEstimatesCorrected(resultBufferSize);
+        vector<int> numSmallCorrectionIterations(resultBufferSize);
+        vector<int> numLargeCorrectionIterations(resultBufferSize);
         vector<double> flajoletEstimates(resultBufferSize);
         vector<double> maxLikelihoodEstimates(resultBufferSize);
         vector<int> outerLoopIterationsCount(resultBufferSize);
@@ -180,6 +183,7 @@ int main(int argc, char* argv[])
                 
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
+                flajoletMidRangeEstimatesCorrected[resultPos] = flajoletRawEstimateCorrected(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
                 maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
                 weakLowerBoundEstimates[resultPos] = weakLowerBoundEstimate(c);
@@ -208,6 +212,10 @@ int main(int argc, char* argv[])
         printToFile(filePrefix + "max_likelihood_estimates.dat", &maxLikelihoodEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "flajolet_small_range_estimates.dat", &flajoletSmallRangeEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "flajolet_mid_range_estimates.dat", &flajoletMidRangeEstimates[0], seeds.size(), cardinalities.size());
+        printToFile(filePrefix + "flajolet_mid_range_estimates_corrected.dat", &flajoletMidRangeEstimatesCorrected[0], seeds.size(), cardinalities.size());
+        printToFile(filePrefix + "num_small_correction_iterations.dat", &numSmallCorrectionIterations[0], seeds.size(), cardinalities.size());
+        printToFile(filePrefix + "num_large_correction_iterations.dat", &numLargeCorrectionIterations[0], seeds.size(), cardinalities.size());
+        
         printToFile(filePrefix + "flajolet_estimates.dat", &flajoletEstimates[0], seeds.size(), cardinalities.size());
     
         printToFile(filePrefix + "outer_loop_iterations_count.dat", &outerLoopIterationsCount[0], seeds.size(), cardinalities.size());
