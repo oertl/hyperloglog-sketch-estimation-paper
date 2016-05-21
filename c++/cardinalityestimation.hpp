@@ -30,6 +30,8 @@ int getPFromCounts(const std::vector<int>& c) {
     return getPFromNumberRegisters(m);
 }
 
+// TODO define classes with precalculated constants
+
 double maxLikelihoodEstimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount, int& kMin, int& kMax) {
 
     const double eps = 1e-2;

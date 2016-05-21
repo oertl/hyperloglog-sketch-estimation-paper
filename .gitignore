@@ -39,6 +39,8 @@ paper/original_estimate.pdf
 paper/original_estimate.pdf_tex
 paper/max_likelihood_estimate_*_*.pdf
 paper/max_likelihood_estimate_*_*.pdf_tex
+paper/raw_corrected_estimate_*_*.pdf
+paper/raw_corrected_estimate_*_*.pdf_tex
 paper/paper.aux
 paper/paper.bbl
 paper/paper.blg

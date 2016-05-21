@@ -136,6 +136,9 @@ void run(const int p, const int q, const string& resultsFileName) {
         double maxLikelihoodWithoutRegisterScan = 0.;
         double flajoletWithRegisterScan = 0.;
         double flajoletWithoutRegisterScan = 0.;
+        double flajoletCorrectedWithoutRegisterScan = 0.;
+        long flajoletCorrectedSmallCorrectionIterationsSum = 0;
+        long flajoletCorrectedLargeCorrectionIterationsSum = 0;
         long outerLoopIterationsCountSum = 0;
         long innerLoop1IterationsCountSum = 0;
         long innerLoop2IterationsCountSum = 0;
@@ -173,6 +176,21 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             maxLikelihoodWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }
+        
+        {
+            int smallCorrectionIterations;
+            int largeCorrectionIterations;
+            
+            auto start = std::chrono::system_clock::now();
+            for(auto c : counts) {
+                sum += flajoletRawEstimateCorrected(c, smallCorrectionIterations, largeCorrectionIterations);
+                flajoletCorrectedSmallCorrectionIterationsSum += smallCorrectionIterations;
+                flajoletCorrectedLargeCorrectionIterationsSum += largeCorrectionIterations;
+            }
+            auto end = chrono::system_clock::now();
+            auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
+            flajoletCorrectedWithoutRegisterScan = elapsed.count()/(double)dataSize;
+        }
             
         /*{
             auto start = std::chrono::system_clock::now();
@@ -204,6 +222,9 @@ void run(const int p, const int q, const string& resultsFileName) {
         outputFile << " " << innerLoop1IterationsCountSum/(double)dataSize;
         outputFile << " " << innerLoop2IterationsCountSum/(double)dataSize;
         outputFile << " " << logEvaluationCountSum/(double)dataSize;
+        outputFile << " " << flajoletCorrectedWithoutRegisterScan;
+        outputFile << " " << flajoletCorrectedSmallCorrectionIterationsSum/(double)dataSize;
+        outputFile << " " << flajoletCorrectedLargeCorrectionIterationsSum/(double)dataSize;
         outputFile << endl;
     }
     
