@@ -41,7 +41,7 @@ template <typename T> void printToFile(const string& fileName, const T* data, si
 class parameter {
     int p;
     int q;
-    
+
 public:
     parameter(int p_, int q_) : p(p_), q(q_) {
         assert(p <= maxP);
@@ -49,7 +49,7 @@ public:
         assert(q >= 0);
         assert(p+q <= maxPplusQ);
     }
-    
+
     int getP() const {return p;};
     int getQ() const {return q;};
 };
@@ -102,42 +102,42 @@ string getFileName(const string& seed, int p) {
 
 int main(int argc, char* argv[])
 {
-    
+
     vector<string> seeds;
     {
         ifstream seedFile(seedFileName);
-        
+
         string line;
         while (getline(seedFile, line))
         {
             seeds.push_back(line);
         }
     }
-    
+
     cout << "seedSize "  << seeds.size() << endl;
-    
+
     vector<long> cardinalities;
     {
         ifstream cardFile(cardFileName);
-        
+
         string line;
         while (getline(cardFile, line))
         {
             cardinalities.push_back(stol(line));
         }
     }
-    
+
     cout << "cardinalitySize "  << cardinalities.size() << endl;
-    
+
     const vector<parameter> parameters = readParameters();
-    
-    for (size_t parameterIdx = 0; parameterIdx < parameters.size(); ++parameterIdx) { 
-        
+
+    for (size_t parameterIdx = 0; parameterIdx < parameters.size(); ++parameterIdx) {
+
         const parameter& par = parameters[parameterIdx];
-        
+
         const unsigned char p = par.getP();
         const unsigned char q = par.getQ();
-        
+
         const size_t resultBufferSize = seeds.size()*cardinalities.size();
         vector<double> flajoletSmallRangeEstimates(resultBufferSize);
         vector<double> flajoletMidRangeEstimates(resultBufferSize);
@@ -150,24 +150,27 @@ int main(int argc, char* argv[])
         vector<int> innerLoop1IterationsCount(resultBufferSize);
         vector<int> innerLoop2IterationsCount(resultBufferSize);
         vector<int> logEvaluationCount(resultBufferSize);
-        
+
         vector<double> strongLowerBoundEstimates(resultBufferSize);
         vector<double> weakLowerBoundEstimates(resultBufferSize);
         vector<double> strongUpperBoundEstimates(resultBufferSize);
         vector<double> weakUpperBoundEstimates(resultBufferSize);
-        
+
         vector<int> kMinSum(cardinalities.size());
         vector<int> kMaxSum(cardinalities.size());
 
+        const MaxLikelihoodEstimator maxLikelihoodEstimator(p,q);
+        const CorrectedRawEstimator correctedRawEstimator(p,q);
+
         #pragma omp parallel for
         for(size_t seedCounter = 0; seedCounter < seeds.size(); ++seedCounter) {
-            
+
             cout << getFileName(seeds[seedCounter], p) << endl;
-            
+
             ifstream dataFile(getFileName(seeds[seedCounter], p));
 
             for(size_t cardinalityIdx = 0; cardinalityIdx < cardinalities.size(); ++cardinalityIdx) {
-                
+
                 string line;
                 getline(dataFile, line);
                 vector<int> tmpC = readCounts(line);
@@ -175,30 +178,30 @@ int main(int argc, char* argv[])
                 for (int i = 0; i < tmpC.size(); ++i) {
                     c[min(i, q+1)] += tmpC[i];
                 }
-                
+
                 size_t resultPos = cardinalityIdx*seeds.size()+seedCounter;
-                
+
                 int kMin;
                 int kMax;
-                
+
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
-                flajoletMidRangeEstimatesCorrected[resultPos] = flajoletRawEstimateCorrected(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
+                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
-                maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
+                maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
                 weakLowerBoundEstimates[resultPos] = weakLowerBoundEstimate(c);
                 strongLowerBoundEstimates[resultPos] = strongLowerBoundEstimate(c);
                 weakUpperBoundEstimates[resultPos] = weakUpperBoundEstimate(c);
                 strongUpperBoundEstimates[resultPos] = strongUpperBoundEstimate(c);
-                
+
                 #pragma omp atomic
                 kMinSum[cardinalityIdx] += kMin;
-                
+
                 #pragma omp atomic
                 kMaxSum[cardinalityIdx] += kMax;
             }
         }
-        
+
         vector<double> kMinAvg(cardinalities.size());
         vector<double> kMaxAvg(cardinalities.size());
 
@@ -206,7 +209,7 @@ int main(int argc, char* argv[])
             kMinAvg[cardinalityIdx] = kMinSum[cardinalityIdx] / (double) seeds.size();
             kMaxAvg[cardinalityIdx] = kMaxSum[cardinalityIdx] / (double) seeds.size();
         }
-        
+
         const string filePrefix = getFilePrefix(par);
 
         printToFile(filePrefix + "max_likelihood_estimates.dat", &maxLikelihoodEstimates[0], seeds.size(), cardinalities.size());
@@ -215,16 +218,16 @@ int main(int argc, char* argv[])
         printToFile(filePrefix + "flajolet_mid_range_estimates_corrected.dat", &flajoletMidRangeEstimatesCorrected[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "num_small_correction_iterations.dat", &numSmallCorrectionIterations[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "num_large_correction_iterations.dat", &numLargeCorrectionIterations[0], seeds.size(), cardinalities.size());
-        
+
         printToFile(filePrefix + "flajolet_estimates.dat", &flajoletEstimates[0], seeds.size(), cardinalities.size());
-    
+
         printToFile(filePrefix + "outer_loop_iterations_count.dat", &outerLoopIterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "inner_loop_1_iterations_count.dat", &innerLoop1IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "inner_loop_2_iterations_count.dat", &innerLoop2IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "log_evaluation_count.dat", &logEvaluationCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "kMin.dat", &kMinAvg[0], 1, cardinalities.size());
         printToFile(filePrefix + "kMax.dat", &kMaxAvg[0], 1, cardinalities.size());
-        
+
         printToFile(filePrefix + "weak_lower_bound_estimates.dat", &weakLowerBoundEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "strong_lower_bound_estimates.dat", &strongLowerBoundEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "weak_upper_bound_estimates.dat", &weakUpperBoundEstimates[0], seeds.size(), cardinalities.size());

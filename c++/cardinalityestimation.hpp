@@ -30,108 +30,114 @@ int getPFromCounts(const std::vector<int>& c) {
     return getPFromNumberRegisters(m);
 }
 
-// TODO define classes with precalculated constants
+int getPFromJointStatistic(const std::vector<int>& jointStatistic) {
+    size_t l = jointStatistic.size()/5;
+    const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
+    return getPFromNumberRegisters(m);
+}
 
-double maxLikelihoodEstimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount, int& kMin, int& kMax) {
-
+class MaxLikelihoodEstimator {
     const double eps = 1e-2;
-    
-    outerLoopIterationsCount = 0;
-    innerLoop1IterationsCount = 0;
-    innerLoop2IterationsCount = 0;
-    logEvaluationCount = 0;
-    
-    int q = c.size() - 2;
+    const int p;
+    const int q;
+    const int m;
+    const double relativeErrorLimit;
 
-    for(kMin=0; c[kMin]==0; ++kMin);
-    int kMinPrime = std::max(1, kMin);
-    
-    for(kMax=q+1; c[kMax]==0; --kMax);
-    int kMaxPrime = std::min(q, kMax);
+public:
 
-    if (kMin > q) return std::numeric_limits<double>::infinity();
-    
-    double z = 0.;
-    int mPrime = c[q+1];
-    double y = ldexp(1., -kMaxPrime);
-    for (int k = kMaxPrime; k >= kMinPrime; --k) {
-        z += y*c[k];
-        y += y;
-        mPrime += c[k];
-    }
-    int m = mPrime + c[0];
-    
-    int cPrime = c[q+1];
-    if (q >= 1) {
-        cPrime += c[kMaxPrime];
+    MaxLikelihoodEstimator(const int p_, const int q_) :p(p_), q(q_), m(1 << p_), relativeErrorLimit(eps/(sqrt(m))) {}
+
+    double estimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount, int& kMin, int& kMax) const {
+
+        outerLoopIterationsCount = 0;
+        innerLoop1IterationsCount = 0;
+        innerLoop2IterationsCount = 0;
+        logEvaluationCount = 0;
+
+        for(kMin=0; c[kMin]==0; ++kMin);
+        int kMinPrime = std::max(1, kMin);
+
+        for(kMax=q+1; c[kMax]==0; --kMax);
+        int kMaxPrime = std::min(q, kMax);
+
+        if (kMin > q) return std::numeric_limits<double>::infinity();
+
+        double z = 0.;
+        int mPrime = c[q+1];
+        double y = ldexp(1., -kMaxPrime);
+        for (int k = kMaxPrime; k >= kMinPrime; --k) {
+            z += y*c[k];
+            y += y;
+            mPrime += c[k];
+        }
+
+        int cPrime = c[q+1];
+        if (q >= 1) {
+            cPrime += c[kMaxPrime];
+        }
+
+        double gPrevious = 0;
+
+        double x;
+        double a = z + c[0];
+        {
+            double b = z + ldexp(c[q+1], -q);
+            if (b <= 1.5*a) { // TODO constant 1.5
+                x = mPrime/(0.5*b+a);
+            }
+            else {
+                x = (mPrime/b)*log1p(b/a);
+                logEvaluationCount += 1;
+            }
+        }
+
+        double deltaX = x;
+        while(deltaX > x*relativeErrorLimit) {
+            int e;
+            frexp(x, &e);
+            double xPrime = ldexp(x, -std::max(kMaxPrime+1, e+2));
+            double xPrime2 = xPrime*xPrime;
+            double h = xPrime - xPrime2/3 + (xPrime2*xPrime2)*(1./45. - xPrime2/472.5);
+            for (int k = e; k >= kMaxPrime; --k) {
+                double hPrime = 1. - h;
+                h = (xPrime + h*hPrime)/(xPrime+hPrime);
+                xPrime += xPrime;
+                innerLoop1IterationsCount += 1;
+            }
+            double g = cPrime*h;
+            for (int k = kMaxPrime-1; k >= kMinPrime; --k) {
+                double hPrime = 1. - h;
+                h = (xPrime + h*hPrime)/(xPrime+hPrime);
+                xPrime += xPrime;
+                g += c[k] * h;
+                innerLoop2IterationsCount += 1;
+            }
+            g += x*a;
+            if (gPrevious < g && g <= mPrime) {
+                deltaX *= (g-mPrime)/(gPrevious-g);
+            }
+            else {
+                deltaX = 0;
+            }
+            x += deltaX;
+            gPrevious = g;
+            outerLoopIterationsCount += 1;
+        }
+        return x*m;
     }
 
-    double gPrevious = 0;
-    
-    double x;
-    double a = z + c[0];
-    {
-        double b = z + ldexp(c[q+1], -q);
-        if (b <= 1.5*a) { // TODO constant 1.5
-            x = mPrime/(0.5*b+a);
-        }
-        else {
-            x = (mPrime/b)*log1p(b/a);
-            logEvaluationCount += 1;
-        }
-    }
-    
-    double relativeErrorLimit = eps/(sqrt(m)); // TODO could be precalculated
-    double deltaX = x;
-    while(deltaX > x*relativeErrorLimit) {
-        int e;
-        frexp(x, &e);
-        double xPrime = ldexp(x, -std::max(kMaxPrime+1, e+2));
-        // assert(xPrime > 0.0);
-        // assert(xPrime < 0.5);
-        double xPrime2 = xPrime*xPrime;
-        double h = xPrime - xPrime2/3 + (xPrime2*xPrime2)*(1./45. - xPrime2/472.5);
-        for (int k = e; k >= kMaxPrime; --k) {
-            double hPrime = 1. - h;
-            h = (xPrime + h*hPrime)/(xPrime+hPrime);
-            xPrime += xPrime;
-            innerLoop1IterationsCount += 1;
-        }
-        double g = cPrime*h;
-        //xPrime = ldexp(x, -kMaxPrime-2);
-        for (int k = kMaxPrime-1; k >= kMinPrime; --k) {
-            double hPrime = 1. - h;
-            h = (xPrime + h*hPrime)/(xPrime+hPrime);
-            xPrime += xPrime;
-            g += c[k] * h;
-            innerLoop2IterationsCount += 1;
-        }
-        g += x*a;
-        if (gPrevious < g && g <= mPrime) {
-            deltaX *= (g-mPrime)/(gPrevious-g);
-        }
-        else {
-            // std::cout << "gPrevious = " << gPrevious << ", g = " << g << ", x = " << x << std::endl;
-            deltaX = 0;
-        }
-        x += deltaX;
-        gPrevious = g;
-        outerLoopIterationsCount += 1;
-    }
-    return x*m;
-}
+    double operator()(const std::vector<int>& c) const {
 
-double maxLikelihoodEstimate(const std::vector<int>& c) {
-    
-    int outerLoopIterationsCount;
-    int innerLoop1IterationsCount;
-    int innerLoop2IterationsCount;
-    int logEvaluationCount;
-    int kMin;
-    int kMax;
-    
-    return maxLikelihoodEstimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
-}
+        int outerLoopIterationsCount;
+        int innerLoop1IterationsCount;
+        int innerLoop2IterationsCount;
+        int logEvaluationCount;
+        int kMin;
+        int kMax;
+
+        return estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
+    }
+};
 
 double flajoletSmallRangeEstimate(const std::vector<int>& c, int m) {
     return m*std::log(m/(double)(c[0]));
@@ -166,58 +172,67 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
     for (int i = c.size()-1; i >= 0; --i) {
         z += ldexp(c[i], -i);
     }
-    double alpha = getAlpha(m);   
+    double alpha = getAlpha(m);
     return (alpha*m)*m/z;
 }
 
-double flajoletRawEstimateCorrected(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) {
-    numSmallCorrectionIterations = 0;
-    numLargeCorrectionIterations = 0;
-    const int m = std::accumulate(c.begin(), c.end(), 0);
-    const int q = c.size()-2;
-    
-    if (c[0] == m) {
-        return 0.;
+class CorrectedRawEstimator {
+    const int p;
+    const int q;
+    const int m;
+
+public:
+
+    CorrectedRawEstimator(const int p_, const int q_) :p(p_), q(q_), m(1 << p_) {}
+
+    double estimate(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
+
+        numSmallCorrectionIterations = 0;
+        numLargeCorrectionIterations = 0;
+
+        if (c[0] == m) {
+            return 0.;
+        }
+
+        if (c[q+1] == m) {
+            return std::numeric_limits<double>::infinity();
+        }
+
+        double z = 0;
+        for (int i = q+1; i >= 0; --i) {
+            z += ldexp(c[i], -i);
+        }
+
+        // small range correction
+        double c0 = 0;
+        double x = c[0]/(double)m;
+        double factor = m;
+        double c0old;
+        do {
+            numSmallCorrectionIterations += 1;
+            x *= x;
+            c0old = c0;
+            c0 += x * factor;
+            factor += factor;
+        } while(c0old < c0);
+
+        // large range correction
+        double cqp1 = 0;
+        double factor2 = ldexp(m, -(q+1));
+        double cqp1old;
+        double y = (m-c[q+1])/(double)m;
+        do {
+            numLargeCorrectionIterations += 1;
+            y = std::sqrt(y);
+            factor2 *= 0.5;
+            cqp1old = cqp1;
+            cqp1 += (y-1.)*factor2;
+        } while (cqp1old > cqp1);
+
+        double alpha = getAlpha(m);
+        return (alpha*m)*m/(z + c0 + cqp1);
     }
-    
-    if (c[q+1] == m) {
-        return std::numeric_limits<double>::infinity();
-    }
-    
-    double z = 0;
-    for (int i = q+1; i >= 0; --i) {
-        z += ldexp(c[i], -i);
-    }
-    
-    // small range correction
-    double c0 = 0;
-    double x = c[0]/(double)m;  
-    double factor = m;
-    double c0old;
-    do {
-        numSmallCorrectionIterations += 1;
-        x *= x;
-        c0old = c0;
-        c0 += x * factor;
-        factor += factor;
-    } while(c0old < c0);
-    
-    // large range correction
-    double cqp1 = 0;
-    double factor2 = ldexp(m, -(q+1));
-    double cqp1old;
-    double y = (m-c[q+1])/(double)m;
-    do {
-        numLargeCorrectionIterations += 1;
-        y = std::sqrt(y);
-        factor2 *= 0.5;
-        cqp1old = cqp1;
-        cqp1 += (y-1.)*factor2;
-    } while (cqp1old > cqp1);
-    
-    double alpha = getAlpha(m);
-    return (alpha*m)*m/(z + c0 + cqp1);
-}
+};
 
 double flajoletRawEstimate(const std::vector<int>& c) {
     int m = std::accumulate(c.begin(), c.end(), 0);
@@ -231,7 +246,7 @@ double flajoletEstimate(const std::vector<int>& c) {
     if (p + q != 32) {
         return 0.; // original estimate is only designed for 32 bit hash values
     }
-    
+
     double e  = flajoletRawEstimate(c, m);
     double eStar;
     if (e <= 5./2.*m) {
@@ -263,12 +278,12 @@ double strongLowerBoundEstimate(const std::vector<int>& c) {
     int q = c.size()-2;
     if (m == c[0]) return 0.;
     if (m == c[q+1]) return std::numeric_limits<double>::infinity();
-    
+
     double s = 0.;
     for (int i = q; i >= 1; --i) {
         s += std::ldexp(c[i], -i);
     }
-    
+
     double a = s + c[0];
     double b = s + std::ldexp(c[q+1], -q);
     int numNonZeroRegisters = m-c[0];
@@ -282,12 +297,12 @@ double weakLowerBoundEstimate(const std::vector<int>& c) {
     int q = c.size()-2;
     if (m == c[0]) return 0.;
     if (m == c[q+1]) return std::numeric_limits<double>::infinity();
-    
+
     double s = 0.;
     for (int i = q; i >= 1; --i) {
         s += std::ldexp(c[i], -i);
     }
-    
+
     double a = s + c[0];
     double b = s + ldexp(c[q+1], -q);
     int numNonZeroRegisters = m-c[0];
@@ -300,7 +315,7 @@ double weakUpperBoundEstimate(const std::vector<int>& c) {
     int q = c.size()-2;
     if (m == c[0]) return 0.;
     if (m == c[q+1]) return std::numeric_limits<double>::infinity();
-    
+
     double z = 0;
     for (int i = q; i >= 0; --i) {
         z += std::ldexp(c[i], -i);
@@ -315,7 +330,7 @@ double strongUpperBoundEstimate(const std::vector<int>& c) {
     if (m == c[q+1]) return std::numeric_limits<double>::infinity();
     int kMax;
     for(kMax=q+1; c[kMax]==0; --kMax);
-    
+
     int kPrime = std::min(kMax, q);
 
     double z = 0;
@@ -326,7 +341,8 @@ double strongUpperBoundEstimate(const std::vector<int>& c) {
 }
 
 void inclusionExclusionTwoHyperLogLogEstimation(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
-    const int q = jointStatistic.size()/5-2;    
+    const int q = jointStatistic.size()/5-2;
+    const int p = getPFromJointStatistic(jointStatistic);
     std::vector<int> countsAX(q+2);
     std::vector<int> countsBX(q+2);
     std::vector<int> countsABX(q+2);
@@ -335,50 +351,52 @@ void inclusionExclusionTwoHyperLogLogEstimation(const std::vector<int>& jointSta
         countsBX[i]  = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*3 + i];
         countsABX[i] = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*4 + i];
     }
-    
-    const double cardinalityAX = maxLikelihoodEstimate(countsAX);
-    const double cardinalityBX = maxLikelihoodEstimate(countsBX);
-    const double cardinalityABX = maxLikelihoodEstimate(countsABX);
-    
+
+    const MaxLikelihoodEstimator estimator(p,q);
+
+    const double cardinalityAX = estimator(countsAX);
+    const double cardinalityBX = estimator(countsBX);
+    const double cardinalityABX = estimator(countsABX);
+
     cardinalityA = cardinalityABX - cardinalityBX;
     cardinalityB = cardinalityABX - cardinalityAX;
     cardinalityX = std::max(0., cardinalityBX + cardinalityAX - cardinalityABX);
-    
+
 }
 
 
 
 // the minimum of this function gives the max likelihood estimate
 void eval_joint_log_likelihood_function_and_derivatives(
-    const std::vector<int>& jointStatistic, 
-    const double la, 
-    const double lb, 
-    const double lx, 
-    double& f, 
-    double& fa, 
-    double& fb, 
+    const std::vector<int>& jointStatistic,
+    const double la,
+    const double lb,
+    const double lx,
+    double& f,
+    double& fa,
+    double& fb,
     double& fx) {
-        
+
     const int q = jointStatistic.size()/5-2;
-    
+
     assert((q+2)*5==jointStatistic.size());
-    
+
     f = 0.;
     fa = 0.;
     fb = 0.;
     fx = 0.;
-    
+
     double term1a = 0;
     double term1b = 0;
     double term1x = 0;
-    
+
     for (int k = q; k >= 0; --k) {
         double pow2k = std::ldexp(1., -k);
         term1a += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*2+k]+jointStatistic[(q+2)*4+k]) * pow2k;
         term1b += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*1+k]+jointStatistic[(q+2)*3+k]) * pow2k;
         term1x += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*2+k]+jointStatistic[(q+2)*3+k]) * pow2k;
     }
-    
+
     for (int k = q+1; k >= 1; --k) {
 
         const int cCenter = jointStatistic[(q+2)*0+k];
@@ -388,12 +406,12 @@ void eval_joint_log_likelihood_function_and_derivatives(
         const int cLeft   = jointStatistic[(q+2)*4+k];
 
         double pow2k = std::ldexp(1., -std::min(q, k));
-        
+
         double expm1a;
         double expm1b;
         double expm1ax;
         double expm1bx;
-        
+
         if (cLeft > 0 || cCenter > 0) {
             expm1a = -std::expm1(-la * pow2k);
         }
@@ -430,7 +448,7 @@ void eval_joint_log_likelihood_function_and_derivatives(
             f  -= cUp * std::log(expm1b);
             fb -= cUp * pow2k * (1-expm1b) / expm1b;
         }
-        
+
         if (cCenter > 0) {
 
             double expm1x = -std::expm1(-lx * pow2k);
@@ -441,31 +459,31 @@ void eval_joint_log_likelihood_function_and_derivatives(
             fx -= cCenter * pow2k * ((1 - expm1x) *(1 - expm1a * expm1b))/x;
         }
     }
-    
+
     f += term1a * la + term1b * lb + term1x * lx;
     fa += term1a;
     fb += term1b;
     fx += term1x;
 }
 
-void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *x, void *params, double *g, gsl_vector *dg) 
+void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *x, void *params, double *g, gsl_vector *dg)
 {
     const double la = std::exp(gsl_vector_get(x, 0));
     const double lb = std::exp(gsl_vector_get(x, 1));
     const double lx = std::exp(gsl_vector_get(x, 2));
     const std::vector<int>& jointStatistic= *((std::vector<int>*)params);
-    
+
     double f, fa, fb, fx;
-    
+
     eval_joint_log_likelihood_function_and_derivatives(
         *((std::vector<int>*)params),
         la, lb, lx,
         f, fa, fb, fx);
-    
+
     //if (f > std::numeric_limits<double>::max()) {
     //  f = std::numeric_limits<double>::max();
     //}
-    *g = f; 
+    *g = f;
     gsl_vector_set(dg, 0, fa*la);
     gsl_vector_set(dg, 1, fb*lb);
     gsl_vector_set(dg, 2, fx*lx);
@@ -489,23 +507,23 @@ double log_likelihood_function_value_for_gsl(const gsl_vector *x, void *params)
 
 
 void maxLikelihoodTwoHyperLogLogEstimation(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted) {
-    
+
     const int maxNumIterations = 10000;
-    
+
     size_t l = jointStatistic.size()/5;
     const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
-    
+
     double initialCardinalityA;
     double initialCardinalityB;
     double initialCardinalityX;
     inclusionExclusionTwoHyperLogLogEstimation(jointStatistic, initialCardinalityA, initialCardinalityB, initialCardinalityX);
-    
+
     // set initial vector
     gsl_vector *x = gsl_vector_alloc(3);
     gsl_vector_set (x, 0, std::log(std::max(1.,initialCardinalityA)/m));
     gsl_vector_set (x, 1, std::log(std::max(1.,initialCardinalityB)/m));
     gsl_vector_set (x, 2, std::log(std::max(1.,initialCardinalityX)/m));
-    
+
     // set initial simplex size
     gsl_vector *step_size = gsl_vector_alloc(3);
     gsl_vector_set_all(step_size, 1.);
@@ -522,14 +540,14 @@ void maxLikelihoodTwoHyperLogLogEstimation(const std::vector<int>& jointStatisti
     const gsl_multimin_fminimizer_type *T =  gsl_multimin_fminimizer_nmsimplex2;
     gsl_multimin_fminimizer *s = gsl_multimin_fminimizer_alloc (T, 3); // 3 dimensions
     gsl_multimin_fminimizer_set (s, &my_func, x, step_size);
-    
+
     int status;
     size_t iter = 0;
     do
     {
         iter++;
         status = gsl_multimin_fminimizer_iterate(s);
-        
+
         if (status) {
             if (status == GSL_ENOPROG) {
                 iterationAborted = true;
@@ -552,36 +570,36 @@ void maxLikelihoodTwoHyperLogLogEstimation(const std::vector<int>& jointStatisti
         }
 
     }
-    while (true);   
-    
-    
+    while (true);
+
+
     //std::cout << iter << std::endl;
-        
+
     cardinalityA = std::exp(gsl_vector_get(s->x, 0)) * m;
     cardinalityB = std::exp(gsl_vector_get(s->x, 1)) * m;
     cardinalityX = std::exp(gsl_vector_get(s->x, 2)) * m;
-    
+
     gsl_multimin_fminimizer_free(s);
     gsl_vector_free(x);
     gsl_vector_free(step_size);
-    
+
 }
 
 void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted) {
-    
+
     const int maxNumIterations = 10000;
-    
+
     maxNumIterationsReached = false;
     iterationAborted = false;
-    
+
     size_t l = jointStatistic.size()/5;
     const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
-    
+
     double initialCardinalityA;
     double initialCardinalityB;
     double initialCardinalityX;
     inclusionExclusionTwoHyperLogLogEstimation(jointStatistic, initialCardinalityA, initialCardinalityB, initialCardinalityX);
-    
+
     // set initial vector
     double lastA = std::log(std::max(1.,initialCardinalityA)/m);
     double lastB = std::log(std::max(1.,initialCardinalityB)/m);
@@ -602,13 +620,13 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
     const gsl_multimin_fdfminimizer_type *T =  gsl_multimin_fdfminimizer_vector_bfgs2;
     gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc (T, 3); // 3 dimensions
     gsl_multimin_fdfminimizer_set (s, &my_func, x, 1, 0.1);
-    
+
     size_t iter = 0;
     do
     {
         iter++;
         int status = gsl_multimin_fdfminimizer_iterate(s);
-        
+
         if (status) {
             if (status == GSL_ENOPROG) {
                 iterationAborted = true;
@@ -617,19 +635,19 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
             std::cout << "error!" << std::endl;
             exit(-1);
         }
-        
+
         const gsl_vector* current_x = gsl_multimin_fdfminimizer_x(s);
         double currentA = gsl_vector_get(current_x, 0);
         double currentB = gsl_vector_get(current_x, 1);
         double currentX = gsl_vector_get(current_x, 2);
-        
+
         if (
             std::fabs(currentA - lastA) <= 1e-5 &&
             std::fabs(currentB - lastB) <= 1e-5 &&
             std::fabs(currentX - lastX) <= 1e-5) {
             break;
         }
-        
+
         lastA = currentA;
         lastB = currentB;
         lastX = currentX;
@@ -639,15 +657,15 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
             break;
         }
     }
-    while (true);   
+    while (true);
 
     cardinalityA = std::exp(gsl_vector_get(s->x, 0)) * m;
     cardinalityB = std::exp(gsl_vector_get(s->x, 1)) * m;
     cardinalityX = std::exp(gsl_vector_get(s->x, 2)) * m;
-    
+
     gsl_multimin_fdfminimizer_free (s);
     gsl_vector_free (x);
-    
+
 }
 
 

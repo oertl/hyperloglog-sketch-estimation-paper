@@ -60,62 +60,65 @@ string getFileName(const string& seed, int p) {
 }
 
 void run(const int p, const int q, const string& resultsFileName) {
-    
-    
+
+
     mt19937_64 rng(0);
 
     vector<string> seeds;
     {
         ifstream seedFile(seedFileName);
-        
+
         string line;
         while (getline(seedFile, line))
         {
             seeds.push_back(line);
         }
     }
-    
+
     cout << "seedSize "  << seeds.size() << endl;
-    
+
     assert(numData <= seeds.size());
-    
+
     vector<long> cardinalities;
     {
         ifstream cardFile(cardFileName);
-        
+
         string line;
         while (getline(cardFile, line))
         {
             cardinalities.push_back(stol(line));
         }
     }
-    
+
     cout << "cardinalitySize "  << cardinalities.size() << endl;
-    
-    
+
+
     std::vector<unique_ptr<ifstream>> files;
     files.reserve(numData);
     for (size_t seedCounter = 0; seedCounter < numData; ++seedCounter) {
         files.emplace_back(unique_ptr<ifstream>(new ifstream(getFileName(seeds[seedCounter], p))));
     }
-    
+
     size_t dataSize = numLoops * numData;
 
     double sum = 0.;
-    
+
     ofstream outputFile(resultsFileName);
+
+    MaxLikelihoodEstimator maxLikelihoodEstimator(p,q);
+    CorrectedRawEstimator correctedRawEstimator(p,q);
 
     for(long cardinality : cardinalities) {
 
         // load data into memory
         vector<vector<int>> counts(dataSize);
         for(size_t seedCounter = 0; seedCounter < numData; ++seedCounter) {
-        
+
             ifstream& dataFile = (*files[seedCounter]);
-            
+
             string line;
             getline(dataFile, line);
-            
+
             vector<int> tmpC = readCounts(line);
             vector<int> c(q+2);
             for (int i = 0; i < tmpC.size(); ++i) {
@@ -125,13 +128,13 @@ void run(const int p, const int q, const string& resultsFileName) {
                 counts[seedCounter + i *numData] = c;
             }
         }
-        
+
         /*vector<HyperLogLog> hyperLogLogs;
         hyperLogLogs.reserve(dataSize);
         for (auto c : counts) {
             hyperLogLogs.emplace_back(HyperLogLog::createFromCounts(c, rng));
         }*/
-        
+
         double maxLikelihoodWithRegisterScan = 0.;
         double maxLikelihoodWithoutRegisterScan = 0.;
         double flajoletWithRegisterScan = 0.;
@@ -148,13 +151,13 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto start = std::chrono::system_clock::now();
             for(auto h : hyperLogLogs) {
                 sum += maxLikelihoodEstimate(h.getCounts());
-                
+
             }
             auto end = chrono::system_clock::now();
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             maxLikelihoodWithRegisterScan = elapsed.count()/(double)dataSize;
         }*/
-        
+
         {
             int outerLoopIterationsCount;
             int innerLoop1IterationsCount;
@@ -162,11 +165,11 @@ void run(const int p, const int q, const string& resultsFileName) {
             int logEvaluationCount;
             int kMin;
             int kMax;
-            
-            
+
+
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
-                sum += maxLikelihoodEstimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
+                sum += maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
                 outerLoopIterationsCountSum += outerLoopIterationsCount;
                 innerLoop1IterationsCountSum += innerLoop1IterationsCount;
                 innerLoop2IterationsCountSum += innerLoop2IterationsCount;
@@ -176,14 +179,14 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             maxLikelihoodWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }
-        
+
         {
             int smallCorrectionIterations;
             int largeCorrectionIterations;
-            
+
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
-                sum += flajoletRawEstimateCorrected(c, smallCorrectionIterations, largeCorrectionIterations);
+                sum += correctedRawEstimator.estimate(c, smallCorrectionIterations, largeCorrectionIterations);
                 flajoletCorrectedSmallCorrectionIterationsSum += smallCorrectionIterations;
                 flajoletCorrectedLargeCorrectionIterationsSum += largeCorrectionIterations;
             }
@@ -191,18 +194,18 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             flajoletCorrectedWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }
-            
+
         /*{
             auto start = std::chrono::system_clock::now();
             for(auto h : hyperLogLogs) {
                 sum += flajoletEstimate(h.getCounts());
-                
+
             }
             auto end = chrono::system_clock::now();
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             flajoletWithRegisterScan = elapsed.count()/(double)dataSize;
         }*/
-        
+
         /*{
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
@@ -212,7 +215,7 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             flajoletWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }*/
-        
+
         outputFile << cardinality;
         //outputFile << " " << maxLikelihoodWithRegisterScan;
         outputFile << " " << maxLikelihoodWithoutRegisterScan;
@@ -227,7 +230,7 @@ void run(const int p, const int q, const string& resultsFileName) {
         outputFile << " " << flajoletCorrectedLargeCorrectionIterationsSum/(double)dataSize;
         outputFile << endl;
     }
-    
+
     cout << sum << endl; // in order to avoid compiler optimizations
 }
 
@@ -235,7 +238,7 @@ int main(int argc, char* argv[])
 {
     run(p1, q1, resultsFileName1);
     run(p2, q2, resultsFileName2);
-    
+
     return 0;
 }
 
