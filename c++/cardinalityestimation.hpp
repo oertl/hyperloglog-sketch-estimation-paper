@@ -179,59 +179,90 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
 class CorrectedRawEstimator {
     const int p;
     const int q;
-    const int m;
+    const int m = 1 << p;
+    const double m2alpha = (m/(2.*std::log(2)))*m;
+    const std::vector<double> tauValues = initTau(m);
+    const std::vector<double> sigmaValues = initSigma(m);
+
+    static double sigma(int c, int m, int& numIterations) {
+        numIterations = 0;
+        if (c==m) return std::numeric_limits<double>::infinity();
+        double powerOfX = static_cast<double>(c)/static_cast<double>(m);
+        double result = powerOfX;
+        double previousResult;
+        double powerOf2 = 1;
+        do {
+            numIterations += 1;
+            powerOfX *= powerOfX;
+            previousResult = result;
+            result += powerOfX * powerOf2;
+            powerOf2 += powerOf2;
+        } while(previousResult < result);
+        return m*result;
+    }
+
+    static double tau(int c, int m, int& numIterations) {
+        numIterations = 0;
+        double result = static_cast<double>(c)/static_cast<double>(m);
+        double powerOfX  = 1 - result;
+        double previousResult;
+        double powerOf2 = 0.5;
+        do {
+            numIterations += 1;
+            powerOfX = std::sqrt(powerOfX);
+            previousResult = result;
+            result -= (1 - powerOfX)*powerOf2;
+            powerOf2 *= 0.5;
+        } while(previousResult > result);
+        return m*result;
+    }
+
+    static std::vector<double> initSigma(int m) {
+        int numIterations;
+        std::vector<double> result(m+2);
+        for (int c = 0; c < m+2; ++c) {
+            result.push_back(sigma(c, m, numIterations));
+        }
+        return result;
+    }
+
+    static std::vector<double> initTau(int m) {
+        int numIterations;
+        std::vector<double> result(m+2);
+        for (int c = 0; c < m+2; ++c) {
+            result.push_back(tau(c, m, numIterations));
+        }
+        return result;
+    }
+
 
 public:
 
-    CorrectedRawEstimator(const int p_, const int q_) :p(p_), q(q_), m(1 << p_) {}
+    CorrectedRawEstimator(const int p_, const int q_) :p(p_), q(q_) {}
 
     double estimate(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
 
         numSmallCorrectionIterations = 0;
         numLargeCorrectionIterations = 0;
 
-        if (c[0] == m) {
-            return 0.;
+        double z = 0.5 * tau(c[q+1], m, numLargeCorrectionIterations);
+        for (int k = q; k >= 1; --k) {
+            z += 0.5*c[k];
         }
-
-        if (c[q+1] == m) {
-            return std::numeric_limits<double>::infinity();
-        }
-
-        double z = 0;
-        for (int i = q+1; i >= 0; --i) {
-            z += ldexp(c[i], -i);
-        }
-
-        // small range correction
-        double c0 = 0;
-        double x = c[0]/(double)m;
-        double factor = m;
-        double c0old;
-        do {
-            numSmallCorrectionIterations += 1;
-            x *= x;
-            c0old = c0;
-            c0 += x * factor;
-            factor += factor;
-        } while(c0old < c0);
-
-        // large range correction
-        double cqp1 = 0;
-        double factor2 = ldexp(m, -(q+1));
-        double cqp1old;
-        double y = (m-c[q+1])/(double)m;
-        do {
-            numLargeCorrectionIterations += 1;
-            y = std::sqrt(y);
-            factor2 *= 0.5;
-            cqp1old = cqp1;
-            cqp1 += (y-1.)*factor2;
-        } while (cqp1old > cqp1);
-
-        double alpha = getAlpha(m);
-        return (alpha*m)*m/(z + c0 + cqp1);
+        z += sigma(c[0], m, numSmallCorrectionIterations);
+        return m2alpha/z;
     }
+
+    double estimate2(const std::vector<int>& c) const {
+
+        double z = 0.5 * tauValues[c[q+1]];
+        for (int k = q; k >= 1; --k) {
+            z += 0.5*c[k];
+        }
+        z += sigmaValues[c[0]];
+        return m2alpha/z;
+    }
+
 };
 
 double flajoletRawEstimate(const std::vector<int>& c) {

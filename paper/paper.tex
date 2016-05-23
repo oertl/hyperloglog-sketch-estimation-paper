@@ -90,6 +90,8 @@
 \symDefine{\symSetXSuffix}{x}
 \symDefine{\symCountMatrix}{\mathbf{c}}
 \symDefine{\symPowerSeriesFunc}{\xi}
+\symDefine{\symSmallCorrectionFunc}{\sigma}
+\symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
 
 %%% END Article customizations
@@ -478,34 +480,48 @@ Inserting all these estimators into \eqref{equ:raw_estimate_with_multiplicities}
 = 
 \frac{\symNumReg^2}{2\log(2)\sum_{\symRegVal=-\infty}^\infty \hat{\symCount}'_\symRegVal 2^{-\symRegVal}}
 =
-\frac{\symNumReg^2}{2\log(2)\left(\symCount_0^{\text{corr}} + \sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal 2^{-\symRegVal} + \symCount_{\symRegRange+1}^{\text{corr}}2^{-(\symRegRange+1)}\right)}
+\frac{\symNumReg^2}
+{2\log(2)
+\left(
+\symSmallCorrectionFunc(\symCount_0) + \sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal 2^{-\symRegVal} + \symLargeCorrectionFunc(\symCount_{\symRegRange+1}) 2^{-(\symRegRange+1)}
+\right)}
 \end{equation}
-where $\symCount_0^{\text{corr}}$ and $\symCount_{\symRegRange+1}^{\text{corr}}$ are corrections for $\symCount_0$ and $\symCount_{\symRegRange+1}$, respectively (compare \eqref{equ:intermediate_estimate}). They are given by
+where $\symSmallCorrectionFunc(\symCount_0)$ and $\symLargeCorrectionFunc(\symCount_{\symRegRange+1})$ replace $\symCount_0$ and $\symCount_{\symRegRange+1}$ in the \emph{raw} estimate \eqref{equ:intermediate_estimate}, respectively. The functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are given by
 \begin{equation}
-\symCount_0^{\text{corr}} := \symNumReg
+\symSmallCorrectionFunc(\symCount) := \symNumReg
 \cdot
 \left(
-\frac{\symCount_0}{\symNumReg}
+\frac{\symCount}{\symNumReg}
 +
 \frac{1}{2}\sum_{\symRegVal=1}^\infty
-\left(\frac{\symCount_0}{\symNumReg}\right)^{2^\symRegVal} 2^{\symRegVal}
+\left(\frac{\symCount}{\symNumReg}\right)^{2^\symRegVal} 2^{\symRegVal}
 \right)
 \end{equation}
 and
 \begin{equation}
-\symCount_{\symRegRange+1}^{\text{corr}}
+\symLargeCorrectionFunc(\symCount)
 :=
 \symNumReg
 \cdot
 \left(
 \sum_{\symRegVal=1}^\infty
-\left(1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}\right)	^{2^{-\symRegVal}}
+\left(1-\frac{\symCount}{\symNumReg}\right)	^{2^{-\symRegVal}}
 2^{-\symRegVal}
 -
 \left(
-1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}
+1-\frac{\symCount}{\symNumReg}
 \right)
-\right).
+\right)
+=
+\symNumReg
+\cdot
+\left(
+\frac{\symCount}{\symNumReg}
+-
+\sum_{\symRegVal=1}^\infty
+\left(1-\left(1-\frac{\symCount}{\symNumReg}\right)^{2^{-\symRegVal}}\right)
+2^{-\symRegVal}
+\right)
 \end{equation}
 
 For the special case of linear probabilistic counting with $\symRegRange=0$, we get for the  estimator \eqref{equ:correctedestimator}
@@ -520,6 +536,22 @@ For the special case of linear probabilistic counting with $\symRegRange=0$, we 
 \symNumReg\log\left(\frac{\symNumReg}{\symCount_0}\right).
 \end{equation}
 Here we used function $\symPowerSeriesFunc$ defined in \eqref{equ:power_series_function} which is known to be approximately equal to 1. Hence, for this special case we get as expected almost the same estimator as given in \eqref{equ:small_range_estimate}.
+\subsection{Estimation algorithm}
+\begin{algorithm}
+\caption{Cardinality estimation algorithm based on the corrected \emph{raw} estimate.}
+\label{alg:estimate_raw_corrected}
+\begin{algorithmic}
+\Function {EstimateCardinality}{$\vec{\symCount}$}
+\State $\symNumReg \gets \left\Vert\vec{\symCount}\right\Vert_1$
+\State $\symZ\gets 0.5\cdot \symLargeCorrectionFunc(\symCount_{\symRegRange+1})$
+\For{$\symRegVal\gets \symRegRange, 1$}
+\State $\symZ\gets\symZ + 0.5\cdot \symCount_\symRegVal$
+\EndFor
+\State $\symZ\gets\symZ+\symSmallCorrectionFunc(\symCount_0)$
+\State \Return$\symNumReg^2 / \left(2\log(2)\symZ\right)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 
 \subsection{Estimation error}

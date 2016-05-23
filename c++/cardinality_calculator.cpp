@@ -186,7 +186,8 @@ int main(int argc, char* argv[])
 
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
-                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
+                //flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
+                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate2(c);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
                 maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
                 weakLowerBoundEstimates[resultPos] = weakLowerBoundEstimate(c);
