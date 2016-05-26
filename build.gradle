@@ -262,7 +262,8 @@ task pdflatex2(type: Exec) {
         "$project.paperDir/paper.tex",
         "$project.paperDir/helper.svg",
         "$project.paperDir/max_likelihood_avg_exec_time.svg",
-        "$project.paperDir/orignal_estimate.svg",
+        "$project.paperDir/corrected_raw_avg_exec_time.svg",
+        "$project.paperDir/original_estimate.svg",
         "$project.paperDir/raw_estimate.svg",
         "$project.paperDir/small_range_estimate.svg",
         "$project.paperDir/max_likelihood_estimate_8_24.svg",
@@ -270,47 +271,21 @@ task pdflatex2(type: Exec) {
         "$project.paperDir/max_likelihood_estimate_12_14.svg",
         "$project.paperDir/max_likelihood_estimate_16_16.svg",
         "$project.paperDir/max_likelihood_estimate_20_12.svg",
-        "$project.paperDir/max_likelihood_estimate_12_52.svg"
+        "$project.paperDir/max_likelihood_estimate_12_52.svg",
+        "$project.paperDir/raw_corrected_estimate_8_24.svg",
+        "$project.paperDir/raw_corrected_estimate_12_20.svg",
+        "$project.paperDir/raw_corrected_estimate_16_16.svg",
+        "$project.paperDir/raw_corrected_estimate_20_12.svg",
+        "$project.paperDir/raw_corrected_estimate_22_42.svg"
     outputs.files "$project.paperDir/paper.aux",
         "$project.paperDir/helper.pdf",
         "$project.paperDir/helper.pdf_tex",
-        "$project.paperDir/avg_exec_time.pdf",
-        "$project.paperDir/avg_exec_time.pdf_tex",
-        "$project.paperDir/orignal_estimate.pdf",
-        "$project.paperDir/orignal_estimate.pdf_tex",
-        "$project.paperDir/raw_estimate.pdf",
-        "$project.paperDir/raw_estimate.pdf_tex",
-        "$project.paperDir/small_range_estimate.pdf",
-        "$project.paperDir/small_range_estimate.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_8_24.pdf",
-        "$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_12_20.pdf",
-        "$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_12_14.pdf",
-        "$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_16_16.pdf",
-        "$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_20_12.pdf",
-        "$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
-        "$project.paperDir/max_likelihood_estimate_12_52.pdf",
-        "$project.paperDir/max_likelihood_estimate_12_52.pdf_tex"
-    outputs.upToDateWhen { false }
-    standardOutput = new ByteArrayOutputStream()
-    commandLine 'pdflatex','--shell-escape','paper'
-    dependsOn 'bibtex'
-}
-
-task pdflatex3(type: Exec) {
-    workingDir project.paperDir
-    inputs.files "$project.paperDir/paper.bbl",
-        "$project.paperDir/paper.blg",
-        "$project.paperDir/paper.tex",
-        "$project.paperDir/helper.pdf",
-        "$project.paperDir/helper.pdf_tex",
-        "$project.paperDir/avg_exec_time.pdf",
-        "$project.paperDir/avg_exec_time.pdf_tex",
-        "$project.paperDir/orignal_estimate.pdf",
-        "$project.paperDir/orignal_estimate.pdf_tex",
+        "$project.paperDir/max_likelihood_avg_exec_time.pdf",
+        "$project.paperDir/max_likelihood_avg_exec_time.pdf_tex",
+        "$project.paperDir/corrected_raw_avg_exec_time.pdf",
+        "$project.paperDir/corrected_raw_avg_exec_time.pdf_tex",
+        "$project.paperDir/original_estimate.pdf",
+        "$project.paperDir/original_estimate.pdf_tex",
         "$project.paperDir/raw_estimate.pdf",
         "$project.paperDir/raw_estimate.pdf_tex",
         "$project.paperDir/small_range_estimate.pdf",
@@ -327,6 +302,62 @@ task pdflatex3(type: Exec) {
         "$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
         "$project.paperDir/max_likelihood_estimate_12_52.pdf",
         "$project.paperDir/max_likelihood_estimate_12_52.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_8_24.pdf",
+        "$project.paperDir/raw_corrected_estimate_8_24.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_12_20.pdf",
+        "$project.paperDir/raw_corrected_estimate_12_20.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_16_16.pdf",
+        "$project.paperDir/raw_corrected_estimate_16_16.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_20_12.pdf",
+        "$project.paperDir/raw_corrected_estimate_20_12.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_22_42.pdf",
+        "$project.paperDir/raw_corrected_estimate_22_42.pdf_tex"
+
+    outputs.upToDateWhen { false }
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'pdflatex','--shell-escape','paper'
+    dependsOn 'bibtex'
+}
+
+task pdflatex3(type: Exec) {
+    workingDir project.paperDir
+    inputs.files "$project.paperDir/paper.bbl",
+        "$project.paperDir/paper.blg",
+        "$project.paperDir/paper.tex",
+        "$project.paperDir/helper.pdf",
+        "$project.paperDir/helper.pdf_tex",
+        "$project.paperDir/max_likelihood_avg_exec_time.pdf",
+        "$project.paperDir/max_likelihood_avg_exec_time.pdf_tex",
+        "$project.paperDir/corrected_raw_avg_exec_time.pdf",
+        "$project.paperDir/corrected_raw_avg_exec_time.pdf_tex",
+        "$project.paperDir/original_estimate.pdf",
+        "$project.paperDir/original_estimate.pdf_tex",
+        "$project.paperDir/raw_estimate.pdf",
+        "$project.paperDir/raw_estimate.pdf_tex",
+        "$project.paperDir/small_range_estimate.pdf",
+        "$project.paperDir/small_range_estimate.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf",
+        "$project.paperDir/max_likelihood_estimate_8_24.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf",
+        "$project.paperDir/max_likelihood_estimate_12_20.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf",
+        "$project.paperDir/max_likelihood_estimate_12_14.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf",
+        "$project.paperDir/max_likelihood_estimate_16_16.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf",
+        "$project.paperDir/max_likelihood_estimate_20_12.pdf_tex",
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf",
+        "$project.paperDir/max_likelihood_estimate_12_52.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_8_24.pdf",
+        "$project.paperDir/raw_corrected_estimate_8_24.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_12_20.pdf",
+        "$project.paperDir/raw_corrected_estimate_12_20.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_16_16.pdf",
+        "$project.paperDir/raw_corrected_estimate_16_16.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_20_12.pdf",
+        "$project.paperDir/raw_corrected_estimate_20_12.pdf_tex",
+        "$project.paperDir/raw_corrected_estimate_22_42.pdf",
+        "$project.paperDir/raw_corrected_estimate_22_42.pdf_tex",
         "$project.paperDir/max_errror_propagation_factor.txt"
     outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
     outputs.upToDateWhen { false }

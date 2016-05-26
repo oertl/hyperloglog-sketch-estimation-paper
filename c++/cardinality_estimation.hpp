@@ -187,10 +187,10 @@ class CorrectedRawEstimator {
     static double sigma(int c, int m, int& numIterations) {
         numIterations = 0;
         if (c==m) return std::numeric_limits<double>::infinity();
-        double powerOfX = static_cast<double>(c)/static_cast<double>(m);
-        double result = powerOfX;
         double previousResult;
+        double powerOfX = static_cast<double>(c)/static_cast<double>(m);
         double powerOf2 = 1;
+        double result = powerOfX;
         do {
             numIterations += 1;
             powerOfX *= powerOfX;
@@ -204,11 +204,10 @@ class CorrectedRawEstimator {
     static double tau(int c, int m, int& numIterations) {
         numIterations = 0;
 
-        double powerOfX = static_cast<double>(m-c)/static_cast<double>(m);
-
-        double result = 0;
         double previousResult;
+        double powerOfX = static_cast<double>(m-c)/static_cast<double>(m);
         double powerOf2 = 1.0;
+        double result = 0;
         do {
             numIterations += 1;
             powerOfX = std::sqrt(powerOfX);

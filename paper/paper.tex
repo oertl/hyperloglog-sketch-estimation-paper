@@ -97,7 +97,7 @@
 %%% END Article customizations
 
 
-\title{Cardinality estimation methods for HyperLogLog sketches}
+\title{New cardinality estimation algorithms for HyperLogLog sketches}
 \subtitle{Draft version}
 \author{Otmar Ertl}
 
@@ -459,16 +459,17 @@ which motivates us to use
 \begin{equation}
 \hat{\symCount}'_\symRegVal
 :=
-\symNumReg
-\left(\frac{\symCount_0}{\symNumReg}\right)^{2^{-\symRegVal}}
+\symNumReg\cdot
+\left(\frac{\symCount_0}{\symNumReg}\right)^{2^{-\symRegVal}}\cdot
 \left(1-\left(\frac{\symCount_0}{\symNumReg}\right)^{2^{-\symRegVal}}\right)
 \end{equation}
 as estimator for $\symRegVal \leq 0$ and
 \begin{equation}
 \hat{\symCount}'_\symRegVal
 :=
-\symNumReg
+\symNumReg\cdot
 \left(1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}\right)^{2^{\symRegRange-\symRegVal}}
+\cdot
 \left(1-\left(1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}\right)^{2^{\symRegRange-\symRegVal}}\right)
 \end{equation}
 as estimator for $\symRegVal \geq \symRegRange+1$, respectively.
@@ -483,45 +484,32 @@ Inserting all these estimators into \eqref{equ:raw_estimate_with_multiplicities}
 \frac{\symNumReg^2}
 {2\log(2)
 \left(
-\symSmallCorrectionFunc(\symCount_0) + \sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal 2^{-\symRegVal} + \symLargeCorrectionFunc(\symCount_{\symRegRange+1}) 2^{-(\symRegRange+1)}
+\symSmallCorrectionFunc(\symCount_0,\symNumReg) + \sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal 2^{-\symRegVal} + \symLargeCorrectionFunc(\symCount_{\symRegRange+1},\symNumReg) 2^{-(\symRegRange+1)}
 \right)}
 \end{equation}
 where $\symSmallCorrectionFunc(\symCount_0)$ and $\symLargeCorrectionFunc(\symCount_{\symRegRange+1})$ replace $\symCount_0$ and $\symCount_{\symRegRange+1}$ in the \emph{raw} estimate \eqref{equ:intermediate_estimate}, respectively. The functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are given by
 \begin{equation}
-\symSmallCorrectionFunc(\symCount) := \symNumReg
+\symSmallCorrectionFunc(\symCount,\symNumReg) := \symNumReg
 \cdot
 \left(
 \frac{\symCount}{\symNumReg}
 +
-\frac{1}{2}\sum_{\symRegVal=1}^\infty
-\left(\frac{\symCount}{\symNumReg}\right)^{2^\symRegVal} 2^{\symRegVal}
+\sum_{\symRegVal=1}^\infty
+\left(\frac{\symCount}{\symNumReg}\right)^{2^\symRegVal} 2^{\symRegVal-1}
 \right)
 \end{equation}
 and
 \begin{equation}
-\symLargeCorrectionFunc(\symCount)
+\symLargeCorrectionFunc(\symCount,\symNumReg)
 :=
 \symNumReg
 \cdot
-\left(
 \sum_{\symRegVal=1}^\infty
-\left(1-\frac{\symCount}{\symNumReg}\right)	^{2^{-\symRegVal}}
-2^{-\symRegVal}
--
-\left(
-1-\frac{\symCount}{\symNumReg}
-\right)
-\right)
-=
-\symNumReg
+\left(1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}\right)^{2^{-\symRegVal}}
 \cdot
-\left(
-\frac{\symCount}{\symNumReg}
--
-\sum_{\symRegVal=1}^\infty
-\left(1-\left(1-\frac{\symCount}{\symNumReg}\right)^{2^{-\symRegVal}}\right)
-2^{-\symRegVal}
-\right)
+\left(1-\left(1-\frac{\symCount_{\symRegRange+1}}{\symNumReg}\right)^{2^{-\symRegVal}}\right)
+\cdot
+2^{-(\symRegVal-1)}
 \end{equation}
 
 For the special case of linear probabilistic counting with $\symRegRange=0$, we get for the  estimator \eqref{equ:correctedestimator}
@@ -537,24 +525,56 @@ For the special case of linear probabilistic counting with $\symRegRange=0$, we 
 \end{equation}
 Here we used function $\symPowerSeriesFunc$ defined in \eqref{equ:power_series_function} which is known to be approximately equal to 1. Hence, for this special case we get as expected almost the same estimator as given in \eqref{equ:small_range_estimate}.
 \subsection{Estimation algorithm}
+see \algoref{alg:corrected_raw_estimation}
+
 \begin{algorithm}
 \caption{Cardinality estimation algorithm based on the corrected \emph{raw} estimate.}
-\label{alg:estimate_raw_corrected}
+\label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\vec{\symCount}$}
 \State $\symNumReg \gets \left\Vert\vec{\symCount}\right\Vert_1$
-\State $\symZ\gets 0.5\cdot \symLargeCorrectionFunc(\symCount_{\symRegRange+1})$
+\State $\symZ\gets 0.5\cdot \symLargeCorrectionFunc(\symCount_{\symRegRange+1},\symNumReg)$
 \For{$\symRegVal\gets \symRegRange, 1$}
 \State $\symZ\gets0.5\cdot\left(\symZ + \symCount_\symRegVal\right)$
 \EndFor
-\State $\symZ\gets\symZ+\symSmallCorrectionFunc(\symCount_0)$
+\State $\symZ\gets\symZ+\symSmallCorrectionFunc(\symCount_0,\symNumReg)$
 \State \Return$\symNumReg^2 / \left(2\log(2)\symZ\right)$
+\EndFunction
+\\
+\Function {$\symSmallCorrectionFunc$}{$\symCount,\symNumReg$}
+\If{$\symCount=\symNumReg$}
+\State\Return$\infty$
+\EndIf
+\State $\symX\gets\symCount/\symNumReg$
+\State $\symY\gets1$
+\State $\symZ\gets\symX$
+\Repeat
+\State $\symX\gets\symX\cdot\symX$
+\State $\symZ'\gets\symZ$
+\State $\symZ\gets\symZ + \symX\cdot\symY$
+\State $\symY\gets2\cdot\symY$
+\Until{$\symZ=\symZ'$}
+\State\Return$\symNumReg\cdot\symZ$
+\EndFunction
+\\
+\Function {$\symLargeCorrectionFunc$}{$\symCount,\symNumReg$}
+\State $\symX\gets(\symNumReg-\symCount)/\symNumReg$
+\State $\symY\gets1$
+\State $\symZ\gets0$
+\Repeat
+\State $\symX\gets\sqrt{\symX}$
+\State $\symZ'\gets\symZ$
+\State $\symZ\gets\symZ + \left(1-\symX\right)\cdot\symX\cdot\symY$
+\State $\symY\gets0.5\cdot\symY$
+\Until{$\symZ=\symZ'$}
+\State\Return$\symNumReg\cdot\symZ$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 
-
 \subsection{Estimation error}
+
+
 
 see \autoref{fig:raw_corrected_estimation_error_8_24}, \autoref{fig:raw_corrected_estimation_error_12_20},
 \autoref{fig:raw_corrected_estimation_error_16_16},
@@ -596,6 +616,16 @@ see \autoref{fig:raw_corrected_estimation_error_8_24}, \autoref{fig:raw_correcte
 \label{fig:raw_corrected_estimation_error_22_42}
 \end{figure}
 
+
+\subsection{Performance}
+see \autoref{fig:corrected_raw_avg_exec_time}
+
+\begin{figure}
+\centering
+\includesvg[width=1\textwidth]{corrected_raw_avg_exec_time}
+\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively. Both cases, $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ precalculated or calculated on-demand have been considered.}
+\label{fig:corrected_raw_avg_exec_time}
+\end{figure}
 
 \section{Maximum likelihood estimation}
 

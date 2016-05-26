@@ -1,4 +1,4 @@
-# Cardinality estimation methods for HyperLogLog sketches
+# New cardinality estimation algorithms for HyperLogLog sketches
 [Paper](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/paper.pdf) about the estimation of cardinalities from HyperLogLog sketches. (Work is still in progress.)
 
 ## Abstract
