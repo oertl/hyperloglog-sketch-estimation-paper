@@ -19,7 +19,7 @@ task buildCardinalitiesGenerator(type: Exec) {
     inputs.files "$project.cppDir/definecardinalities.cpp"
     outputs.files "$project.cppDir/definecardinalities"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','definecardinalities.cpp','-o','definecardinalities'
+    commandLine 'g++','-std=c++11','-Wall','definecardinalities.cpp','-o','definecardinalities'
 }
 
 task buildHyperLogLogDataGenerator(type: Exec) {
@@ -27,7 +27,7 @@ task buildHyperLogLogDataGenerator(type: Exec) {
     inputs.files "$project.cppDir/hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/hyperloglog_data_generator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','hyperloglog_data_generator.cpp','-Ofast','-march=native','-fopenmp','-o','hyperloglog_data_generator'
+    commandLine 'g++','-std=c++11','-Wall','hyperloglog_data_generator.cpp','-Ofast','-march=native','-fopenmp','-o','hyperloglog_data_generator'
 }
 
 task generateSimulatedCardinalities(type: Exec) {
@@ -54,7 +54,7 @@ task buildJointHyperLogLogDataGenerator(type: Exec) {
     inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/joint_hyperloglog_data_generator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
+    commandLine 'g++','-std=c++11','-Wall','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
 }
 
 task generateJointHyperLogLogData(type: Exec) {
@@ -72,10 +72,10 @@ task generateJointHyperLogLogData(type: Exec) {
 
 task buildBenchmark(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/benchmark.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
+    inputs.files "$project.cppDir/benchmark.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/benchmark"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','benchmark.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','benchmark'
+    commandLine 'g++','-Wall','-std=c++11','benchmark.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','benchmark'
 }
 
 task runBenchmark(type: Exec) {
@@ -101,10 +101,10 @@ task updateCpuInfo(type: Exec) {
 
 task buildCardinalityCalculation(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/cardinality_calculator.cpp", "$project.cppDir/cardinalityestimation.hpp", "$project.cppDir/hyperloglog.hpp"
+    inputs.files "$project.cppDir/cardinality_calculator.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/cardinality_calculator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','cardinality_calculator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','cardinality_calculator'
+    commandLine 'g++','-std=c++11','-Wall','cardinality_calculator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','cardinality_calculator'
 }
 
 task doCardinalityCalculation(type: Exec) {
@@ -121,14 +121,14 @@ task doCardinalityCalculation(type: Exec) {
         "$project.dataDir/12_52_max_likelihood_estimates.dat",
         "$project.dataDir/12_0_max_likelihood_estimates.dat",
         "$project.dataDir/22_42_max_likelihood_estimates.dat",
-        "$project.dataDir/12_20_raw_corrected_estimates.dat",
-        "$project.dataDir/12_14_raw_corrected_estimates.dat",
-        "$project.dataDir/8_24_raw_corrected_estimates.dat",
-        "$project.dataDir/16_16_raw_corrected_estimates.dat",
-        "$project.dataDir/20_12_raw_corrected_estimates.dat",
-        "$project.dataDir/12_52_raw_corrected_estimates.dat",
-        "$project.dataDir/12_0_raw_corrected_estimates.dat",
-        "$project.dataDir/22_42_raw_corrected_estimates.dat",
+        "$project.dataDir/12_20_corrected_raw_estimates.dat",
+        "$project.dataDir/12_14_corrected_raw_estimates.dat",
+        "$project.dataDir/8_24_corrected_raw_estimates.dat",
+        "$project.dataDir/16_16_corrected_raw_estimates.dat",
+        "$project.dataDir/20_12_corrected_raw_estimates.dat",
+        "$project.dataDir/12_52_corrected_raw_estimates.dat",
+        "$project.dataDir/12_0_corrected_raw_estimates.dat",
+        "$project.dataDir/22_42_corrected_raw_estimates.dat",
         "$project.dataDir/cardinalities.dat"
     standardOutput = new FileOutputStream("$project.cppDir/cardinality_calculator.out")
     commandLine './cardinality_calculator'
@@ -172,14 +172,14 @@ task createDistributionCharts(type: Exec) {
         "$project.dataDir/12_52_max_likelihood_estimates.dat",
         "$project.dataDir/12_0_max_likelihood_estimates.dat",
         "$project.dataDir/22_42_max_likelihood_estimates.dat",
-        "$project.dataDir/12_20_raw_corrected_estimates.dat",
-        "$project.dataDir/12_14_raw_corrected_estimates.dat",
-        "$project.dataDir/8_24_raw_corrected_estimates.dat",
-        "$project.dataDir/16_16_raw_corrected_estimates.dat",
-        "$project.dataDir/20_12_raw_corrected_estimates.dat",
-        "$project.dataDir/12_52_raw_corrected_estimates.dat",
-        "$project.dataDir/12_0_raw_corrected_estimates.dat",
-        "$project.dataDir/22_42_raw_corrected_estimates.dat",
+        "$project.dataDir/12_20_corrected_raw_estimates.dat",
+        "$project.dataDir/12_14_corrected_raw_estimates.dat",
+        "$project.dataDir/8_24_corrected_raw_estimates.dat",
+        "$project.dataDir/16_16_corrected_raw_estimates.dat",
+        "$project.dataDir/20_12_corrected_raw_estimates.dat",
+        "$project.dataDir/12_52_corrected_raw_estimates.dat",
+        "$project.dataDir/12_0_corrected_raw_estimates.dat",
+        "$project.dataDir/22_42_corrected_raw_estimates.dat",
         "$project.dataDir/cardinalities.dat"
     outputs.files "$project.paperDir/original_estimate.svg",
         "$project.paperDir/raw_estimate.svg",

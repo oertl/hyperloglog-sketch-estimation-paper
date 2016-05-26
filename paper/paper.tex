@@ -545,7 +545,7 @@ Here we used function $\symPowerSeriesFunc$ defined in \eqref{equ:power_series_f
 \State $\symNumReg \gets \left\Vert\vec{\symCount}\right\Vert_1$
 \State $\symZ\gets 0.5\cdot \symLargeCorrectionFunc(\symCount_{\symRegRange+1})$
 \For{$\symRegVal\gets \symRegRange, 1$}
-\State $\symZ\gets\symZ + 0.5\cdot \symCount_\symRegVal$
+\State $\symZ\gets0.5\cdot\left(\symZ + \symCount_\symRegVal\right)$
 \EndFor
 \State $\symZ\gets\symZ+\symSmallCorrectionFunc(\symCount_0)$
 \State \Return$\symNumReg^2 / \left(2\log(2)\symZ\right)$

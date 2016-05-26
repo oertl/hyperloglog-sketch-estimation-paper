@@ -2,7 +2,7 @@
 //# Copyright 2016 Otmar Ertl #
 //#############################
 
-#include "cardinalityestimation.hpp"
+#include "cardinality_estimation.hpp"
 #include "hyperloglog.hpp"
 
 #include <iostream>
@@ -175,8 +175,8 @@ int main(int argc, char* argv[])
                 getline(dataFile, line);
                 vector<int> tmpC = readCounts(line);
                 vector<int> c(q+2);
-                for (int i = 0; i < tmpC.size(); ++i) {
-                    c[min(i, q+1)] += tmpC[i];
+                for (size_t i = 0; i < tmpC.size(); ++i) {
+                    c[min(i, size_t(q+1))] += tmpC[i];
                 }
 
                 size_t resultPos = cardinalityIdx*seeds.size()+seedCounter;
@@ -186,8 +186,8 @@ int main(int argc, char* argv[])
 
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
-                //flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
-                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate2(c);
+                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
+                //flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate2(c);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
                 maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
                 weakLowerBoundEstimates[resultPos] = weakLowerBoundEstimate(c);
@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
         printToFile(filePrefix + "max_likelihood_estimates.dat", &maxLikelihoodEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "flajolet_small_range_estimates.dat", &flajoletSmallRangeEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "flajolet_mid_range_estimates.dat", &flajoletMidRangeEstimates[0], seeds.size(), cardinalities.size());
-        printToFile(filePrefix + "flajolet_mid_range_estimates_corrected.dat", &flajoletMidRangeEstimatesCorrected[0], seeds.size(), cardinalities.size());
+        printToFile(filePrefix + "corrected_raw_estimates.dat", &flajoletMidRangeEstimatesCorrected[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "num_small_correction_iterations.dat", &numSmallCorrectionIterations[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "num_large_correction_iterations.dat", &numLargeCorrectionIterations[0], seeds.size(), cardinalities.size());
 

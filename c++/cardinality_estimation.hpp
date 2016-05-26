@@ -21,7 +21,7 @@ int getPFromNumberRegisters(int m) {
     int p;
     std::frexp(m, &p);
     p -= 1;
-    assert(m == size_t(1) << p);
+    assert(m == 1 << p);
     return p;
 }
 
@@ -179,10 +179,10 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
 class CorrectedRawEstimator {
     const int p;
     const int q;
-    const int m = 1 << p;
-    const double m2alpha = (m/(2.*std::log(2)))*m;
-    const std::vector<double> tauValues = initTau(m);
-    const std::vector<double> sigmaValues = initSigma(m);
+    const int m; // = 1 << p;
+    const double m2alpha; // = (m/(2.*std::log(2)))*m;
+    const std::vector<double> tauValues; // = initTau(m);
+    const std::vector<double> sigmaValues; // = initSigma(m);
 
     static double sigma(int c, int m, int& numIterations) {
         numIterations = 0;
@@ -203,34 +203,36 @@ class CorrectedRawEstimator {
 
     static double tau(int c, int m, int& numIterations) {
         numIterations = 0;
-        double result = static_cast<double>(c)/static_cast<double>(m);
-        double powerOfX  = 1 - result;
+
+        double powerOfX = static_cast<double>(m-c)/static_cast<double>(m);
+
+        double result = 0;
         double previousResult;
-        double powerOf2 = 0.5;
+        double powerOf2 = 1.0;
         do {
             numIterations += 1;
             powerOfX = std::sqrt(powerOfX);
             previousResult = result;
-            result -= (1 - powerOfX)*powerOf2;
+            result += (1 - powerOfX)*powerOfX*powerOf2;
             powerOf2 *= 0.5;
-        } while(previousResult > result);
+        } while(previousResult < result);
         return m*result;
     }
 
     static std::vector<double> initSigma(int m) {
         int numIterations;
-        std::vector<double> result(m+2);
-        for (int c = 0; c < m+2; ++c) {
-            result.push_back(sigma(c, m, numIterations));
+        std::vector<double> result(m+1);
+        for (int c = 0; c <= m; ++c) {
+            result[c] = sigma(c, m, numIterations);
         }
         return result;
     }
 
     static std::vector<double> initTau(int m) {
         int numIterations;
-        std::vector<double> result(m+2);
-        for (int c = 0; c < m+2; ++c) {
-            result.push_back(tau(c, m, numIterations));
+        std::vector<double> result(m+1);
+        for (int c = 0; c <= m; ++c) {
+            result[c] = tau(c, m, numIterations);
         }
         return result;
     }
@@ -238,7 +240,13 @@ class CorrectedRawEstimator {
 
 public:
 
-    CorrectedRawEstimator(const int p_, const int q_) :p(p_), q(q_) {}
+    CorrectedRawEstimator(const int p_, const int q_) :
+        p(p_),
+        q(q_),
+        m(1 << p),
+        m2alpha((m/(2.*std::log(2)))*m),
+        tauValues(initTau(m)),
+        sigmaValues(initSigma(m)) {}
 
     double estimate(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
 
@@ -247,7 +255,8 @@ public:
 
         double z = 0.5 * tau(c[q+1], m, numLargeCorrectionIterations);
         for (int k = q; k >= 1; --k) {
-            z += 0.5*c[k];
+            z += c[k];
+            z *= 0.5;
         }
         z += sigma(c[0], m, numSmallCorrectionIterations);
         return m2alpha/z;
@@ -257,7 +266,8 @@ public:
 
         double z = 0.5 * tauValues[c[q+1]];
         for (int k = q; k >= 1; --k) {
-            z += 0.5*c[k];
+            z += c[k];
+            z *= 0.5;
         }
         z += sigmaValues[c[0]];
         return m2alpha/z;
@@ -377,7 +387,7 @@ void inclusionExclusionTwoHyperLogLogEstimation(const std::vector<int>& jointSta
     std::vector<int> countsAX(q+2);
     std::vector<int> countsBX(q+2);
     std::vector<int> countsABX(q+2);
-    for (std::size_t i = 0; i < q+2; ++i) {
+    for (int i = 0; i < q+2; ++i) {
         countsAX[i]  = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*2 + i] + jointStatistic[(q+2)*4 + i];
         countsBX[i]  = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*3 + i];
         countsABX[i] = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*4 + i];
@@ -410,7 +420,7 @@ void eval_joint_log_likelihood_function_and_derivatives(
 
     const int q = jointStatistic.size()/5-2;
 
-    assert((q+2)*5==jointStatistic.size());
+    assert(size_t((q+2)*5)==jointStatistic.size());
 
     f = 0.;
     fa = 0.;
@@ -502,7 +512,7 @@ void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *x, 
     const double la = std::exp(gsl_vector_get(x, 0));
     const double lb = std::exp(gsl_vector_get(x, 1));
     const double lx = std::exp(gsl_vector_get(x, 2));
-    const std::vector<int>& jointStatistic= *((std::vector<int>*)params);
+    //const std::vector<int>& jointStatistic= *((std::vector<int>*)params);
 
     double f, fa, fb, fx;
 

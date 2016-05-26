@@ -2,7 +2,7 @@
 //# Copyright 2016 Otmar Ertl #
 //#############################
 
-#include "cardinalityestimation.hpp"
+#include "cardinality_estimation.hpp"
 #include "hyperloglog.hpp"
 
 #include <iostream>
@@ -121,8 +121,8 @@ void run(const int p, const int q, const string& resultsFileName) {
 
             vector<int> tmpC = readCounts(line);
             vector<int> c(q+2);
-            for (int i = 0; i < tmpC.size(); ++i) {
-                c[min(i, q+1)] += tmpC[i];
+            for (size_t i = 0; i < tmpC.size(); ++i) {
+                c[min(i, size_t(q+1))] += tmpC[i];
             }
             for (int i = 0; i < numLoops; ++i) {
                 counts[seedCounter + i *numData] = c;
@@ -140,6 +140,7 @@ void run(const int p, const int q, const string& resultsFileName) {
         double flajoletWithRegisterScan = 0.;
         double flajoletWithoutRegisterScan = 0.;
         double flajoletCorrectedWithoutRegisterScan = 0.;
+        double flajoletCorrectedWithoutRegisterScanPrecalculated = 0.;
         long flajoletCorrectedSmallCorrectionIterationsSum = 0;
         long flajoletCorrectedLargeCorrectionIterationsSum = 0;
         long outerLoopIterationsCountSum = 0;
@@ -194,6 +195,16 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             flajoletCorrectedWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }
+        
+        {
+            auto start = std::chrono::system_clock::now();
+            for(auto c : counts) {
+                sum += correctedRawEstimator.estimate2(c);
+            }
+            auto end = chrono::system_clock::now();
+            auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
+            flajoletCorrectedWithoutRegisterScanPrecalculated = elapsed.count()/(double)dataSize;
+        }
 
         /*{
             auto start = std::chrono::system_clock::now();
@@ -228,6 +239,7 @@ void run(const int p, const int q, const string& resultsFileName) {
         outputFile << " " << flajoletCorrectedWithoutRegisterScan;
         outputFile << " " << flajoletCorrectedSmallCorrectionIterationsSum/(double)dataSize;
         outputFile << " " << flajoletCorrectedLargeCorrectionIterationsSum/(double)dataSize;
+        outputFile << " " << flajoletCorrectedWithoutRegisterScanPrecalculated;
         outputFile << endl;
     }
 

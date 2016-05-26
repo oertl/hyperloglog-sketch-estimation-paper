@@ -117,9 +117,9 @@ public:
     //
     // the corresponding  count matrix is
     //
-    //                / 0 0 2 \
-    // count matrix = | 0 1 0 |
-    //                \ 1 0 0 /
+    //                ( 0 0 2 )
+    // count matrix = ( 0 1 0 )
+    //                ( 1 0 0 )
     //
     // or as array representation
     //

@@ -1,9 +1,8 @@
 .gradle
-data/*_*_corrected_large_range_estimates.dat
+data/*_*_corrected_raw_estimates.dat
 data/*_*_flajolet_estimates.dat
 data/*_*_flajolet_large_range_estimates.dat
 data/*_*_flajolet_mid_range_estimates.dat
-data/*_*_flajolet_mid_range_estimates_corrected.dat
 data/*_*_flajolet_small_range_estimates.dat
 data/*_*_inner_loop_1_iterations_count.dat
 data/*_*_inner_loop_2_iterations_count.dat
