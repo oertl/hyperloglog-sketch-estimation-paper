@@ -12,4 +12,4 @@ The following two figures show how the new algorithm improves cardinality estima
 ![new algorithm relative error chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/max_likelihood_estimate_12_20.png)
 
 The new algorithm is also fast. The following figure shows the average computation time for the cardinality estimate from HyperLogLog sketches with 4096 registers working with a 32-bit (q=20) or 64-bit (q=52) hash function, respectively.
-![performance chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/avg_exec_time.png)
+![performance chart](https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/max_likelihood_avg_exec_time.png)
