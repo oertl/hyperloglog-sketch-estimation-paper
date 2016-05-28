@@ -179,16 +179,16 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
 class CorrectedRawEstimator {
     const int p;
     const int q;
-    const int m; // = 1 << p;
-    const double m2alpha; // = (m/(2.*std::log(2)))*m;
-    const std::vector<double> tauValues; // = initTau(m);
-    const std::vector<double> sigmaValues; // = initSigma(m);
+    const int m = 1 << p;
+    const double m2alpha = (m/(2.*std::log(2)))*m;
+    const std::vector<double> tauValues = initTau(m);
+    const std::vector<double> sigmaValues = initSigma(m);
 
-    static double sigma(int c, int m, int& numIterations) {
+    static double sigma(double x, int& numIterations) {
         numIterations = 0;
-        if (c==m) return std::numeric_limits<double>::infinity();
+        if (x == 1.) return std::numeric_limits<double>::infinity();
         double previousResult;
-        double powerOfX = static_cast<double>(c)/static_cast<double>(m);
+        double powerOfX = x;
         double powerOf2 = 1;
         double result = powerOfX;
         do {
@@ -198,14 +198,13 @@ class CorrectedRawEstimator {
             result += powerOfX * powerOf2;
             powerOf2 += powerOf2;
         } while(previousResult < result);
-        return m*result;
+        return result;
     }
 
-    static double tau(int c, int m, int& numIterations) {
+    static double tau(double x, int& numIterations) {
         numIterations = 0;
-
         double previousResult;
-        double powerOfX = static_cast<double>(m-c)/static_cast<double>(m);
+        double powerOfX = x;
         double powerOf2 = 1.0;
         double result = 0;
         do {
@@ -215,14 +214,14 @@ class CorrectedRawEstimator {
             result += (1 - powerOfX)*powerOfX*powerOf2;
             powerOf2 *= 0.5;
         } while(previousResult < result);
-        return m*result;
+        return result;
     }
 
     static std::vector<double> initSigma(int m) {
         int numIterations;
         std::vector<double> result(m+1);
         for (int c = 0; c <= m; ++c) {
-            result[c] = sigma(c, m, numIterations);
+            result[c] = m * sigma(static_cast<double>(c)/static_cast<double>(m), numIterations);
         }
         return result;
     }
@@ -231,7 +230,7 @@ class CorrectedRawEstimator {
         int numIterations;
         std::vector<double> result(m+1);
         for (int c = 0; c <= m; ++c) {
-            result[c] = tau(c, m, numIterations);
+            result[c] = m * tau(static_cast<double>(m-c)/static_cast<double>(m), numIterations);
         }
         return result;
     }
@@ -239,25 +238,19 @@ class CorrectedRawEstimator {
 
 public:
 
-    CorrectedRawEstimator(const int p_, const int q_) :
-        p(p_),
-        q(q_),
-        m(1 << p),
-        m2alpha((m/(2.*std::log(2)))*m),
-        tauValues(initTau(m)),
-        sigmaValues(initSigma(m)) {}
+    CorrectedRawEstimator(const int p_, const int q_) : p(p_), q(q_) {}
 
     double estimate(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
 
         numSmallCorrectionIterations = 0;
         numLargeCorrectionIterations = 0;
 
-        double z = 0.5 * tau(c[q+1], m, numLargeCorrectionIterations);
+        double z = 0.5 * m * tau(static_cast<double>(m-c[q+1])/static_cast<double>(m), numLargeCorrectionIterations);
         for (int k = q; k >= 1; --k) {
             z += c[k];
             z *= 0.5;
         }
-        z += sigma(c[0], m, numSmallCorrectionIterations);
+        z += m * sigma(static_cast<double>(c[0])/static_cast<double>(m), numSmallCorrectionIterations);
         return m2alpha/z;
     }
 
