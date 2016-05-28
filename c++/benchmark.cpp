@@ -187,7 +187,7 @@ void run(const int p, const int q, const string& resultsFileName) {
 
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
-                sum += correctedRawEstimator.estimate(c, smallCorrectionIterations, largeCorrectionIterations);
+                sum += correctedRawEstimator.estimate_on_demand(c, smallCorrectionIterations, largeCorrectionIterations);
                 flajoletCorrectedSmallCorrectionIterationsSum += smallCorrectionIterations;
                 flajoletCorrectedLargeCorrectionIterationsSum += largeCorrectionIterations;
             }
@@ -199,7 +199,7 @@ void run(const int p, const int q, const string& resultsFileName) {
         {
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
-                sum += correctedRawEstimator.estimate2(c);
+                sum += correctedRawEstimator.estimate_precalculated(c);
             }
             auto end = chrono::system_clock::now();
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);

@@ -531,19 +531,18 @@ see \algoref{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\vec{\symCount}$}
 \State $\symNumReg \gets \left\Vert\vec{\symCount}\right\Vert_1$
-\State $\symZ\gets 0.5\cdot \symLargeCorrectionFunc(\symCount_{\symRegRange+1},\symNumReg)$
+\State $\symZ\gets 0.5\cdot \symNumReg\cdot\symLargeCorrectionFunc(1 - \symCount_{\symRegRange+1}/\symNumReg)$
 \For{$\symRegVal\gets \symRegRange, 1$}
 \State $\symZ\gets0.5\cdot\left(\symZ + \symCount_\symRegVal\right)$
 \EndFor
-\State $\symZ\gets\symZ+\symSmallCorrectionFunc(\symCount_0,\symNumReg)$
+\State $\symZ\gets\symZ+\symNumReg\cdot\symSmallCorrectionFunc(\symCount_0/\symNumReg)$
 \State \Return$\symNumReg^2 / \left(2\log(2)\symZ\right)$
 \EndFunction
 \\
-\Function {$\symSmallCorrectionFunc$}{$\symCount,\symNumReg$}
-\If{$\symCount=\symNumReg$}
+\Function {$\symSmallCorrectionFunc$}{$\symX$}
+\If{$\symX=1$}
 \State\Return$\infty$
 \EndIf
-\State $\symX\gets\symCount/\symNumReg$
 \State $\symY\gets1$
 \State $\symZ\gets\symX$
 \Repeat
@@ -552,11 +551,10 @@ see \algoref{alg:corrected_raw_estimation}
 \State $\symZ\gets\symZ + \symX\cdot\symY$
 \State $\symY\gets2\cdot\symY$
 \Until{$\symZ=\symZ'$}
-\State\Return$\symNumReg\cdot\symZ$
+\State\Return$\symZ$
 \EndFunction
 \\
-\Function {$\symLargeCorrectionFunc$}{$\symCount,\symNumReg$}
-\State $\symX\gets(\symNumReg-\symCount)/\symNumReg$
+\Function {$\symLargeCorrectionFunc$}{$\symX$}
 \State $\symY\gets1$
 \State $\symZ\gets0$
 \Repeat
@@ -565,7 +563,7 @@ see \algoref{alg:corrected_raw_estimation}
 \State $\symZ\gets\symZ + \left(1-\symX\right)\cdot\symX\cdot\symY$
 \State $\symY\gets0.5\cdot\symY$
 \Until{$\symZ=\symZ'$}
-\State\Return$\symNumReg\cdot\symZ$
+\State\Return$\symZ$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}

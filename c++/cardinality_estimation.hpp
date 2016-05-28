@@ -187,34 +187,32 @@ class CorrectedRawEstimator {
     static double sigma(double x, int& numIterations) {
         numIterations = 0;
         if (x == 1.) return std::numeric_limits<double>::infinity();
-        double previousResult;
-        double powerOfX = x;
-        double powerOf2 = 1;
-        double result = powerOfX;
+        double zPrime;
+        double y = 1;
+        double z = x;
         do {
             numIterations += 1;
-            powerOfX *= powerOfX;
-            previousResult = result;
-            result += powerOfX * powerOf2;
-            powerOf2 += powerOf2;
-        } while(previousResult < result);
-        return result;
+            x *= x;
+            zPrime = z;
+            z += x * y;
+            y += y;
+        } while(zPrime < z);
+        return z;
     }
 
     static double tau(double x, int& numIterations) {
         numIterations = 0;
-        double previousResult;
-        double powerOfX = x;
-        double powerOf2 = 1.0;
-        double result = 0;
+        double zPrime;
+        double y = 1.0;
+        double z = 0;
         do {
             numIterations += 1;
-            powerOfX = std::sqrt(powerOfX);
-            previousResult = result;
-            result += (1 - powerOfX)*powerOfX*powerOf2;
-            powerOf2 *= 0.5;
-        } while(previousResult < result);
-        return result;
+            x = std::sqrt(x);
+            zPrime = z;
+            z += (1 - x)*x*y;
+            y *= 0.5;
+        } while(zPrime < z);
+        return z;
     }
 
     static std::vector<double> initSigma(int m) {
@@ -230,7 +228,7 @@ class CorrectedRawEstimator {
         int numIterations;
         std::vector<double> result(m+1);
         for (int c = 0; c <= m; ++c) {
-            result[c] = m * tau(static_cast<double>(m-c)/static_cast<double>(m), numIterations);
+            result[c] = 0.5 * m * tau(static_cast<double>(m-c)/static_cast<double>(m), numIterations);
         }
         return result;
     }
@@ -240,7 +238,7 @@ public:
 
     CorrectedRawEstimator(const int p_, const int q_) : p(p_), q(q_) {}
 
-    double estimate(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
+    double estimate_on_demand(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
 
         numSmallCorrectionIterations = 0;
         numLargeCorrectionIterations = 0;
@@ -254,9 +252,9 @@ public:
         return m2alpha/z;
     }
 
-    double estimate2(const std::vector<int>& c) const {
+    double estimate_precalculated(const std::vector<int>& c) const {
 
-        double z = 0.5 * tauValues[c[q+1]];
+        double z = tauValues[c[q+1]];
         for (int k = q; k >= 1; --k) {
             z += c[k];
             z *= 0.5;
