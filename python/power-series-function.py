@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 
 numPoints = 100000
-xMin = 0.000
-xMax = 1
+xMin = -2
+xMax = 2
 
 def h2(x):
     return exp(-pow(2,x))*pow(2,x)
-    
+
 def h(x):
-    
+
     a = h2(x)
     amin = 0.
     k = 0
@@ -25,7 +25,7 @@ def h(x):
         amin += h2(k+x)
         if (amin == aminold):
             break
-    
+
     amax = 0.;
     k = 0
     while True:
@@ -34,14 +34,14 @@ def h(x):
         amax += h2(k+x)
         if (amax == amaxold):
             break
-    
+
     return log(2.)*(a + amin + amax)
 
 
 
 def f1(x):
     return h(x) - 1.
-    
+
 def f2(x):
     return 1. - h(x)
 
@@ -56,5 +56,13 @@ res2 = minimize_scalar(f2, bounds = (0,1), method='bounded')
 
 print(res1)
 print(res2)
-plt.show()
+
+fig1, ax1 = plt.subplots(subplot_kw=dict(xlim=[xMin,xMax], ylim=[-1.1e-5,1.1e-5]))
+fig1.set_size_inches(6, 4)
+ax1.plot(xValues, yValues, color='black')
+ax1.grid(b=True, which='major', color='black', linestyle='--')
+ax1.ticklabel_format(axis='y', style = 'sci', useOffset=False,  scilimits=(-1e-6,1e-6))
+ax1.set_xlabel(r"$x$")
+ax1.set_ylabel(r"$\xi(x)-1$")
+fig1.savefig('../paper/power-series-function-minus-1.svg', format='svg', dpi=600)
 
