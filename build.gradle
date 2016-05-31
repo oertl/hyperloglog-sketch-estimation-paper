@@ -284,7 +284,8 @@ task pdflatex2(type: Exec) {
         "$project.paperDir/raw_corrected_estimate_12_20.svg",
         "$project.paperDir/raw_corrected_estimate_16_16.svg",
         "$project.paperDir/raw_corrected_estimate_20_12.svg",
-        "$project.paperDir/raw_corrected_estimate_22_42.svg"
+        "$project.paperDir/raw_corrected_estimate_22_42.svg",
+        "$project.paperDir/power-series-function-minus-1.svg"
     outputs.files "$project.paperDir/paper.aux",
         "$project.paperDir/helper.pdf",
         "$project.paperDir/helper.pdf_tex",
@@ -319,8 +320,9 @@ task pdflatex2(type: Exec) {
         "$project.paperDir/raw_corrected_estimate_20_12.pdf",
         "$project.paperDir/raw_corrected_estimate_20_12.pdf_tex",
         "$project.paperDir/raw_corrected_estimate_22_42.pdf",
-        "$project.paperDir/raw_corrected_estimate_22_42.pdf_tex"
-
+        "$project.paperDir/raw_corrected_estimate_22_42.pdf_tex",
+        "$project.paperDir/power-series-function-minus-1.pdf",
+        "$project.paperDir/power-series-function-minus-1.pdf_tex"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
     commandLine 'pdflatex','--shell-escape','paper'
@@ -366,6 +368,8 @@ task pdflatex3(type: Exec) {
         "$project.paperDir/raw_corrected_estimate_20_12.pdf_tex",
         "$project.paperDir/raw_corrected_estimate_22_42.pdf",
         "$project.paperDir/raw_corrected_estimate_22_42.pdf_tex",
+        "$project.paperDir/power-series-function-minus-1.pdf",
+        "$project.paperDir/power-series-function-minus-1.pdf_tex",
         "$project.paperDir/max_errror_propagation_factor.txt"
     outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
     outputs.upToDateWhen { false }

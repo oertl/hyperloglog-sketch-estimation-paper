@@ -368,7 +368,15 @@ where the function
 e^{-2^{\symRegVal+\symX}}
 \end{equation}
  is a smooth periodic function with period 1. Numerical evaluations indicate that this function can be bounded by $1 - \symEpsPowerSeriesFunc 
-\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=9.885\cdot 10^{-6}$.
+\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=9.885\cdot 10^{-6}$ (see \cref{fig:power_series_func}).
+
+\begin{figure}
+\centering
+\includesvg[width=0.6\textwidth]{power-series-function-minus-1}
+\caption{The deviation of $\symPowerSeriesFunc(\symX)$ from 1.}
+\label{fig:power_series_func}
+\end{figure}
+
 
 Let $\symRegVal_1,\ldots,\symRegVal_\symNumReg$ be a sample taken from \eqref{equ:assumed_register_val_distribution}. For large sample sizes $\symNumReg\rightarrow \infty$ we have asymptotically
 \begin{equation}
