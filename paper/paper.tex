@@ -116,7 +116,7 @@ In case the data is not distributed and results do not need to be aggregated fur
 %In contrast, HyperLogLog sketches (without historic inverse probability estimator) built from different sets of elements can be merged and the result is identical to a HyperLogLog sketch obtained by inserting all elements of the union set. Therefore, the HyperLogLog sketch inherently supports cardinality estimation of unions. However, there are also applications which require the cardinality estimation of intersections.
 
 \section{HyperLogLog data structure}
-The HyperLogLog algorithm uses a sketching data structure that consists of $\symNumReg$ registers. For performance reasons the number of registers is chosen to be a power of 2: $\symNumReg = 2^\symPrecision$. $\symPrecision$ is the precision that directly influences the relative error which scales like $1/\sqrt{\symNumReg}$. All registers start with the initial value 0. The HyperLogLog algorithm successively increases the register values up to a maximum value limited by the space per register which is usually between 5 and 8 bits. 
+The HyperLogLog algorithm uses a sketching data structure that consists of $\symNumReg$ registers. For performance reasons the number of registers is chosen to be a power of 2: $\symNumReg = 2^\symPrecision$. $\symPrecision$ is the precision that directly influences the relative error which scales like $1/\sqrt{\symNumReg}$. All registers start with initial value 0. The HyperLogLog algorithm successively increases the register values up to a maximum value limited by the space per register which is usually between 5 and 8 bits. 
 
 \subsection{Data element insertion}
 \label{sec:data_element_insertion}
@@ -582,8 +582,7 @@ The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardin
 
 see \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_12_20},
 \cref{fig:raw_corrected_estimation_error_16_16},
-\cref{fig:raw_corrected_estimation_error_20_12},
-\cref{fig:raw_corrected_estimation_error_22_42},
+\cref{fig:raw_corrected_estimation_error_22_10},
 
 \begin{figure}
 \centering
@@ -608,16 +607,9 @@ see \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_esti
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_20_12}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 20$ and $\symRegRange=12$.}
-\label{fig:raw_corrected_estimation_error_20_12}
-\end{figure}
-
-\begin{figure}
-\centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_22_42}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=42$.}
-\label{fig:raw_corrected_estimation_error_22_42}
+\includesvg[width=1\textwidth]{raw_corrected_estimate_22_10}
+\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
+\label{fig:raw_corrected_estimation_error_22_10}
 \end{figure}
 
 
@@ -989,7 +981,7 @@ In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLo
 \label{fig:estimation_error_12_20}
 \end{figure}
 
-The new estimation algorithm also works well for other HyperLogLog configurations. First we considered the original HyperLogLog algorithm that used a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=20$ are shown in \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16}, and \cref{fig:estimation_error_20_12}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives inherently unbiased estimates.
+The new estimation algorithm also works well for other HyperLogLog configurations. First we considered the original HyperLogLog algorithm that used a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16}, and \cref{fig:estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives inherently unbiased estimates.
 
 \begin{figure}
 \centering
@@ -1007,9 +999,9 @@ The new estimation algorithm also works well for other HyperLogLog configuration
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_20_12}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 20$ and $\symRegRange=12$.}
-\label{fig:estimation_error_20_12}
+\includesvg[width=1\textwidth]{max_likelihood_estimate_22_10}
+\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
+\label{fig:estimation_error_22_10}
 \end{figure}
 
 As proposed in \cite{Heule2013}, the operating range can be extended by
@@ -1030,15 +1022,6 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
 \label{fig:estimation_error_12_14}
 \end{figure}
-
-\begin{figure}
-\centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_22_42}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=42$.}
-\label{fig:estimation_error_22_42}
-\end{figure}
-
-TODO \cref{fig:estimation_error_22_42}
 
 \subsection{Performance}
 In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
