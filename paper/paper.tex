@@ -248,7 +248,7 @@ Therefore, the unbiased estimator $\symPoissonRateEstimate$ conditioned on $\sym
 \label{sec:cardinality_estimation}
 The original cardinality estimate \cite{Flajolet2007} is based on the idea that approximately $\symNumReg  2^{\symRegVal_\symIndexJ}$ distinct element insertions are needed until the value of register $\symIndexJ$ reaches $\symRegVal_\symIndexJ$. Given that, a cardinality estimate can be obtained by calculating the average over the values $\lbrace \symNumReg 2^{\symRegVal_1},\ldots,\symNumReg2^{\symRegVal_\symNumReg}\rbrace$. 
 
-In the history of the HyperLogLog algorithm different averaging techniques have been proposed. First, there was the LogLog algorithm using the geometric mean and the SuperLogLog algorithm that enhanced the estimate by truncating the largest register values before applying the geometric mean \cite{Durand2003}. Finally, the harmonic mean was found to give even better estimates as it is inherently less sensitive to outliers. The result is the so-called raw HyperLogLog estimate and given by
+In the history of the HyperLogLog algorithm different averaging techniques have been proposed. First, there was the LogLog algorithm using the geometric mean and the SuperLogLog algorithm that enhanced the estimate by truncating the largest register values before applying the geometric mean \cite{Durand2003}. Finally, the harmonic mean was found to give even better estimates as it is inherently less sensitive to outliers. The result is the so-called raw estimator and given by
 \begin{equation}
 \label{equ:intermediate_estimate}
 \symCardinalityOriginalEstimate
@@ -282,9 +282,7 @@ as approximation for $\symAlpha_\symNumReg$ in \eqref{equ:intermediate_estimate}
 As mentioned in \cref{sec:data_element_insertion}, a HyperLogLog sketch with parameters $(\symPrecision, \symRegRange)$ can be turned into a $(\symPrecision, 0)$-HyperLogLog sketch. Since $\symRegRange=0$ corresponds to linear counting and the transformed HyperLogLog sketch corresponds to a bitset with $\symCount_0$ zeros, the linear counting cardinality estimator \cite{Whang1990} can be applied here
 \begin{equation}
 \label{equ:small_range_estimate}
-\symCardinalityEstimate_\text{small} = \symNumReg \log\left(
-\frac{\symNumReg}{\symCount_0}
-\right).
+\symCardinalityEstimate_\text{small} = \symNumReg \log(\symNumReg/\symCount_0).
 \end{equation}
 The corresponding relative estimation error as depicted in \cref{fig:small_range_estimate} shows that this estimator is convenient for small cardinalities. It was proposed to use this small-range estimator as long as $\symCardinalityOriginalEstimate \leq \frac{5}{2}\symNumReg$ where the factor $\frac{5}{2}$ was empirically determined \cite{Flajolet2007}. 
 
@@ -293,7 +291,7 @@ For large cardinalities in the order of $2^{\symPrecision+\symRegRange}$, for wh
 \label{equ:large_range_estimate}
 \symCardinalityEstimate_\text{large}
 =
--2^{32}\log\left(1-\frac{\symCardinalityOriginalEstimate}{2^{32}}\right).
+-2^{32}\log\!\left(1-\symCardinalityOriginalEstimate/2^{32}\right).
 \end{equation}
 
 The original estimation algorithm as presented in \cite{Flajolet2007} including small and large range corrections is summarized by \cref{alg:estimate_original}. 
@@ -384,7 +382,7 @@ e^{-\frac{\symPoissonRate}{\symNumReg} 2^{-\symRegVal}}
 2^{\symRegVal}
 e^{-\frac{\symPoissonRate}{\symNumReg} 2^{\symRegVal}}
 =
-\frac{\symAlpha_\infty\,\symNumReg\,\symPowerSeriesFunc\!\left(\log_2\left( \frac{\symPoissonRate}{\symNumReg}\right)\right)}{\symPoissonRate},
+\frac{\symAlpha_\infty\,\symNumReg\,\symPowerSeriesFunc\!\left(\log_2\!\left( \frac{\symPoissonRate}{\symNumReg}\right)\right)}{\symPoissonRate},
 \end{multline}
 where the function 
 \begin{equation}
@@ -420,7 +418,7 @@ Together with \eqref{equ:expectation_power_two} we obtain
 \symPoissonRate
 =
 \symExpectation\left(
-\frac{\symAlpha_\infty\,\symNumReg^2\,\symPowerSeriesFunc\!\left(\log_2\left( \symPoissonRate/\symNumReg\right)\right)}{2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}}
+\frac{\symAlpha_\infty\,\symNumReg^2\,\symPowerSeriesFunc\!\left(\log_2\!\left( \symPoissonRate/\symNumReg\right)\right)}{2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}}
 \right)
 \quad
 \text{for $\symNumReg\rightarrow \infty$}.
@@ -547,9 +545,9 @@ Using the identity $2\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\s
 \symLargeCorrectionFunc(\symCount_0/\symNumReg)
 \right)}
 =
-\frac{\symNumReg\log\left(\frac{\symNumReg}{\symCount_0}\right)}{\symPowerSeriesFunc\left(\log_2\left(\log\left(\frac{\symNumReg}{\symCount_0}\right)\right)\right)}
+\frac{\symNumReg\log\!\left(\frac{\symNumReg}{\symCount_0}\right)}{\symPowerSeriesFunc\!\left(\log_2\!\left(\log\!\left(\frac{\symNumReg}{\symCount_0}\right)\right)\right)}
 \approx
-\symNumReg\log\left(\frac{\symNumReg}{\symCount_0}\right),
+\symNumReg\log\!\left(\symNumReg/\symCount_0\right),
 \end{equation}
 which is almost identical to the linear counting estimator used for the small range correction \eqref{equ:small_range_estimate}. Here we used the fact that $\symPowerSeriesFunc$ can be well approximated by 1.
 \subsection{Corrected raw estimation algorithm}

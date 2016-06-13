@@ -57,6 +57,9 @@ res2 = minimize_scalar(f2, bounds = (0,1), method='bounded')
 print(res1)
 print(res2)
 
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
 fig1, ax1 = plt.subplots(subplot_kw=dict(xlim=[xMin,xMax], ylim=[-1.1e-5,1.1e-5]))
 fig1.set_size_inches(6, 4)
 ax1.plot(xValues, yValues, color='black')
