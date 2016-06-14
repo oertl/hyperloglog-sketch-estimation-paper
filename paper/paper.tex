@@ -660,7 +660,7 @@ see \cref{fig:corrected_raw_avg_exec_time}
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{corrected_raw_avg_exec_time}
-\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively. Both cases, $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ precalculated and calculated on-demand have been considered.}
+\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3\,GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively. Both cases, $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ precalculated and calculated on-demand have been considered.}
 \label{fig:corrected_raw_avg_exec_time}
 \end{figure}
 
@@ -764,7 +764,7 @@ It is easy to see that the estimate $\symPoissonRateEstimate$ remains equal or b
 \end{multline}
 shows that the coefficient of $\symCount_\symIndexI$ is larger than the coefficient of $\symCount_\symIndexJ$ in case $\symIndexI < \symIndexJ$. Keeping $\symX$ fixed during an update decreases $\symFunc(\symX)$. As a consequence, since $\symFunc(\symX)$ is increasing, the new root and hence the estimate must be larger than before the update.
 
-Note that \eqref{equ:funcdef} can be solved analytically for the special case $\symRegRange=0$ which corresponds to the already mentioned linear counting algorithm. In this case, the maximum likelihood method under the Poisson model directly leads to the estimator presented in \cite{Whang1990} and which was also used for small range estimation \eqref{equ:small_range_estimate}. Despite the assumption of a Poisson model, it is a very good approximation of the optimal martingale estimator presented in \cite{Ting2014}. Due to this fact we could expect that maximum likelihood estimation under the Poisson model also works very well for the more  general HyperLogLog case.
+Note that \eqref{equ:funcdef} can be solved analytically for the special case $\symRegRange=0$ which corresponds to the already mentioned linear counting algorithm. In this case, the maximum likelihood method under the Poisson model directly leads to the linear counting  estimator presented in \cite{Whang1990} and which was also used for small range estimation \eqref{equ:small_range_estimate}. Despite the assumption of a Poisson model, it is a very good approximation of the optimal martingale estimator presented in \cite{Ting2014}. Due to this fact we could expect that maximum likelihood estimation under the Poisson model also works well for the more general HyperLogLog case.
 
 \subsection{Inequalities for the maximum likelihood estimate}
 In the following lower and upper bounds for $\symXEstimate$ are derived.
@@ -776,7 +776,7 @@ Applying Jensen's inequality on $\symHelper$ in \eqref{equ:func} gives an upper 
 \sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}
 +
 \left(\symNumReg-\symCount_0\right)\cdot
-\symHelper\left(
+\symHelper\!\left(
 \symX\cdot
 \left(
 \sum_{\symRegVal=1}^{\symRegRange}
@@ -795,7 +795,7 @@ The left-hand side is zero, if $\symXEstimate$ is inserted. Resolution for $\sym
 +
 \frac{\symCount_{\symRegRange+1}}{2^\symRegRange}
 }
-\log\left(
+\log\!\left(
 1
 +
 \frac{\sum_{\symRegVal=1}^{\symRegRange}
@@ -1056,14 +1056,14 @@ see \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{f
 \end{figure}
 
 \subsection{Performance}
-In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
+In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
 
 The numbers do not yet include the required processing time to calculate the multiplicity vector from the HyperLogLog sketch, which requires a complete scan over all registers and counting the different register values into an array. A theoretical lower bound for this processing time can be derived using the maximum memory bandwidth of the CPU, which is 21\,GB/s for an Intel Core i5-2500K. For precision $\symPrecision=12$ there are 4096 registers, each of them requires at least 5 bits. Hence, the total data size of the HyperLogLog sketch is 2.5\,kB minimum and transfer time from main memory to CPU will be at least 120\,ns. Having this value in mind, the presented processing time numbers are quite satisfying.
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_avg_exec_time}
-\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
+\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3\,GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
 \label{fig:avg_exec_time}
 \end{figure}
 
@@ -1371,27 +1371,27 @@ The logarithm of the joint probability mass function can be written using Iverso
 \nonumber\\
 &
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_1}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_1}}}\right)
 \left[1\leq\symRegVal_1<\symRegVal_2\right]
 \nonumber\\
 &
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}\right)
 \left[\symRegVal_2<\symRegVal_1\right]
 \nonumber\\
 &
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_2}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_2}}}\right)
 \left[1\leq\symRegVal_2<\symRegVal_1\right]
 \nonumber\\
 &
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal_2, \symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal_2, \symRegRange\right)}}}\right)
 \left[\symRegVal_1<\symRegVal_2\right]
 \nonumber\\
 &
 +
-\log\left(
+\log\!\left(
 1
 -e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}
 -
@@ -1484,25 +1484,25 @@ Insertion of \eqref{equ:joint_log_pmf_single_register} results in
 &
 +
 \sum_{\symRegVal=1}^{\symRegRange+1}
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
 \symCount_\symRegVal^\rightarrow
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
 \symCount_\symRegVal^\leftarrow
 \nonumber\\
 &
 +
 \sum_{\symRegVal=1}^{\symRegRange+1}
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
 \symCount_\symRegVal^\downarrow
 +
-\log\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
 \symCount_\symRegVal^\uparrow
 \nonumber\\
 &
 +
 \sum_{\symRegVal=1}^{\symRegRange+1}
-\log\left(
+\log\!\left(
 1
 -e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
 -
