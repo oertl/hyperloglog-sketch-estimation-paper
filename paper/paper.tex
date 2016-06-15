@@ -683,9 +683,9 @@ Under the Poisson model the log-likelihood and its derivative are given by
 \label{equ:log_likelihood_single}
 \log \mathcal{\symLikelihood}(\symPoissonRate\vert\vec{\symRegVal}) = 
 -\frac{\symPoissonRate}{\symNumReg}\sum_{\symRegVal=0}^{\symRegRange}\frac{\symCount_\symRegVal}{2^\symRegVal}+ 
-\sum_{\symRegVal=1}^{\symRegRange}\symCount_\symRegVal \log\left(1-e^{-\frac{\symPoissonRate}{\symNumReg 2^\symRegVal}}\right)
+\sum_{\symRegVal=1}^{\symRegRange}\symCount_\symRegVal \log\!\left(1-e^{-\frac{\symPoissonRate}{\symNumReg 2^\symRegVal}}\right)
 +
-\symCount_{\symRegRange+1} \log\left(1-e^{-\frac{\symPoissonRate}{\symNumReg 2^{\symRegRange}}}\right)
+\symCount_{\symRegRange+1} \log\!\left(1-e^{-\frac{\symPoissonRate}{\symNumReg 2^{\symRegRange}}}\right)
 \end{equation}
 and
 \begin{equation}
@@ -716,9 +716,9 @@ This function can also be written as
 \symFunc(\symX)
 :=
 \symX\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}+
-\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\left(\frac{\symX}{2^\symRegVal}\right)
+\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\!\left(\frac{\symX}{2^\symRegVal}\right)
 +
-\symCount_{\symRegRange+1}\symHelper\left(\frac{\symX}{2^\symRegRange}\right)
+\symCount_{\symRegRange+1}\symHelper\!\left(\frac{\symX}{2^\symRegRange}\right)
 -
 \left(\symNumReg-\symCount_0\right),
 \end{equation}
@@ -828,9 +828,9 @@ Using the monotonicity of $\symHelper$, the lower bound
 \symFunc(\symX)
 \geq
 \symX\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}+
-\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)
+\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)
 +
-\symCount_{\symRegRange+1}\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)
+\symCount_{\symRegRange+1}\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)
 -
 \left(\symNumReg-\symCount_0\right),
 \end{equation}
@@ -901,19 +901,19 @@ In order to get a fast cardinality estimation algorithm, it is crucial to minimi
 \item Only a fraction of all count values $\symCount_\symRegVal$ is non-zero. If we denote $\symRegVal_\text{min}:=\min\lbrace \symRegVal\vert\symCount_\symRegVal>0\rbrace$ and $\symRegVal_\text{max}:=\max\lbrace \symRegVal\vert\symCount_\symRegVal>0\rbrace$,  it is sufficient to loop over all indices in the range $[\symRegVal_\text{min}, \symRegVal_\text{max}]$.
 \item The coefficient of the linear term $\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}$ can be precalculated and reused for all function evaluations.
 \item Many programming languages allow the efficient multiplication and division by any integral power of 2 using special functions, such as \texttt{ldexp} in C/C++ or \texttt{scalb} in Java.
-\item The function $\symHelper(\symX)$ only needs to be evaluated at values $\lbrace\frac{\symX}{2^{\symRegVal'_\text{max}}},\frac{\symX}{2^{\symRegVal'_\text{max}-1}}\ldots,\frac{\symX}{2^{\symRegVal_\text{min}}}\rbrace$ where $\symRegVal'_\text{max} := \min(\symRegVal_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio 2. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we already know $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
+\item The function $\symHelper(\symX)$ only needs to be evaluated at values $\left\lbrace\frac{\symX}{2^{\symRegVal'_\text{max}}},\frac{\symX}{2^{\symRegVal'_\text{max}-1}}\ldots,\frac{\symX}{2^{\symRegVal_\text{min}}}\right\rbrace$ where $\symRegVal'_\text{max} := \min(\symRegVal_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio 2. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we already know $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
 \begin{equation}
 \label{equ:helper_recursion1}
-\symHelper\left(2\symX\right) = \frac{\symX+2\symHelper\left(\symX\right)\left(1-\symHelper\left(\symX\right)\right)}{\symX+2\left(1-\symHelper\left(\symX\right)\right)}
+\symHelper\!\left(2\symX\right) = \frac{\symX+2\symHelper\!\left(\symX\right)\left(1-\symHelper\!\left(\symX\right)\right)}{\symX+2\left(1-\symHelper\!\left(\symX\right)\right)}
 \end{equation}
 or
 \begin{equation}
 \label{equ:helper_recursion2}
-\symHelper\left(\frac{\symX}{2^{\symRegVal}}\right) = \frac{\frac{\symX}{2^{\symRegVal+2}}+\symHelper\left(\frac{\symX}{2^{\symRegVal+1}}\right)\left(1-\symHelper\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}{\frac{\symX}{2^{\symRegVal+2}}+\left(1-\symHelper\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}
+\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right) = \frac{\frac{\symX}{2^{\symRegVal+2}}+\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\left(1-\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}{\frac{\symX}{2^{\symRegVal+2}}+\left(1-\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}
 \end{equation}
-Note, this recursive formula is stable in a sense that the relative error of $\symHelper\left(2\symX\right)$ is smaller than that of $\symHelper\left(\symX\right)$ as shown in \cref{app:helper_stable}.
+Note, this recursive formula is stable in a sense that the relative error of $\symHelper\!\left(2\symX\right)$ is smaller than that of $\symHelper\!\left(\symX\right)$ as shown in \cref{app:helper_stable}.
 
-\item If $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is smaller than 0.5, the function $\symHelper(\symX)$ can be well approximated by a Taylor series around $\symX=0$
+\item If $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is smaller than 0.5, the function $\symHelper(\symX)$ can be well approximated by a Taylor series around $\symX=0$
 \begin{equation}
 \symHelper(\symX)
 =
@@ -927,8 +927,8 @@ which can be optimized for numerical evaluation using Estrin's scheme and $\symX
 \symX' - \symX''/3 + \left(\symX'' \symX''\right)\left(1/45-\symX''/472.5\right)
 + \symBigO(\symX^{8})
 \end{equation}
-In fact, $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)\leq 0.5$ is almost always fulfilled as long as registers are not saturated. Using \eqref{equ:strong_upper_bound} it is straightforward to see that $\frac{\symX}{2^{\symRegVal'_\text{max}}} \leq \log 2 \approx 0.693$, if $\symCount_{\symRegRange+1}=0$.
-In case $\frac{\symX}{2^{\symRegVal'_\text{max}}} > 0.5$, the value $\frac{\symX}{2^{\symE+1}}$ is taken instead, where $\symE$ is the exponent of the floating point representation of $\symX$, $\symE = 1+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symE+1}}\leq 0.5$ which allows using the Taylor approximation. $\symHelper\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is finally obtained after $\symE + 1 -\symRegVal'_\text{max}$ iterations using \eqref{equ:helper_recursion2}.
+In fact, $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)\leq 0.5$ is almost always fulfilled as long as registers are not saturated. Using \eqref{equ:strong_upper_bound} it is straightforward to see that $\frac{\symX}{2^{\symRegVal'_\text{max}}} \leq \log 2 \approx 0.693$, if $\symCount_{\symRegRange+1}=0$.
+In case $\frac{\symX}{2^{\symRegVal'_\text{max}}} > 0.5$, the value $\frac{\symX}{2^{\symE+1}}$ is taken instead, where $\symE$ is the exponent of the floating point representation of $\symX$, $\symE = 1+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symE+1}}\leq 0.5$ which allows using the Taylor approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is finally obtained after $\symE + 1 -\symRegVal'_\text{max}$ iterations using \eqref{equ:helper_recursion2}.
 \end{itemize}
 
 All these optimizations together finally give the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}.
@@ -1717,9 +1717,9 @@ According to \eqref{equ:func} the exact estimate $\symXEstimate$ fulfills
 \begin{equation}
 \label{equ:max_likelihood_2}
 \symXEstimate\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}+
-\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\left(\frac{\symXEstimate}{2^\symRegVal}\right)
+\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelper\!\left(\frac{\symXEstimate}{2^\symRegVal}\right)
 +
-\symCount_{\symRegRange+1}\symHelper\left(\frac{\symXEstimate}{2^\symRegRange}\right)
+\symCount_{\symRegRange+1}\symHelper\!\left(\frac{\symXEstimate}{2^\symRegRange}\right)
 =
 \symNumReg-\symCount_0
 \end{equation}
@@ -1732,10 +1732,10 @@ the solution of the equation will be off by a relative error $\symError_\symX$:
 \begin{equation}
 \label{equ:ml_equation}
 \symXEstimate\left(1+\symError_\symX\right)\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}+
-\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelperApprox\left(\frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegVal}\right)
+\sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal\symHelperApprox\!\left(\frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegVal}\right)
 +
 \symCount_{\symRegRange+1}
-\symHelperApprox\left(
+\symHelperApprox\!\left(
 \frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegRange}\right)
 =
 \symNumReg-\symCount_0
@@ -1748,11 +1748,11 @@ Due to \eqref{equ:abs_error_helper} there exists some $\symAlpha \in [-\symError
 \right)
 \left(
 \sum_{\symRegVal=1}^\symRegRange \symCount_\symRegVal
-\symHelper\left(\frac{\symXEstimate\left(1+\symError_\symX\right)
+\symHelper\!\left(\frac{\symXEstimate\left(1+\symError_\symX\right)
 }{2^\symRegVal}\right)
 +
 \symCount_{\symRegRange+1}
-\symHelper\left(
+\symHelper\!\left(
 \frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegRange}\right)
 \right)
 =
@@ -1768,7 +1768,7 @@ For $\symX \geq 0$ $\symHelper'(\symX)\in[0,0.5]$. Hence, there exists a $\symBe
 \left(
 \sum_{\symRegVal=1}^\symRegRange 
 \symCount_\symRegVal
-\symHelper\left(\frac{\symXEstimate
+\symHelper\!\left(\frac{\symXEstimate
 }{2^\symRegVal}\right)
 +
 \frac{\symCount_\symRegVal}{2^\symRegVal}
@@ -1783,7 +1783,7 @@ For $\symX \geq 0$ $\symHelper'(\symX)\in[0,0.5]$. Hence, there exists a $\symBe
 \right)
 \left(
 \symCount_{\symRegRange+1}
-\symHelper\left(
+\symHelper\!\left(
 \frac{\symXEstimate}{2^\symRegRange}\right)
 +
 \frac{\symCount_{\symRegRange+1}}{2^\symRegRange}
