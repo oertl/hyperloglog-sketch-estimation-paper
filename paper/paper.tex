@@ -96,7 +96,7 @@
 
 
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
-\subtitle{Draft version, \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}}
+\subtitle{Draft version \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}}
 \author{Otmar Ertl}
 
 \begin{document}
@@ -318,7 +318,7 @@ The original estimation algorithm as presented in \cite{Flajolet2007} including 
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
-The relative estimation error for the original method is shown in \cref{fig:original_estimate}. Unfortunatley, as can be clearly seen, the ranges where the estimation error is small for $\symCardinalityOriginalEstimate$ and $\symCardinalityEstimate_\text{small}$ do not overlap. Therefore, the estimation error is much larger near the transition region. To reduce the estimation error for cardinalities close to this region, it was proposed to correct $\symCardinalityOriginalEstimate$ for bias. The empirically determined bias correction data can be either stored as set of interpolation points \cite{Heule2013}, as lookup table \cite{Rhodes2015}, or as best-fitting polynomial \cite{Sanfilippo2014}. 
+The relative estimation error for the original method is shown in \cref{fig:original_estimate}. Unfortunatley, as can be clearly seen, the ranges where the estimation error is small for $\symCardinalityOriginalEstimate$ and $\symCardinalityEstimate_\text{small}$ do not overlap. Therefore, the estimation error is much larger near the transition region. To reduce the estimation error for cardinalities close to this region, it was proposed to correct $\symCardinalityOriginalEstimate$ for bias. Empirically collected bias correction data is either stored as set of interpolation points \cite{Heule2013}, as lookup table \cite{Rhodes2015}, or as best-fitting polynomial \cite{Sanfilippo2014}. However, all these empirical approaches treat the symptom and not the cause.
 
 \begin{figure}
 \centering
@@ -601,7 +601,7 @@ The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardin
 \end{algorithm}
 
 \subsection{Estimation error}
-In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLog sketches and inserted up to 50 billion unique elements. Element hash values have been mocked by random numbers. For the following results we used the Mersenne Twister random number generator with 19937 bit state size from the C++ standard library.
+In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLog sketches and inserted up to 50 billion unique elements. Assuming a strong universal hash function, element hash values can be mocked by random numbers. For the following results we used the Mersenne Twister random number generator with 19937 bit state size from the C++ standard library.
 
 \cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}) or the original method (\cref{fig:original_estimate}).
 
@@ -655,7 +655,13 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \end{figure}
 
 \subsection{Performance}
-see \cref{fig:corrected_raw_avg_exec_time}
+In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the precalculated multiplicity vectors of 1000 randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. 
+
+The results show that the execution times are nearly constant for $\symRegRange=52$. Using the lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed, because $\symCount_{53}$ is equal to zero with high probability for realistic cardinalities.
+
+For the case $\symRegRange=20$ with precalculated correction values the computation time is again -- as expected -- independent of the cardinality. The faster computation times compared to the $\symRegRange=52$ case can be explained by the much smaller dimension of the multiplicity vector which is equal to $\symRegRange+2$. If the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are calculated on-demand, the execution times for larger cardinalities are doubled. This comes from the fact that the calculation of $\symLargeCorrectionFunc$ is much more expensive than that of $\symSmallCorrectionFunc$, because it requires more iterations and involves square root evaluations. However, we can imagine that a better numerical approximation of $\symLargeCorrectionFunc$ can be found than that given in \cref{alg:corrected_raw_estimation} and which allows on-demand evaluation without significant extra costs.
+
+The numbers do not yet include the required processing time to extract the multiplicity vector out from the HyperLogLog sketch, which requires a complete scan over all registers and counting the different register values into an array. A theoretical lower bound for this processing time can be derived using the maximum memory bandwidth of the CPU, which is 21\,GB/s for an Intel Core i5-2500K. For precision $\symPrecision=12$ there are 4096 registers, each of them requires at least 5 bits. Hence, the total data size of the HyperLogLog sketch is 2.5\,kB minimum and transfer time from main memory to CPU will be at least 120\,ns. Having this value in mind, the presented numbers for estimating the cardinality from the multiplicity vector are quite satisfying. 
 
 \begin{figure}
 \centering
@@ -1056,9 +1062,8 @@ see \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{f
 \end{figure}
 
 \subsection{Performance}
-In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
-
-The numbers do not yet include the required processing time to calculate the multiplicity vector from the HyperLogLog sketch, which requires a complete scan over all registers and counting the different register values into an array. A theoretical lower bound for this processing time can be derived using the maximum memory bandwidth of the CPU, which is 21\,GB/s for an Intel Core i5-2500K. For precision $\symPrecision=12$ there are 4096 registers, each of them requires at least 5 bits. Hence, the total data size of the HyperLogLog sketch is 2.5\,kB minimum and transfer time from main memory to CPU will be at least 120\,ns. Having this value in mind, the presented processing time numbers are quite satisfying.
+see \cref{fig:avg_exec_time}
+%In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
 
 \begin{figure}
 \centering
