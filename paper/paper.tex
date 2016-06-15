@@ -535,7 +535,7 @@ and
 2^{-(\symRegVal-1)}.
 \end{equation}
 
-Using the identity $2\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\symX) = -\symPowerSeriesFunc(\log_2(-\log(\symX)))/\left(\log(2)\log(\symX)\right)$, we get for the linear counting case with $\symRegRange=0$
+Using the identity $2\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\symX) = \symPowerSeriesFunc(\log_2(\log(1/\symX)))/\left(\log(2)\log(1/\symX)\right)$, we get for the linear counting case with $\symRegRange=0$
 \begin{equation}
 \symPoissonRateEstimate 
 = 
@@ -545,7 +545,7 @@ Using the identity $2\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\s
 \symLargeCorrectionFunc(\symCount_0/\symNumReg)
 \right)}
 =
-\frac{\symNumReg\log\!\left(\frac{\symNumReg}{\symCount_0}\right)}{\symPowerSeriesFunc\!\left(\log_2\!\left(\log\!\left(\frac{\symNumReg}{\symCount_0}\right)\right)\right)}
+\frac{\symNumReg\log\!\left(\symNumReg/\symCount_0\right)}{\symPowerSeriesFunc\!\left(\log_2\!\left(\log\!\left(\symNumReg/\symCount_0\right)\right)\right)}
 \approx
 \symNumReg\log\!\left(\symNumReg/\symCount_0\right),
 \end{equation}
