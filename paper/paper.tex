@@ -2,36 +2,25 @@
 %# Copyright 2016 Otmar Ertl #
 %#############################
 
-
-% !TEX TS-program = pdflatex
-% !TEX encoding = UTF-8 Unicode
-
-% This is a simple template for a LaTeX document using the "article" class.
-% See "book", "report", "letter" for other types of document.
-
 \documentclass[a4paper]{scrartcl}
-\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{graphicx}
 \usepackage{svg}
 \usepackage{algpseudocode,algorithm,algorithmicx}
 \usepackage{float}
 \usepackage{url}
-\usepackage{booktabs} % for much better looking tables
-\usepackage{array} % for better arrays (eg matrices) in maths
-\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
-\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
-\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
-% These packages are all incorporated in the memoir class to one degree or another...
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{paralist}
+\usepackage{verbatim}
+\usepackage{subfig}
 \usepackage{hyperref}
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
-% \renewcommand{\sffamily}{\rmfamily}
-
 % SYMBOLS
 \newcommand*{\symDefine}[2]{\newcommand{{#1}}{{#2}}}
-
 \symDefine{\symPrecision}{p}
 \symDefine{\symRegRange}{q}
 \symDefine{\symRegVal}{k}
@@ -92,8 +81,6 @@
 \symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
 
-%%% END Article customizations
-
 
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
 \subtitle{Draft version \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}}
@@ -116,7 +103,7 @@ In case the data is not distributed and results do not need to be aggregated fur
 %In contrast, HyperLogLog sketches (without historic inverse probability estimator) built from different sets of elements can be merged and the result is identical to a HyperLogLog sketch obtained by inserting all elements of the union set. Therefore, the HyperLogLog sketch inherently supports cardinality estimation of unions. However, there are also applications which require the cardinality estimation of intersections.
 
 \section{HyperLogLog data structure}
-The HyperLogLog algorithm uses a sketching data structure that consists of $\symNumReg$ registers. For performance reasons the number of registers is chosen to be a power of 2: $\symNumReg = 2^\symPrecision$. $\symPrecision$ is the precision that directly influences the relative error which scales like $1/\sqrt{\symNumReg}$. All registers start with initial value 0. The HyperLogLog algorithm successively increases the register values up to a maximum value limited by the space per register which is usually between 5 and 8 bits. 
+The HyperLogLog algorithm uses a sketching data structure that consists of $\symNumReg$ registers. For performance reasons the number of registers is chosen to be a power of 2: $\symNumReg = 2^\symPrecision$. $\symPrecision$ is the precision that directly influences the relative error which scales like $1/\sqrt{\symNumReg}$. All registers start with initial value 0. Each element insertion potentially increases the value of one of these registers. The maximum value a register can reach is a natural bound given either by the output size of the used hash algorithm or the space that is reserved for a single register. Common implementations allocate up to 8 bits per register.
 
 \subsection{Data element insertion}
 \label{sec:data_element_insertion}
@@ -124,11 +111,14 @@ In order to insert a data element into a HyperLogLog data structure a hash value
 
 A HyperLogLog sketch can be characterized by the parameter pair $(\symPrecision, \symRegRange)$. The first parameter controls the relative error while the second defines the possible value range of a register. A register can take all values starting from 0 to $\symRegRange+1$, inclusively. 
 
-The number of bits of the consumed hash value $\symPrecision+\symRegRange$ limit the maximum cardinality that can be tracked. Obviously, if the cardinality reaches values in the order of $2^{\symPrecision+\symRegRange}$, hash collisions will become more apparent, which will reduce estimation accuracy drastically.
+For element insertion a hash value with bit size $\symPrecision+\symRegRange$ is required. The consumed number of bits also limits the maximum cardinality that can be tracked. Obviously, if the cardinality reaches values in the order of $2^{\symPrecision+\symRegRange}$, hash collisions will become more apparent and the estimation accuracy is drastically reduced.
 
 At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with parameters $(\symPrecision, \symRegRange)$ can be compressed into a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied. This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
 
-Note that a $(\symPrecision, 0)$-HyperLogLog sketch corresponds to a bit array as used by linear counting \cite{Whang1990}. In this case each register value is represented by a single bit. Hence, linear counting can be regarded as a special case of the HyperLogLog algorithm ($\symRegRange = 0$).
+\cref{alg:insert} has some properties which are especially useful in distributed environments. The insertion order of elements has no influence on the final HyperLogLog sketch. Furthermore, HyperLogLog sketches with same parameters $(\symPrecision, \symRegRange)$ can be easily merged. The resulting register values are simply the register-wise maximum values. The final HyperLogLog sketch corresponds to the union of both sets that have been represented by the input sketches. 
+
+A $(\symPrecision, 0)$-HyperLogLog sketch corresponds to a bit array as used by linear counting \cite{Whang1990}. In this case each register value is represented by a single bit. Hence, linear counting can be regarded as a special case of the HyperLogLog algorithm ($\symRegRange = 0$).
+
 
 \begin{algorithm}
 \caption{Insertion of a data element $\symDataItem$ into a HyperLogLog data structure that consists of $\symNumReg=2^\symPrecision$ registers $\vec{\symRegVal} = (\symRegVal_1,\ldots,\symRegVal_\symNumReg$) which are initialized to 0 and which can represent any integer in range $[0, \symRegRange+1]$.}
@@ -221,6 +211,7 @@ e^{-\frac{\symPoissonRate}{\symNumReg 2^\symRegVal}} & 0\leq \symRegVal \leq \sy
 \end{equation}
 
 \subsection{Depoissonization}
+\label{sec:depoissonization}
 Due to the simpler probability mass function, it is easier to find an estimator $\symPoissonRateEstimate = \symPoissonRateEstimate(\vec{\symRegValVariate})$ for the Poisson rate $\symPoissonRate$ rather than for the cardinality $\symCardinality$ in the fixed-size model \eqref{equ:multinomialProbabilityMass}. Here $\vec{\symRegValVariate}$ denotes the vector of all observed register values. $\vec{\symRegValVariate}$ is distributed according to \eqref{equ:multinomialProbabilityMass}. Depoissonization \cite{Jacquet1998} finally allows to translate the estimates back to the fixed-size model. Assume we have found an unbiased estimator for the Poisson rate
 \begin{equation}
 \symExpectation(\symPoissonRateEstimate\vert\symPoissonRate) = \symPoissonRate
@@ -554,7 +545,7 @@ which is almost identical to the linear counting estimator used for the small ra
 The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range for $\symCount_0$ and $\symCount_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, it is possible to precalculate the function values for all possible arguments and keep them in lookup tables of size $\symNumReg+1$. 
 
 \begin{algorithm}
-\caption{Cardinality estimation algorithm based on the corrected raw estimate.}
+\caption{Cardinality estimation algorithm based on the corrected raw estimator.}
 \label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\vec{\symCount}$}
@@ -671,10 +662,11 @@ The numbers do not yet include the required processing time to extract the multi
 \end{figure}
 
 \section{Maximum likelihood estimation}
+We know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. We know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
 
-The maximum likelihood method was already applied to HyperLogLog sketches in \cite{Clifford2012}. However, there, a different element insertion algorithm was assumed that works with time complexity $\symBigO(\symNumReg)$, because each register calculates its own hash value from the inserted element and updates its current value accordingly. In comparison, \cref{alg:insert} uses only a single hash value that defines which register needs to be updated. As a consequence, the register values are statistically dependent, and the Poisson approximation is needed to make the register values statistically independent, which allows the factorization of the joint probability distribution of all register values.
+We are not the first applying the maximum likelihood method to HyperLogLog sketches \cite{Clifford2012}. However, there a different element insertion algorithm was considered, which is very inefficient in practice due to its $\symBigO(\symNumReg)$ runtime complexity. Each register has its own hash function which is applied to the inserted element. The result is used to update the corresponding register. The advantage is that the register values are statistically independent in this case, which allows factorization of the joint probability distribution of all register values. 
 
-In the following we derive a new robust and efficient cardinality estimation algorithm that is based on the maximum likelihood method. Furthermore, we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimate \eqref{alg:estimate_original} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
+In contrast, \cref{alg:insert} uses what is also called stochastic averaging. Instead of iterating through all registers, a single hash value is used, to select a single register and to update its value. Since the register values are statistically dependent in this case, the maximum likelihood method is much more complicated to apply. However, with the help of the Poisson approximation we are finally able to derive a new robust and efficient cardinality estimation algorithm. Furthermore, we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimate \eqref{alg:estimate_original} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
 
 \subsection{Log-likelihood function}
 
@@ -1656,7 +1648,7 @@ If $\symHelper_1$ is approximated by $\tilde{\symHelper}_1 = \symHelper_1\left(1
 \begin{equation}
 \label{equ:h2_approx}
 \tilde{\symHelper}_2 = 
-\frac{\symX+2\tilde{\symHelper}_1(1-\tilde{\symHelper}_1)}{\symX+2(1-\tilde{\symHelper_1})}
+\frac{\symX+2\tilde{\symHelper}_1(1-\tilde{\symHelper}_1)}{\symX+2(1-\tilde{\symHelper}_1)}
 \end{equation}
 The corresponding relative error $\symError_2$ is given by
 \begin{equation}
