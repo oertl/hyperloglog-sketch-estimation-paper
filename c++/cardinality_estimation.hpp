@@ -209,8 +209,8 @@ class CorrectedRawEstimator {
             numIterations += 1;
             x = std::sqrt(x);
             zPrime = z;
-            z += (1 - x)*x*y;
             y *= 0.5;
+            z += (1 - x)*x*y;
         } while(zPrime < z);
         return z;
     }
@@ -228,7 +228,7 @@ class CorrectedRawEstimator {
         int numIterations;
         std::vector<double> result(m+1);
         for (int c = 0; c <= m; ++c) {
-            result[c] = 0.5 * m * tau(static_cast<double>(m-c)/static_cast<double>(m), numIterations);
+            result[c] = m * tau(static_cast<double>(m-c)/static_cast<double>(m), numIterations);
         }
         return result;
     }
@@ -243,7 +243,7 @@ public:
         numSmallCorrectionIterations = 0;
         numLargeCorrectionIterations = 0;
 
-        double z = 0.5 * m * tau(static_cast<double>(m-c[q+1])/static_cast<double>(m), numLargeCorrectionIterations);
+        double z = m * tau(static_cast<double>(m-c[q+1])/static_cast<double>(m), numLargeCorrectionIterations);
         for (int k = q; k >= 1; --k) {
             z += c[k];
             z *= 0.5;
