@@ -333,7 +333,7 @@ The relative estimation error for the original method is shown in \cref{fig:orig
 
 The large range correction is not satisfying either as it does not reduce the estimation error. Quite the contrary, it even increases the estimation error. However, instead of underestimating the cardinalities, they are now overestimated. Another indication for the incorrectness of the proposed large range correction \eqref{equ:large_range_estimate} is the fact that it is not even defined for all possible states. For instance, consider a $(\symPrecision,\symRegRange)$-HyperLogLog sketch with $\symPrecision+\symRegRange=32$ for which all registers are equal to the maximum possible value $\symRegRange+1$. The raw estimate would be $\symCardinalityRawEstimate = \symAlpha_\symNumReg 2^{33}$, which is greater than $2^{32}$ and outside of the domain of the large range correction.
 
-A simple approach to avoid the need of any large range correction is to extend the operating range of the raw estimator to larger cardinalities. This can be accomplished by using hash values with more bits $(\symPrecision+\symRegRange>32)$. The drawback is that 5-bit registers are no longer sufficient to represent all possible values in the range $[0, \symRegRange+1]$, if $\symRegRange \geq 30$. For HyperLogLog sketches with 6-bit registers in combination with 64-bit hash values $(\symPrecision+\symRegRange=64)$ as proposed in \cite{Heule2013}, it is unrealistic in practice to encounter cardinalities of order $2^{64}$, which would require some correction.
+A simple approach to avoid the need of any large range correction is to extend the operating range of the raw estimator to larger cardinalities. This can be accomplished by using hash values with more bits $(\symPrecision+\symRegRange>32)$. The drawback is that 5-bit registers are no longer sufficient to represent all possible values in the range $[0, \symRegRange+1]$ in case $\symRegRange \geq 30$. For HyperLogLog sketches with 6-bit registers in combination with 64-bit hash values $(\symPrecision+\symRegRange=64)$ as proposed in \cite{Heule2013}, it is unrealistic in practice to encounter cardinalities of order $2^{64}$, which would require some correction.
 
 %\begin{algorithm}
 %\caption{Calculate the sufficient statistic $\vec{\symCount}=(\symCount_0, \ldots,\symCount_{\symRegRange+1})$ for given register values $\vec{\symRegVal} = (\symRegVal_1,\ldots,\symRegVal_\symNumReg)$.}
@@ -647,6 +647,7 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \end{figure}
 
 \subsection{Performance}
+\label{sec:corrected_raw_estimation_algorithm}
 In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the precalculated multiplicity vectors of 1000 randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. 
 
 The results show that the execution times are nearly constant for $\symRegRange=52$. Using the lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed, because $\symCount_{53}$ is equal to zero with high probability for realistic cardinalities.
@@ -1011,11 +1012,10 @@ All these optimizations together finally give the new cardinality estimation alg
 
 \subsection{Estimation error}
 \label{sec:maximum_likelihood_estimation_error}
-As in \cref{sec:corrected_raw_estimation_error}, where we have validated the corrected raw estimation algorithm, we ran again tests using the maximum likelihood estimation algorithm for different HyperLogLog parameters.
+In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the corrected raw estimation algorithm. \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16},\cref{fig:estimation_error_22_10},\cref{fig:estimation_error_12_52}, and \cref{fig:estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
 
+What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:estimation_error_22_10}).
 
-
-see \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16},\cref{fig:estimation_error_22_10},\cref{fig:estimation_error_12_52},\cref{fig:estimation_error_12_14}
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_12_20}
@@ -1059,8 +1059,7 @@ see \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{f
 \end{figure}
 
 \subsection{Performance}
-see \cref{fig:avg_exec_time}
-%In order to prove that the new algorithm is not only accurate, but also fast, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded the multiplicity vectors of 1000 precalculated and randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the new estimation algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. As can be seen, the average calculation time did never exceed 700\,ns. 
+We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time shows a different behavior over the cardinality than those of the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}). As can be seen, the average calculation time is longer for most cardinalities, but nevertheless it never exceeds 700\,ns which is still fast enough for many applications.
 
 \begin{figure}
 \centering
@@ -1755,7 +1754,7 @@ Due to \eqref{equ:abs_error_helper} there exists some $\symAlpha \in [-\symError
 =
 \symNumReg-\symCount_0
 \end{multline}
-For $\symX \geq 0$ $\symHelper'(\symX)\in[0,0.5]$. Hence, there exists a $\symBeta\in[0,0.5]$ for which
+Since $\symHelper'(\symX)\in[0,0.5]$ for $\symX \geq 0$, there exists a $\symBeta\in[0,0.5]$ for which
 \begin{multline}
 \label{equ:appendix3}
 \symXEstimate\left(1+\symError_\symX\right)\sum_{\symRegVal=0}^\symRegRange \frac{\symCount_\symRegVal}{2^\symRegVal}+
