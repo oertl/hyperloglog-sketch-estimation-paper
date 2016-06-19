@@ -1,5 +1,5 @@
 # New cardinality estimation algorithms for HyperLogLog sketches
-[Paper](https://docs.google.com/viewer?url=https://github.com/oertl/hyperloglog-sketch-estimation-paper/raw/master/paper/paper.pdf) about the estimation of cardinalities from HyperLogLog sketches. (Work is still in progress.)
+[Paper](http://oertl.github.io/hyperloglog-sketch-estimation-paper/paper.pdf) about the estimation of cardinalities from HyperLogLog sketches. (Work is still in progress.)
 
 ## Abstract
 This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically founded extension to the original estimate is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle another unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum-likelihood method is also appropriate to improve cardinality estimates of set intersections compared to the inclusion-exclusion principle. The new methods are demonstrated and verified by extensive simulations.
