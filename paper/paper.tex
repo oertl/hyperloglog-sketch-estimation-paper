@@ -50,7 +50,7 @@
 \symDefine{\symIntegerVariate}{Z}
 \symDefine{\symCardinality}{n}
 \symDefine{\symCardinalityEstimate}{\hat{\symCardinality}}
-\symDefine{\symCardinalityOriginalEstimate}{\symCardinalityEstimate_\text{raw}}
+\symDefine{\symCardinalityRawEstimate}{\symCardinalityEstimate_\text{raw}}
 \symDefine{\symError}{\varepsilon}
 \symDefine{\symStopDelta}{\delta}
 \symDefine{\symStopEpsilon}{\varepsilon}
@@ -242,7 +242,7 @@ The original cardinality estimate \cite{Flajolet2007} is based on the idea that 
 In the history of the HyperLogLog algorithm different averaging techniques have been proposed. First, there was the LogLog algorithm using the geometric mean and the SuperLogLog algorithm that enhanced the estimate by truncating the largest register values before applying the geometric mean \cite{Durand2003}. Finally, the harmonic mean was found to give even better estimates as it is inherently less sensitive to outliers. The result is the so-called raw estimator and given by
 \begin{equation}
 \label{equ:intermediate_estimate}
-\symCardinalityOriginalEstimate
+\symCardinalityRawEstimate
 = 
 \frac{\symAlpha_\symNumReg \symNumReg^2}{\sum_{\symIndexJ=1}^{\symNumReg}2^{-\symRegVal_\symIndexJ}}
 = 
@@ -275,14 +275,14 @@ As mentioned in \cref{sec:data_element_insertion}, a HyperLogLog sketch with par
 \label{equ:small_range_estimate}
 \symCardinalityEstimate_\text{small} = \symNumReg \log(\symNumReg/\symCount_0).
 \end{equation}
-The corresponding relative estimation error as depicted in \cref{fig:small_range_estimate} shows that this estimator is convenient for small cardinalities. It was proposed to use this small-range estimator as long as $\symCardinalityOriginalEstimate \leq \frac{5}{2}\symNumReg$ where the factor $\frac{5}{2}$ was empirically determined \cite{Flajolet2007}. 
+The corresponding relative estimation error as depicted in \cref{fig:small_range_estimate} shows that this estimator is convenient for small cardinalities. It was proposed to use this small-range estimator as long as $\symCardinalityRawEstimate \leq \frac{5}{2}\symNumReg$ where the factor $\frac{5}{2}$ was empirically determined \cite{Flajolet2007}. 
 
 For large cardinalities in the order of $2^{\symPrecision+\symRegRange}$, for which a lot of registers are already in a saturated state meaning that they have reached the maximum possible value $\symRegRange + 1$, the raw estimator underestimates the cardinalities. For the 32-bit hash value case $(\symPrecision+\symRegRange=32)$ which was considered in \cite{Flajolet2007}, following correction formula was proposed to take these saturated registers into account
 \begin{equation}
 \label{equ:large_range_estimate}
 \symCardinalityEstimate_\text{large}
 =
--2^{32}\log\!\left(1-\symCardinalityOriginalEstimate/2^{32}\right).
+-2^{32}\log\!\left(1-\symCardinalityRawEstimate/2^{32}\right).
 \end{equation}
 The original estimation algorithm as presented in \cite{Flajolet2007} including small and large range corrections is summarized by \cref{alg:estimate_original}. 
 \begin{algorithm}
@@ -291,24 +291,24 @@ The original estimation algorithm as presented in \cite{Flajolet2007} including 
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\vec{\symRegVal}$}
 \State $\symNumReg \gets \dim \vec{\symRegVal}$
-\State $\symCardinalityOriginalEstimate = \symAlpha_\symNumReg \symNumReg^2\left(\sum_{\symIndexJ=1}^\symNumReg 2^{-\symRegVal_\symIndexJ}\right)^{-1}$
+\State $\symCardinalityRawEstimate = \symAlpha_\symNumReg \symNumReg^2\left(\sum_{\symIndexJ=1}^\symNumReg 2^{-\symRegVal_\symIndexJ}\right)^{-1}$
 \Comment raw estimate \eqref{equ:intermediate_estimate}
-\If{$\symCardinalityOriginalEstimate\leq \frac{5}{2}\symNumReg$}
+\If{$\symCardinalityRawEstimate\leq \frac{5}{2}\symNumReg$}
 \State $\symCount_0 = \left|\{\symIndexJ |\symRegVal_\symIndexJ=0\}\right|$
 \If{$\symCount_0\neq0$}
 \State \Return $\symNumReg \log(\symNumReg / \symCount_0)$ \Comment small range correction \eqref{equ:small_range_estimate}
 \Else
-\State \Return $\symCardinalityOriginalEstimate$
+\State \Return $\symCardinalityRawEstimate$
 \EndIf
-\ElsIf{$\symCardinalityOriginalEstimate\leq \frac{1}{30}2^{32}$}
-\State \Return $\symCardinalityOriginalEstimate$
+\ElsIf{$\symCardinalityRawEstimate\leq \frac{1}{30}2^{32}$}
+\State \Return $\symCardinalityRawEstimate$
 \Else
-\State\Return $-2^{32}\log(1-\symCardinalityOriginalEstimate/2^{32})$\Comment large range correction \eqref{equ:large_range_estimate}
+\State\Return $-2^{32}\log(1-\symCardinalityRawEstimate/2^{32})$\Comment large range correction \eqref{equ:large_range_estimate}
 \EndIf
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
-The relative estimation error for the original method is shown in \cref{fig:original_estimate}. Unfortunatley, as can be clearly seen, the ranges where the estimation error is small for $\symCardinalityOriginalEstimate$ and $\symCardinalityEstimate_\text{small}$ do not overlap. Therefore, the estimation error is much larger near the transition region. To reduce the estimation error for cardinalities close to this region, it was proposed to correct $\symCardinalityOriginalEstimate$ for bias. Empirically collected bias correction data is either stored as set of interpolation points \cite{Heule2013}, as lookup table \cite{Rhodes2015}, or as best-fitting polynomial \cite{Sanfilippo2014}. However, all these empirical approaches treat the symptom and not the cause.
+The relative estimation error for the original method is shown in \cref{fig:original_estimate}. Unfortunatley, as can be clearly seen, the ranges where the estimation error is small for $\symCardinalityRawEstimate$ and $\symCardinalityEstimate_\text{small}$ do not overlap. Therefore, the estimation error is much larger near the transition region. To reduce the estimation error for cardinalities close to this region, it was proposed to correct $\symCardinalityRawEstimate$ for bias. Empirically collected bias correction data is either stored as set of interpolation points \cite{Heule2013}, as lookup table \cite{Rhodes2015}, or as best-fitting polynomial \cite{Sanfilippo2014}. However, all these empirical approaches treat the symptom and not the cause.
 
 \begin{figure}
 \centering
@@ -331,9 +331,9 @@ The relative estimation error for the original method is shown in \cref{fig:orig
 \label{fig:original_estimate}
 \end{figure}
 
-The large range correction is not satisfying either as it does not reduce the estimation error. Quite the contrary, it even increases the estimation error. However, instead of underestimating the cardinalities, they are now overestimated. Another indication for the incorrectness of the proposed large range correction \eqref{equ:large_range_estimate} is the fact that it is not even defined for all possible states. For instance, consider a $(\symPrecision,\symRegRange)$-HyperLogLog sketch with $\symPrecision+\symRegRange=32$ for which all registers are equal to the maximum possible value $\symRegRange+1$. The raw estimate would be $\symCardinalityEstimate_\text{raw} = \symAlpha_\symNumReg 2^{33}$, which is greater than $2^{32}$ and outside of the domain of the large range correction.
+The large range correction is not satisfying either as it does not reduce the estimation error. Quite the contrary, it even increases the estimation error. However, instead of underestimating the cardinalities, they are now overestimated. Another indication for the incorrectness of the proposed large range correction \eqref{equ:large_range_estimate} is the fact that it is not even defined for all possible states. For instance, consider a $(\symPrecision,\symRegRange)$-HyperLogLog sketch with $\symPrecision+\symRegRange=32$ for which all registers are equal to the maximum possible value $\symRegRange+1$. The raw estimate would be $\symCardinalityRawEstimate = \symAlpha_\symNumReg 2^{33}$, which is greater than $2^{32}$ and outside of the domain of the large range correction.
 
-A simple approach to avoid the large range correction at all is the use of larger hash values $(\symPrecision+\symRegRange>32)$ which shift the biased region of $\symCardinalityOriginalEstimate$ to higher cardinalities. However, in case $\symRegRange \geq 30$ 6-bit registers as used in \cite{Heule2013} are required to allow representing all values in the range $[0, \symRegRange+1]$. If 64-bit hash values are used as proposed in \cite{Heule2013} $(\symPrecision+\symRegRange=64)$, a correction for large cardinalities can be circumvented. Cardinalities in the order of $2^{64}$ for which saturated registers become a problem never occur in practice.
+A simple approach to avoid the need of any large range correction is to extend the operating range of the raw estimator to larger cardinalities. This can be accomplished by using hash values with more bits $(\symPrecision+\symRegRange>32)$. The drawback is that 5-bit registers are no longer sufficient to represent all possible values in the range $[0, \symRegRange+1]$, if $\symRegRange \geq 30$. For HyperLogLog sketches with 6-bit registers in combination with 64-bit hash values $(\symPrecision+\symRegRange=64)$ as proposed in \cite{Heule2013}, it is unrealistic in practice to encounter cardinalities of order $2^{64}$, which would require some correction.
 
 %\begin{algorithm}
 %\caption{Calculate the sufficient statistic $\vec{\symCount}=(\symCount_0, \ldots,\symCount_{\symRegRange+1})$ for given register values $\vec{\symRegVal} = (\symRegVal_1,\ldots,\symRegVal_\symNumReg)$.}
@@ -374,7 +374,7 @@ e^{-\frac{\symPoissonRate}{\symNumReg} 2^{-\symRegVal}}
 2^{\symRegVal}
 e^{-\frac{\symPoissonRate}{\symNumReg} 2^{\symRegVal}}
 =
-\frac{\symAlpha_\infty\,\symNumReg\,\symPowerSeriesFunc\!\left(\log_2\!\left( \frac{\symPoissonRate}{\symNumReg}\right)\right)}{\symPoissonRate},
+\frac{\symAlpha_\infty\,\symNumReg\,\symPowerSeriesFunc\!\left(\log_2\!\left(\symPoissonRate/\symNumReg\right)\right)}{\symPoissonRate},
 \end{multline}
 where the function 
 \begin{equation}
@@ -396,20 +396,20 @@ e^{-2^{\symRegVal+\symX}}
 
 Let $\symRegVal_1,\ldots,\symRegVal_\symNumReg$ be a sample taken from \eqref{equ:assumed_register_val_distribution}. For large sample sizes $\symNumReg\rightarrow \infty$ we have asymptotically
 \begin{equation}
-\symExpectation\left(
+\symExpectation\!\left(
 \frac{1}{2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}}
 \right)
 \underset{\symNumReg\rightarrow \infty}{=}
 \frac{1}{\symExpectation
-\left(2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}\right)}
+\!\left(2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}\right)}
 =
-\frac{1}{\symNumReg \symExpectation\left(2^{-\symRegVal}\right)}.
+\frac{1}{\symNumReg \symExpectation\!\left(2^{-\symRegVal}\right)}.
 \end{equation}
 Together with \eqref{equ:expectation_power_two} we obtain
 \begin{equation}
 \symPoissonRate
 =
-\symExpectation\left(
+\symExpectation\!\left(
 \frac{\symAlpha_\infty\,\symNumReg^2\,\symPowerSeriesFunc\!\left(\log_2\!\left( \symPoissonRate/\symNumReg\right)\right)}{2^{-\symRegVal_1}+\ldots+2^{-\symRegVal_\symNumReg}}
 \right)
 \quad
@@ -444,10 +444,10 @@ As we have already seen in \cref{fig:raw_estimate}, the raw estimator does not w
 \symCount_{\symRegRange+1} &= \textstyle\sum_{\symRegVal = \symRegRange + 1}^{\infty} \symCount'_\symRegVal.
 \end{aligned}
 \end{equation}
-Obviously, as long as $\symCount_0\approx\symCount'_0$ and  $\symCount'_{\symRegRange+1}\approx\symCount_{\symRegRange+1}$ the set of register values is similar to the originating sample. In case $\symCount_0=0$ and $\symCount_{\symRegRange+1}=0$, which implies $\symCount_\symRegVal=0$ for $\symRegVal\leq0$ and $\symRegVal\geq\symRegRange+1$, we can even be sure that the register values are identical to the originating sample. However, for small and large cardinalities $\symCount_0$ and $\symCount_{\symRegRange+1}$ approach $\symNumReg$, respectively, and the raw estimator needs to be corrected.
+Obviously, as long as $\symCount_0\ll\symNumReg$ and  $\symCount_{\symRegRange+1}\ll\symNumReg$ the set of register values is similar to the originating sample. In case $\symCount_0=0$ and $\symCount_{\symRegRange+1}=0$, which implies $\symCount'_\symRegVal=0$ for $\symRegVal\leq0$ and $\symRegVal\geq\symRegRange+1$, we can even be sure that the register values are identical to the originating sample. This explains why the raw estimator only works well in the intermediate cardinality range for which $\symCount_0$ and $\symCount_{\symRegRange+1}$ are negligible.
 
 \subsection{Corrections to the raw estimator}
-Given a HyperLogLog sketch with multiplicity vector $\vec{\symCount}$, we try to find estimates $\hat{\symCount}'_\symRegVal$ for $\symCount'_\symRegVal$ for all $\symRegVal\in\mathbb{Z}$ and use them instead in the estimation formula \eqref{equ:raw_estimate_with_multiplicities}. For $\symRegVal\in[1,\symRegRange]$ where $\symCount_\symRegVal = \symCount'_\symRegVal$ we have the trivial estimators 
+Given a HyperLogLog sketch with multiplicity vector $\vec{\symCount}=\left(\symCount_0,\ldots,\symCount_{\symRegRange+1}\right)$, we try to find estimates $\hat{\symCount}'_\symRegVal$ for $\symCount'_\symRegVal$ for all $\symRegVal\in\mathbb{Z}$ and replace them in the estimation formula \eqref{equ:raw_estimate_with_multiplicities}. For $\symRegVal\in[1,\symRegRange]$ where $\symCount_\symRegVal = \symCount'_\symRegVal$ we can use the trivial estimators 
 \begin{equation}
 \hat{\symCount}'_\symRegVal := \symCount_\symRegVal,\quad 1\leq\symRegVal\leq\symRegRange.
 \end{equation}
@@ -592,6 +592,7 @@ The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardin
 \end{algorithm}
 
 \subsection{Estimation error}
+\label{sec:corrected_raw_estimation_error}
 In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLog sketches and inserted up to 50 billion unique elements. Assuming a strong universal hash function, element hash values can be mocked by random numbers. For the following results we used the Mersenne Twister random number generator with 19937 bit state size from the C++ standard library.
 
 \cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}) or the original method (\cref{fig:original_estimate}).
@@ -603,7 +604,7 @@ In order to verify the new estimation algorithm, we generated 10\,000 HyperLogLo
 \label{fig:raw_corrected_estimation_error_12_20}
 \end{figure}
 
-The new estimation algorithm also works well for other HyperLogLog configurations. First we considered the original HyperLogLog algorithm that used a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_16_16}, and \cref{fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives essentially unbiased estimates. Only for very large precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
+The new estimation algorithm also works well for other HyperLogLog configurations. First we considered configurations using a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_16_16}, and \cref{fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives essentially unbiased estimates. Only for very large precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
 
 \begin{figure}
 \centering
@@ -834,7 +835,7 @@ Again, inserting $\symXEstimate$ and transformation gives
 \symXEstimate
 \leq
 2^{\symRegVal'_\text{max}}
-\log\left(
+\log\!\left(
 1+
 \frac{\symNumReg-\symCount_0}
 {
@@ -853,7 +854,7 @@ as upper bound which can be weakened using $\log(1+\symX)\leq \symX$ for $\symX\
 {\sum_{\symRegVal=0}^{\symRegRange}
 \frac{\symCount_\symRegVal}{2^\symRegVal}}.
 \end{equation}
-Note, if the HyperLogLog sketch is in the intermediate range, where $\symCount_0=\symCount_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor from the raw estimate \eqref{equ:intermediate_estimate}. Hence, the maximum likelihood method leads directly to the harmonic mean that is used by the raw estimator. If $\symCount_0>0$ or $\symCount_{\symRegRange+1}>0$ the bounds do no longer follow the harmonic mean and this is also the reason why the raw estimator fails for small and large cardinalities.
+If the HyperLogLog sketch is in the intermediate range, where $\symCount_0=\symCount_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor from the raw estimator \eqref{equ:intermediate_estimate}. Hence, the maximum likelihood method leads directly to the harmonic that is used by the raw estimator.
 
 \subsection{Computation of the maximum likelihood estimate}
 Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and the secant method, converge to the root, if the function is negative for the starting points. In the following we start from the secant method to derive the new cardinality estimation algorithm. Even though the secant method has the disadvantage of slower convergence, a single iteration is simpler to calculate as it does not require the evaluation of the first derivative.
@@ -885,7 +886,7 @@ the iteration scheme can also be written as
 \frac{\left(\symNumReg-\symCount_0\right)-\symFuncPrime(\symX_{\symIndexI-1})}{\symFuncPrime(\symX_{\symIndexI-1}) - \symFuncPrime(\symX_{\symIndexI-2})}\\
 \symX_{\symIndexI} = \symX_{\symIndexI-1} + \Delta\symX_{\symIndexI}
 \end{gather}
-The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all following results we have used $\symStopEpsilon = 10^{-2}$.
+The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results that will follow in \cref{sec:maximum_likelihood_estimation_error} we have used $\symStopEpsilon = 10^{-2}$.
 
 \subsection{Maximum-likelihood estimation algorithm}
 In order to get a fast cardinality estimation algorithm, it is crucial to minimize the evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of the computational effort:
@@ -926,7 +927,7 @@ In case $\frac{\symX}{2^{\symRegVal'_\text{max}}} > 0.5$, the value $\frac{\symX
 All these optimizations together finally give the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}.
 
 \begin{algorithm}
-\caption{Cardinality estimation}
+\caption{Maximum likelihood cardinality estimation}
 \ContinuedFloat
 \label{alg:estimate_ml}
 \begin{algorithmic}
@@ -967,7 +968,7 @@ All these optimizations together finally give the new cardinality estimation alg
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Cardinality estimation (continued)}
+\caption{Maximum likelihood cardinality estimation (continued)}
 \begin{algorithmic}
 \algrestore{myalg}
 \State $\Delta\symX \gets \symX$
@@ -982,14 +983,14 @@ All these optimizations together finally give the new cardinality estimation alg
 \Comment Taylor approximation \eqref{equ:taylor}
 \For{$\symRegVal\gets \symE,\symRegVal'_\text{max}$}
 \State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\Comment calculate $\symHelper\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion2}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$
+\Comment calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion2}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$
 \State $\symXNormalized \gets 2\symXNormalized$
 \EndFor
 \State $\symFuncPrime \gets \symCount'\cdot\symHelper$
 \Comment compare \eqref{equ:funcprime}
 \For{$\symRegVal\gets(\symRegVal'_\text{max}-1),\symRegVal'_\text{min}$}
 \State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\Comment calculate $\symHelper\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion2}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$
+\Comment calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion2}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$
 \State $\symFuncPrime\gets \symFuncPrime + \symCount_\symRegVal\cdot\symHelper$
 \State $\symXNormalized \gets 2\symXNormalized$
 \EndFor
@@ -1009,6 +1010,10 @@ All these optimizations together finally give the new cardinality estimation alg
 \end{algorithm}
 
 \subsection{Estimation error}
+\label{sec:maximum_likelihood_estimation_error}
+As in \cref{sec:corrected_raw_estimation_error}, where we have validated the corrected raw estimation algorithm, we ran again tests using the maximum likelihood estimation algorithm for different HyperLogLog parameters.
+
+
 
 see \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16},\cref{fig:estimation_error_22_10},\cref{fig:estimation_error_12_52},\cref{fig:estimation_error_12_14}
 \begin{figure}
@@ -1072,46 +1077,46 @@ Under the Poisson model the register values are independent and identically dist
 
 The HyperLogLog sketch that represents $\symSetS_1$ could have also been obtained by constructing two HyperLogLog sketches from sets $\symSetA$ and $\symSetX$ and by merging both by taking for each register the maximum value of both sketches. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let us consider the register values $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ at a certain position of the HyperLogLog sketches for $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
 \begin{equation}
-\symRegValVariate_1 = \max\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right)
+\symRegValVariate_1 = \max\!\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right)
 ,\quad
-\symRegValVariate_2 = \max\left(\symRegValVariate_\symSetBSuffix, \symRegValVariate_\symSetXSuffix\right)
+\symRegValVariate_2 = \max\!\left(\symRegValVariate_\symSetBSuffix, \symRegValVariate_\symSetXSuffix\right)
 \end{equation}
 Their joint cumulative probability function is given as
 \begin{align}
-\symProbability\left(
+\symProbability\!\left(
 \symRegValVariate_1 \leq \symRegVal_1
 \wedge
 \symRegValVariate_2 \leq \symRegVal_2
 \right)
 &=
-\symProbability\left(
-\max\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right) \leq \symRegVal_1
+\symProbability\!\left(
+\max\!\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right) \leq \symRegVal_1
 \wedge
-\max\left(\symRegValVariate_\symSetBSuffix, \symRegValVariate_\symSetXSuffix\right) \leq \symRegVal_2
+\max\!\left(\symRegValVariate_\symSetBSuffix, \symRegValVariate_\symSetXSuffix\right) \leq \symRegVal_2
 \right)
 \nonumber\\
 &=
 \symProbability
-\left(
+\!\left(
 \symRegValVariate_\symSetASuffix \leq \symRegVal_1
 \wedge
 \symRegValVariate_\symSetBSuffix \leq \symRegVal_2
 \wedge
-\symRegValVariate_\symSetXSuffix \leq \min\left(\symRegVal_1, \symRegVal_2\right)
+\symRegValVariate_\symSetXSuffix \leq \min\!\left(\symRegVal_1, \symRegVal_2\right)
 \right)
 \nonumber\\
 &=
 \symProbability
-\left(
+\!\left(
 \symRegValVariate_\symSetASuffix \leq \symRegVal_1
 \right)
 \symProbability
-\left(
+\!\left(
 \symRegValVariate_\symSetBSuffix \leq \symRegVal_2
 \right)
 \symProbability
-\left(
-\symRegValVariate_\symSetXSuffix \leq \min\left(\symRegVal_1, \symRegVal_2\right)
+\!\left(
+\symRegValVariate_\symSetXSuffix \leq \min\!\left(\symRegVal_1, \symRegVal_2\right)
 \right)
 \end{align}
 Here the last transformation used the independence of $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$, because by definition, the sets $\symSetA$, $\symSetB$, and $\symSetX$ are disjoint. Furthermore, under the Poisson model $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ obey 
