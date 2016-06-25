@@ -652,7 +652,7 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \label{sec:corrected_raw_estimation_algorithm}
 In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded precalculated multiplicity vectors of 1000 randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions for each cardinality value. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. 
 
-The results show that the execution times are nearly constant for $\symRegRange=52$. Using a lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed, because $\symCount_{53}$ is equal to zero with high probability for realistic cardinalities.
+The results show that the execution times are nearly constant for $\symRegRange=52$. Using a lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed due to the small probability of saturated registers ($\symCount_{53}>0$) for realistic cardinalities.
 
 For the case $\symRegRange=20$ with precalculated correction values the computation time is again -- as expected -- independent of the cardinality. The faster computation times compared to the $\symRegRange=52$ case can be explained by the much smaller dimension of the multiplicity vector which is equal to $\symRegRange+2$. If the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are calculated on-demand, the execution times for larger cardinalities are doubled. This comes from the fact that the calculation of $\symLargeCorrectionFunc$ is much more expensive than that of $\symSmallCorrectionFunc$, because it requires more iterations and involves square root evaluations. However, we can imagine that a better numerical approximation of $\symLargeCorrectionFunc$ can be found than that given in \cref{alg:corrected_raw_estimation} and which allows on-demand evaluation without significant extra costs.
 
@@ -924,13 +924,13 @@ which can be optimized for numerical evaluation using Estrin's scheme and $\symX
 + \symBigO(\symX^{8})
 \end{equation}
 In fact, $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)\leq 0.5$ is almost always fulfilled as long as registers are not saturated. Using \eqref{equ:strong_upper_bound} it is straightforward to see that $\frac{\symX}{2^{\symRegVal'_\text{max}}} \leq \log 2 \approx 0.693$, if $\symCount_{\symRegRange+1}=0$.
-In case $\frac{\symX}{2^{\symRegVal'_\text{max}}} > 0.5$, the value $\frac{\symX}{2^{\symE+1}}$ is taken instead, where $\symE$ is the exponent of the floating point representation of $\symX$, $\symE = 1+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symE+1}}\leq 0.5$ which allows using the Taylor approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is finally obtained after $\symE + 1 -\symRegVal'_\text{max}$ iterations using \eqref{equ:helper_recursion2}.
+In case $\frac{\symX}{2^{\symRegVal'_\text{max}}} > 0.5$, the value $\frac{\symX}{2^{\symE+1}}$ is taken instead, where $\symE$ is the exponent of the floating point representation of $\symX$, $\symE = 1+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symE+1}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegVal'_\text{max}}}\right)$ is finally obtained after $\symE + 1 -\symRegVal'_\text{max}$ iterations using \eqref{equ:helper_recursion2}.
 \end{itemize}
 
 All these optimizations together finally give the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}.
 
 \begin{algorithm}
-\caption{Maximum likelihood cardinality estimation}
+\caption{Maximum likelihood cardinality estimation.}
 \ContinuedFloat
 \label{alg:estimate_ml}
 \begin{algorithmic}
@@ -971,7 +971,7 @@ All these optimizations together finally give the new cardinality estimation alg
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Maximum likelihood cardinality estimation (continued)}
+\caption{Maximum likelihood cardinality estimation (continued).}
 \begin{algorithmic}
 \algrestore{myalg}
 \State $\Delta\symX \gets \symX$
@@ -1014,59 +1014,59 @@ All these optimizations together finally give the new cardinality estimation alg
 
 \subsection{Estimation error}
 \label{sec:maximum_likelihood_estimation_error}
-In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the corrected raw estimation algorithm. \cref{fig:estimation_error_12_20}, \cref{fig:estimation_error_8_24}, \cref{fig:estimation_error_16_16},\cref{fig:estimation_error_22_10},\cref{fig:estimation_error_12_52}, and \cref{fig:estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
+In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the corrected raw estimation algorithm. \cref{fig:max_likelihood_estimation_error_12_20}, \cref{fig:max_likelihood_estimation_error_8_24}, \cref{fig:max_likelihood_estimation_error_16_16},\cref{fig:max_likelihood_estimation_error_22_10},\cref{fig:max_likelihood_estimation_error_12_52}, and \cref{fig:max_likelihood_estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
 
-What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:estimation_error_22_10}).
+What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_12_20}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
-\label{fig:estimation_error_12_20}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
+\label{fig:max_likelihood_estimation_error_12_20}
 \end{figure}
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_8_24}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
-\label{fig:estimation_error_8_24}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
+\label{fig:max_likelihood_estimation_error_8_24}
 \end{figure}
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_16_16}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
-\label{fig:estimation_error_16_16}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
+\label{fig:max_likelihood_estimation_error_16_16}
 \end{figure}
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_22_10}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
-\label{fig:estimation_error_22_10}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
+\label{fig:max_likelihood_estimation_error_22_10}
 \end{figure}
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_12_52}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
-\label{fig:estimation_error_12_52}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
+\label{fig:max_likelihood_estimation_error_12_52}
 \end{figure}
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_estimate_12_14}
-\caption{Relative estimation error as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
-\label{fig:estimation_error_12_14}
+\caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
+\label{fig:max_likelihood_estimation_error_12_14}
 \end{figure}
 
 \subsection{Performance}
-We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time shows a different behavior over the cardinality than those of the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}). As can be seen, the average calculation time is longer for most cardinalities, but nevertheless it never exceeds 700\,ns which is still fast enough for many applications.
+We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time for the maximum likelihood algorithm shows a different behavior than for the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}). As can be seen, the average execution time is larger for most cardinalities, but nevertheless it never exceeds 700\,ns which is still fast enough for many applications.
 
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{max_likelihood_avg_exec_time}
-\caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3\,GHz when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
+\caption{Average execution time of the maximum likelihood estimation algorithm as a function of the true cardinality with an Intel Core i5-2500K clocking at 3.3\,GHz for HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
 \label{fig:avg_exec_time}
 \end{figure}
 
