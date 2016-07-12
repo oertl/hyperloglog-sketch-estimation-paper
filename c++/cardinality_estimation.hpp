@@ -93,12 +93,12 @@ public:
 
         double deltaX = x;
         while(deltaX > x*relativeErrorLimit) {
-            int e;
-            frexp(x, &e);
-            double xPrime = ldexp(x, -std::max(kMaxPrime+1, e+2));
+            int kappaMinus1;
+            frexp(x, &kappaMinus1);
+            double xPrime = ldexp(x, -std::max(kMaxPrime+1, kappaMinus1+2));
             double xPrime2 = xPrime*xPrime;
             double h = xPrime - xPrime2/3 + (xPrime2*xPrime2)*(1./45. - xPrime2/472.5);
-            for (int k = e; k >= kMaxPrime; --k) {
+            for (int k = kappaMinus1; k >= kMaxPrime; --k) {
                 double hPrime = 1. - h;
                 h = (xPrime + h*hPrime)/(xPrime+hPrime);
                 xPrime += xPrime;
@@ -175,6 +175,32 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
     double alpha = getAlpha(m);
     return (alpha*m)*m/z;
 }
+
+class OptimalLinearCountingEstimator {
+
+    const int p;
+    const int m = 1 << p;
+    const std::vector<double> results = initResults(m);
+
+    static std::vector<double> initResults(int m) {
+
+        std::vector<double> results(m+1);
+        results[m] = 0;
+        for (int c = m-1; c >= 0; --c) {
+            results[c] = results[c + 1] + m/(double)c; 
+        }
+        return results;
+    }
+
+public:
+
+    OptimalLinearCountingEstimator(const int p_) : p(p_) {}
+
+    double operator()(const std::vector<int>& c) const {
+        return results[c[0]];
+    }
+};
+
 
 class CorrectedRawEstimator {
     const int p;
@@ -423,9 +449,14 @@ void eval_joint_log_likelihood_function_and_derivatives(
 
     for (int k = q; k >= 0; --k) {
         double pow2k = std::ldexp(1., -k);
-        term1a += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*2+k]+jointStatistic[(q+2)*4+k]) * pow2k;
-        term1b += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*1+k]+jointStatistic[(q+2)*3+k]) * pow2k;
-        term1x += (jointStatistic[(q+2)*0+k]+jointStatistic[(q+2)*2+k]+jointStatistic[(q+2)*3+k]) * pow2k;
+        const int cCenter = jointStatistic[(q+2)*0+k];
+        const int cUp     = jointStatistic[(q+2)*1+k];
+        const int cRight  = jointStatistic[(q+2)*2+k];
+        const int cDown   = jointStatistic[(q+2)*3+k];
+        const int cLeft   = jointStatistic[(q+2)*4+k];
+        term1a += (cCenter + cRight + cLeft) * pow2k;
+        term1b += (cCenter + cUp + cDown) * pow2k;
+        term1x += (cCenter + cRight + cDown) * pow2k;
     }
 
     for (int k = q+1; k >= 1; --k) {

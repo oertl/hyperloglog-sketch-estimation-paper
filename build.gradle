@@ -352,7 +352,10 @@ task pdflatex3(type: Exec) {
         "$project.paperDir/raw_corrected_estimate_22_10.pdf_tex",
         "$project.paperDir/power-series-function-minus-1.pdf",
         "$project.paperDir/power-series-function-minus-1.pdf_tex",
-        "$project.paperDir/max_errror_propagation_factor.txt"
+        "$project.paperDir/max_errror_propagation_factor1.txt",
+        "$project.paperDir/max_errror_propagation_factor2.txt",
+        "$project.paperDir/max_errror_propagation_factor3.txt",
+        "$project.paperDir/max_errror_propagation_factor4.txt"
     outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
@@ -363,7 +366,10 @@ task pdflatex3(type: Exec) {
 task calculateMaxErrorPropagationFactor(type: Exec) {
     workingDir project.pythonDir
     inputs.files "$project.pythonDir/recursion-stability.py"
-    outputs.files "$project.paperDir/max_errror_propagation_factor.txt"
+    outputs.files "$project.paperDir/max_errror_propagation_factor1.txt",
+        "$project.paperDir/max_errror_propagation_factor2.txt",
+        "$project.paperDir/max_errror_propagation_factor3.txt",
+        "$project.paperDir/max_errror_propagation_factor4.txt"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'recursion-stability.py'
 }

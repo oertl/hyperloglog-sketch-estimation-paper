@@ -61,8 +61,8 @@ ax_time.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_time.set_xlabel("cardinality")
 ax_time.set_ylabel("time (ns)")
 
-ax_time.plot(cardinalities_12_20, max_likelihood_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20')
-ax_time.plot(cardinalities_12_52, max_likelihood_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52')
+ax_time.plot(cardinalities_12_20, max_likelihood_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
+ax_time.plot(cardinalities_12_52, max_likelihood_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
 
 ax_time.legend(loc=2,prop={'size':12})
 
@@ -78,10 +78,10 @@ ax_time.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_time.set_xlabel("cardinality")
 ax_time.set_ylabel("time (ns)")
 
-ax_time.plot(cardinalities_12_20, corrected_raw_1_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20 on-demand')
-ax_time.plot(cardinalities_12_52, corrected_raw_1_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52 on-demand')
-ax_time.plot(cardinalities_12_20, corrected_raw_2_avg_exec_time_nanos_12_20, color='red', linestyle='-',linewidth=1.0, label='p=12 q=20 precalculated')
-ax_time.plot(cardinalities_12_52, corrected_raw_2_avg_exec_time_nanos_12_52, color='black', linestyle='-',linewidth=1.0, label='p=12 q=52 precalculated')
+ax_time.plot(cardinalities_12_20, corrected_raw_1_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20, on-demand')
+ax_time.plot(cardinalities_12_52, corrected_raw_1_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52, on-demand')
+ax_time.plot(cardinalities_12_20, corrected_raw_2_avg_exec_time_nanos_12_20, color='red', linestyle='-',linewidth=1.0, label='p=12, q=20, precalculated')
+ax_time.plot(cardinalities_12_52, corrected_raw_2_avg_exec_time_nanos_12_52, color='black', linestyle='-',linewidth=1.0, label='p=12, q=52, precalculated')
 
 ax_time.legend(loc=2,prop={'size':12})
 
@@ -98,8 +98,8 @@ ax_out.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_out.set_xlabel("cardinality")
 ax_out.set_ylabel("outer loop iterations")
 
-ax_out.plot(cardinalities_12_20, max_likelihood_avg_outer_loop_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20')
-ax_out.plot(cardinalities_12_52, max_likelihood_avg_outer_loop_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52')
+ax_out.plot(cardinalities_12_20, max_likelihood_avg_outer_loop_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
+ax_out.plot(cardinalities_12_52, max_likelihood_avg_outer_loop_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
 
 ax_out.legend(loc=2,prop={'size':12})
 
@@ -114,8 +114,8 @@ ax_out.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_out.set_xlabel("cardinality")
 ax_out.set_ylabel("inner loop 1 iterations")
 
-ax_out.plot(cardinalities_12_20, max_likelihood_avg_inner_loop1_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20')
-ax_out.plot(cardinalities_12_52, max_likelihood_avg_inner_loop1_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52')
+ax_out.plot(cardinalities_12_20, max_likelihood_avg_inner_loop1_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
+ax_out.plot(cardinalities_12_52, max_likelihood_avg_inner_loop1_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
 
 ax_out.legend(loc=2,prop={'size':12})
 
@@ -130,8 +130,8 @@ ax_out.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_out.set_xlabel("cardinality")
 ax_out.set_ylabel("inner loop 2 iterations")
 
-ax_out.plot(cardinalities_12_20, max_likelihood_avg_inner_loop2_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20')
-ax_out.plot(cardinalities_12_52, max_likelihood_avg_inner_loop2_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52')
+ax_out.plot(cardinalities_12_20, max_likelihood_avg_inner_loop2_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
+ax_out.plot(cardinalities_12_52, max_likelihood_avg_inner_loop2_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
 
 ax_out.legend(loc=2,prop={'size':12})
 
@@ -146,8 +146,8 @@ ax_out.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_out.set_xlabel("cardinality")
 ax_out.set_ylabel("number of logarithm evaluations")
 
-ax_out.plot(cardinalities_12_20, max_likelihood_avg_log_eval_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12 q=20')
-ax_out.plot(cardinalities_12_52, max_likelihood_avg_log_eval_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12 q=52')
+ax_out.plot(cardinalities_12_20, max_likelihood_avg_log_eval_count_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
+ax_out.plot(cardinalities_12_52, max_likelihood_avg_log_eval_count_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
 
 ax_out.legend(loc=2,prop={'size':12})
 
