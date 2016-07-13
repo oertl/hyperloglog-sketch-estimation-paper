@@ -149,8 +149,8 @@ double flajoletSmallRangeEstimate(const std::vector<int>& c) {
 }
 
 double getAlpha(int m) {
-    return 1./(2.*std::log(2));
-    /*assert(m >= 16);
+    //return 1./(2.*std::log(2));
+    assert(m >= 16);
     double alpha;
     if (m == 16) {
         alpha = 0.673;
@@ -164,7 +164,7 @@ double getAlpha(int m) {
     else {
         alpha = 0.7213/(1. + 1.079/m);
     }
-    return alpha;*/
+    return alpha;
 }
 
 double flajoletRawEstimate(const std::vector<int>& c, int m) {
@@ -449,23 +449,23 @@ void eval_joint_log_likelihood_function_and_derivatives(
 
     for (int k = q; k >= 0; --k) {
         double pow2k = std::ldexp(1., -k);
-        const int cCenter = jointStatistic[(q+2)*0+k];
-        const int cUp     = jointStatistic[(q+2)*1+k];
-        const int cRight  = jointStatistic[(q+2)*2+k];
-        const int cDown   = jointStatistic[(q+2)*3+k];
-        const int cLeft   = jointStatistic[(q+2)*4+k];
-        term1a += (cCenter + cRight + cLeft) * pow2k;
-        term1b += (cCenter + cUp + cDown) * pow2k;
-        term1x += (cCenter + cRight + cDown) * pow2k;
+        const int cEqual    = jointStatistic[(q+2)*0+k];
+        const int cLarger2  = jointStatistic[(q+2)*1+k];
+        const int cSmaller1 = jointStatistic[(q+2)*2+k];
+        const int cSmaller2 = jointStatistic[(q+2)*3+k];
+        const int cLarger1  = jointStatistic[(q+2)*4+k];
+        term1a += (cEqual + cSmaller1 + cLarger1 ) * pow2k;
+        term1b += (cEqual + cLarger2  + cSmaller2) * pow2k;
+        term1x += (cEqual + cSmaller1 + cSmaller2) * pow2k;
     }
 
     for (int k = q+1; k >= 1; --k) {
 
-        const int cCenter = jointStatistic[(q+2)*0+k];
-        const int cUp     = jointStatistic[(q+2)*1+k];
-        const int cRight  = jointStatistic[(q+2)*2+k];
-        const int cDown   = jointStatistic[(q+2)*3+k];
-        const int cLeft   = jointStatistic[(q+2)*4+k];
+        const int cEqual    = jointStatistic[(q+2)*0+k];
+        const int cLarger2  = jointStatistic[(q+2)*1+k];
+        const int cSmaller1 = jointStatistic[(q+2)*2+k];
+        const int cSmaller2 = jointStatistic[(q+2)*3+k];
+        const int cLarger1  = jointStatistic[(q+2)*4+k];
 
         double pow2k = std::ldexp(1., -std::min(q, k));
 
@@ -474,51 +474,51 @@ void eval_joint_log_likelihood_function_and_derivatives(
         double expm1ax;
         double expm1bx;
 
-        if (cLeft > 0 || cCenter > 0) {
+        if (cLarger1 > 0 || cEqual > 0) {
             expm1a = -std::expm1(-la * pow2k);
         }
-        if (cUp > 0 || cCenter > 0) {
+        if (cLarger2 > 0 || cEqual > 0) {
             expm1b = -std::expm1(-lb * pow2k);
         }
-        if (cRight > 0 || cCenter > 0) {
+        if (cSmaller1 > 0 || cEqual > 0) {
             expm1ax = -std::expm1(-(la+lx) * pow2k);
         }
-        if (cDown > 0 || cCenter > 0) {
+        if (cSmaller2 > 0 || cEqual > 0) {
             expm1bx = -std::expm1(-(lb+lx) * pow2k);
         }
 
-        if (cRight > 0) {
-            f  -= cRight * std::log(expm1ax);
-            double tmp = cRight * pow2k * (1-expm1ax) / expm1ax;
+        if (cSmaller1 > 0) {
+            f  -= cSmaller1 * std::log(expm1ax);
+            double tmp = cSmaller1 * pow2k * (1-expm1ax) / expm1ax;
             fa -= tmp;
             fx -= tmp;
         }
 
-        if (cLeft > 0) {
-            f  -= cLeft * std::log(expm1a);
-            fa -= cLeft * pow2k * (1-expm1a) / expm1a;
+        if (cLarger1 > 0) {
+            f  -= cLarger1 * std::log(expm1a);
+            fa -= cLarger1 * pow2k * (1-expm1a) / expm1a;
         }
 
-        if (cDown > 0) {
-            f  -= cDown * std::log(expm1bx);
-            double tmp = cDown * pow2k * (1-expm1bx) / expm1bx;
+        if (cSmaller2 > 0) {
+            f  -= cSmaller2 * std::log(expm1bx);
+            double tmp = cSmaller2 * pow2k * (1-expm1bx) / expm1bx;
             fb -= tmp;
             fx -= tmp;
         }
 
-        if (cUp > 0) {
-            f  -= cUp * std::log(expm1b);
-            fb -= cUp * pow2k * (1-expm1b) / expm1b;
+        if (cLarger2 > 0) {
+            f  -= cLarger2 * std::log(expm1b);
+            fb -= cLarger2 * pow2k * (1-expm1b) / expm1b;
         }
 
-        if (cCenter > 0) {
+        if (cEqual > 0) {
 
             double expm1x = -std::expm1(-lx * pow2k);
             double x = expm1a * expm1b * (1 - expm1x) + expm1x;
-            f  -= cCenter * std::log(x);
-            fa -= cCenter * pow2k * ((1 - expm1ax) * expm1b)/x;
-            fb -= cCenter * pow2k * ((1 - expm1bx) * expm1a)/x;
-            fx -= cCenter * pow2k * ((1 - expm1x) *(1 - expm1a * expm1b))/x;
+            f  -= cEqual * std::log(x);
+            fa -= cEqual * pow2k * ((1 - expm1ax) * expm1b)/x;
+            fb -= cEqual * pow2k * ((1 - expm1bx) * expm1a)/x;
+            fx -= cEqual * pow2k * ((1 - expm1x) *(1 - expm1a * expm1b))/x;
         }
     }
 

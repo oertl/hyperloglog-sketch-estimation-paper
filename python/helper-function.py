@@ -7,7 +7,7 @@ from math import expm1, cosh, tanh, sinh, log
 import matplotlib.pyplot as plt
 
 numPoints = 100000
-xMin = 1e-3
+xMin = 0
 xMax = 110
 
 def helper(x):
@@ -31,7 +31,7 @@ def helperApprox(x):
 
 iter = range(0,numPoints)
 xValues = list([xMin + i*((xMax - xMin)/(numPoints-1)) for i in iter])
-yValues = list([helperApprox(xValues[i]) for i in iter])
+yValues = list([helper(xValues[i]) for i in iter])
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')

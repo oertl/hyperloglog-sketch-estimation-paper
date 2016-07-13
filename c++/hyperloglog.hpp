@@ -97,50 +97,20 @@ public:
             unsigned char val2 = hll2.registers[i];
             
             if (val1 < val2) {
-                data[stride*1 + val2] += 1; // up
-                data[stride*2 + val1] += 1; // right
+                data[stride*1 + val2] += 1; // C^(>)_2k
+                data[stride*2 + val1] += 1; // C^(<)_1k
             }
             else if (val1 > val2) {
-                data[stride*3 + val2] += 1; // down
-                data[stride*4 + val1] += 1; // left
+                data[stride*3 + val2] += 1; // C^(<)_2k
+                data[stride*4 + val1] += 1; // C^(>)_1k
             }
             else {
-                data[stride*0 + val1] += 1; // center
+                data[stride*0 + val1] += 1; // C^(=)_k
             }
         }
         return data;
     }
-    
-    // example with q = 1, p = 2
-    // register values of hll1 : {0, 1, 2, 0}
-    // register values of hll2 : {2, 1, 0, 2}
-    //
-    // the corresponding  count matrix is
-    //
-    //                ( 0 0 2 )
-    // count matrix = ( 0 1 0 )
-    //                ( 1 0 0 )
-    //
-    // or as array representation
-    //
-    // count matrix = [0, 0, 2, 0, 1, 0, 1, 0, 0]
-    static std::vector<int> getCountMatrix(const HyperLogLog& hll1, const HyperLogLog& hll2) {
-        assert(hll1.p == hll2.p);
-        assert(hll1.q == hll2.q);
-        
-        unsigned char q = hll1.q;
-        size_t stride = q+2;
-        
-        std::vector<int> countMatrix(stride*stride);
-        
-        for (size_t i = 0; i < hll1.registers.size(); ++i) {
-            countMatrix[hll1.registers[i] + stride*hll2.registers[i]] += 1;
-        }
-        
-        return countMatrix;
-    }
-
-        
+            
     void add(std::uint_fast64_t hashValue) {
         
         if ((registerValueFilter | hashValue) == (~uint_fast64_t(0))) {
