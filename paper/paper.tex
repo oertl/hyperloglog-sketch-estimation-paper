@@ -932,7 +932,7 @@ which can be optimized for numerical evaluation using Estrin's scheme and $\symX
 + \symBigO(\symX^{8})
 \end{equation}
 The smallest argument for which $\symHelper$ needs to be evaluated is $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}$. If 
-$\symCountVariate_{\symRegRange+1}=0$, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} \leq \log 2 \approx 0.693$ holds, which is straightforward to see using \eqref{equ:strong_upper_bound}. In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated ($\symCountVariate_{\symRegRange+1}\ll \symNumReg$). In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}.
+$\symCountVariate_{\symRegRange+1}=0$, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} \leq \log 2 \approx 0.693$ holds, which is straightforward to see using \eqref{equ:strong_upper_bound}. In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated ($\symCountVariate_{\symRegRange+1}\ll \symNumReg$). In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}. As shown in \cref{app:error_approx}, a small approximation error of $\symHelper$ does not have much impact on the error of the maximum likelihood estimate as long as most registers are not yet saturated.
 \end{itemize}
 
 All these optimizations together finally give the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}.
@@ -1766,6 +1766,7 @@ $\frac{\symHelper_1}{\symX+1-\symHelper_1}\leq\input{max_errror_propagation_fact
 which means that the relative error is decreasing in each recursion step and the recursive calculation of $\symHelper$ is numerically stable.
 
 \section{Error caused by approximation of $\symHelper(\symX)$}
+\label{app:error_approx}
 According to \eqref{equ:func} the exact estimate $\symXEstimate$ fulfills 
 \begin{equation}
 \label{equ:max_likelihood_2}
@@ -1915,7 +1916,7 @@ Furthermore, using \eqref{equ:weak_lower_bound} we finally get
 }{2^\symRegRange}
 }
 {
-\sum_{\symRegVal=1}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}
+\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}
 }
 \right)
 \leq
