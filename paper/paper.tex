@@ -86,7 +86,7 @@
 \author{Otmar Ertl \\ otmar.ertl@gmail.com}
 \begin{document}
 \maketitle
-\let\thefootnote\relax\footnotetext{This article together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}.}
+\let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}.}
 \begin{abstract}
 This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle another unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood method is also appropriate to improve cardinality estimates of set intersections compared to the inclusion-exclusion principle. The new methods are demonstrated and verified by extensive simulations.
 \end{abstract}
@@ -252,10 +252,10 @@ In the history of the HyperLogLog algorithm different averaging techniques have 
 \label{equ:raw_estimator}
 \symCardinalityRawEstimate
 =
-2\alpha_\symNumReg
+\alpha_\symNumReg
 \operatorname{HM}
 \!\left(
-\symNumReg 2^{\symRegValVariate_1-1},\ldots,\symNumReg2^{\symRegValVariate_\symNumReg-1}
+\symNumReg 2^{\symRegValVariate_1},\ldots,\symNumReg2^{\symRegValVariate_\symNumReg}
 \right)
 = 
 \frac{\symAlpha_\symNumReg \symNumReg^2}{\sum_{\symIndexI=1}^{\symNumReg}2^{-\symRegValVariate_\symIndexI}}
@@ -1099,12 +1099,14 @@ Unfortunately, this approach can be very inaccurate. Due to estimation errors of
 Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to also use it for the estimation of set operations. 
 Assume two given  HyperLogLog sketches with register values $\boldsymbol{\symRegValVariate}_1$ and $\boldsymbol{\symRegValVariate}_2$ representing the sets $\symSetS_1$ and $\symSetS_2$, respectively. The goal is to find estimates for the cardinalities of the pair-wise disjoint sets $\symSetX = \symSetS_1\cap\symSetS_2$, $\symSetA = \symSetS_1\setminus\symSetS_2$, and $\symSetB = \symSetS_2\setminus\symSetS_1$. 
 
+
+
 The Poisson approximation allows us to assume that the elements of $\symSetA$ are inserted into the HyperLogLog sketch representing $\symSetS_1$ at rate $\symPoissonRate_\symSetA$. Similarly, the elements of $\symSetB$ are inserted into the HyperLogLog sketch representing $\symSetS_2$ at rate $\symPoissonRate_\symSetB$. Furthermore, we assume that elements of $\symSetX$ are inserted into both HyperLogLog sketches simultaneously at rate $\symPoissonRate_\symSetX$. The goal is now to find estimates, $\symPoissonRateEstimate_\symSetA$, $\symPoissonRateEstimate_\symSetB$, and $\symPoissonRateEstimate_\symSetX$ for the rates which could also be good estimates for the wanted cardinalities of $\symSetA$, $\symSetB$, and $\symSetX$. 
 
 \subsection{Joint log-likelihood funtion}
 In order to get maximum-likelihood estimators for $\symPoissonRateEstimate_\symSetA$, $\symPoissonRateEstimate_\symSetB$, and $\symPoissonRateEstimate_\symSetX$ we need to derive the joint probability distribution of two HyperLogLog sketches. Under the Poisson model the register values are independent and identically distributed. Therefore, we first derive the joint probability distribution for a single register that has value $\symRegValVariate_1$ in the first HyperLogLog sketch representing $\symSetS_1$ and value $\symRegValVariate_2$ in the second HyperLogLog sketch representing $\symSetS_2$. 
 
-The HyperLogLog sketch that represents $\symSetS_1$ can be thought to be constructed from two HyperLogLog sketches representing $\symSetA$ and $\symSetX$ and merging both according to \eqref{equ:hll_union}. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let  $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ be the value of the considered register in the HyperLogLog sketch representing $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
+The HyperLogLog sketch that represents $\symSetS_1$ can be thought to be constructed from two HyperLogLog sketches representing $\symSetA$ and $\symSetX$ and merging both using \eqref{equ:hll_union}. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let  $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ be the value of the considered register in the HyperLogLog sketch representing $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
 \begin{equation}
 \symRegValVariate_1 = \max\!\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right)
 ,\quad
@@ -1146,7 +1148,7 @@ Their joint cumulative probability function is given as
 \symProbability
 \!\left(
 \symRegValVariate_\symSetXSuffix \leq \min\!\left(\symRegVal_1, \symRegVal_2\right)
-\right)
+\right).
 \end{align}
 Here the last transformation used the independence of $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$, because by definition, the sets $\symSetA$, $\symSetB$, and $\symSetX$ are disjoint. Furthermore, under the Poisson model $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ obey 
 \eqref{equ:register_value_distribution}. If we take into account that elements are added to $\symSetA$, $\symSetB$, and $\symSetX$ at rates $\symPoissonRate_\symSetXSuffix$, $\symPoissonRate_\symSetASuffix$, and $\symPoissonRate_\symSetBSuffix$, respectively, the probability that a certain register has a value less than or equal to $\symRegVal_1$ in the first HyperLogLog sketch and simultaneously a value less than or equal to $\symRegVal_2$ in the second one can be written as
@@ -1212,7 +1214,7 @@ The joint probability mass function for both register values can be calculated u
 \symRegValVariate_1 \leq \symRegVal_1-1
 \wedge
 \symRegValVariate_2 \leq \symRegVal_2-1
-)
+),
 \end{multline}
 which finally gives
 \begin{multline}
@@ -1430,10 +1432,10 @@ e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNum
 +
 e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}
 \right)
-\left[1\leq\symRegVal_1=\symRegVal_2\right]
+\left[1\leq\symRegVal_1=\symRegVal_2\right].
 \end{align}
 
-Since under the Poisson model, the values for different registers are independent we are now able to write the joint probability mass function for all registers in both HyperLogLog sketches
+Since the values for different registers are independent under the Poisson model, we are now able to write the joint probability mass function for all registers in both HyperLogLog sketches
 \begin{equation}
 \symProbabilityMass(\boldsymbol{\symRegVal}_1,\boldsymbol{\symRegVal}_2)
 =
@@ -1527,9 +1529,9 @@ e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNum
 +
 e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
 \right)
-\symCountVariate^{=}_{\symRegVal}
+\symCountVariate^{=}_{\symRegVal},
 \end{align}
-where the constant $\symCountVariate^{>}_{1\symRegVal}$,
+where the constants $\symCountVariate^{>}_{1\symRegVal}$,
 $\symCountVariate^{<}_{1\symRegVal}$,
 $\symCountVariate^{>}_{2\symRegVal}$,
 $\symCountVariate^{<}_{2\symRegVal}$,
@@ -1549,16 +1551,25 @@ and $\symCountVariate^{=}_{\symRegVal}$ are defined as
 \symRegValVariate_{1\symIndexI}\rbrace\right|,
 \\
 \symCountVariate^{=}_{\symRegVal}&:=\left|\lbrace\symIndexI\vert\symRegVal=\symRegValVariate_{1\symIndexI}=
-\symRegValVariate_{2\symRegVal}\rbrace\right|.
+\symRegValVariate_{2\symIndexI}\rbrace\right|.
 \end{aligned}
 \end{equation}
+These $5\symNumReg$ values are sufficient for estimating $\symPoissonRate_\symSetA$, $\symPoissonRate_\symSetB$, and $\symPoissonRate_\symSetX$. Actually, the set of these constants can be further reduced, because $\symCountVariate^{>}_{10}=\symCountVariate^{>}_{20}=
+\symCountVariate^{<}_{1(\symRegRange+1)}=\symCountVariate^{<}_{2(\symRegRange+1)}=0$
+always holds.
 
-The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have a strict global maximum point. For example, if all register values of the first HyperLogLog sketch are larger than the corresponding values in the second HyperLogLog sketch, the function can be rewritten as sum of two functions, one dependent on $\symPoissonRate_\symSetASuffix$ and the other dependent on $(\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix)$. 
-The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the cardinality estimates for the first and second HyperLogLog sketch, respectively. Similarly, if all register values of the first are smaller than those of the second HyperLogLog sketch, the maximum is obtained when 
-$\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix = \symPoissonRateEstimate_2$.
+The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have a strict global maximum point. For example, if all register values of the first HyperLogLog sketch are larger than the corresponding values in the second HyperLogLog sketch, $\symCountVariate_{1\symRegVal}^{<}
+=
+\symCountVariate_{\symRegVal}^{=}
+=
+\symCountVariate_{2\symRegVal}^{>}
+=
+0$ for all $\symRegVal$, the function can be rewritten as sum of two functions, one dependent on $\symPoissonRate_\symSetASuffix$ and the other dependent on $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix$. 
+The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the single HyperLogLog estimates for the first and second HyperLogLog sketch, respectively, which maximize the corresponding log-likelihood functions \eqref{equ:log_likelihood_single}. This means that the maximum-likelihood makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach gives $\symPoissonRateEstimate_2$ as estimate. This result is questionable, because there is no evidence at all, that the sets $\symSetS_1$ and $\symSetS_2$ really have common elements.
 
-If we know that the two HyperLogLog sketches have been filled by elements taken from disjoint sets we can assume $\symPoissonRate_\symSetXSuffix=0$. In this case \eqref{equ:log_likelihood_pair} is separable into the sum of two log-likelihood functions that depend on $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively, and that follow \eqref{equ:log_likelihood_single}. Hence, the joint maximum likelihood estimation of $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$ gives the same results as estimating them independently by maximization of \eqref{equ:log_likelihood_single}.
+If it is given that the two HyperLogLog sketches represent disjoint sets, we know that $\symPoissonRate_\symSetXSuffix=0$. In this case \eqref{equ:log_likelihood_pair} is separable into the sum of two log-likelihood functions that depend on $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively, and that follow \eqref{equ:log_likelihood_single}. Hence, the joint maximum likelihood estimation of $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$ gives as expected the same results as estimating them independently by maximizing \eqref{equ:log_likelihood_single}.
 
+\subsection{Computation of the maximum likelihood estimates}
 The first derivatives are
 \begin{align}
 \frac{\partial\log \symLikelihood}{\partial\symPoissonRate_\symSetASuffix}
