@@ -3,6 +3,7 @@
 //#############################
 
 #include "cardinality_estimation.hpp"
+#include "two_hyperloglog_statistic.hpp"
 #include "hyperloglog.hpp"
 
 #include <iostream>
@@ -47,15 +48,34 @@ template <typename T> void printToFile(const string& fileName, const T* data, si
     file << endl;
 }
 
-vector<int> readCounts(string s) {
-    stringstream stream(s);
-    int i;
-    vector<int> v;
-    while(stream >> i) {
-        v.push_back(i);
-    }
-    v.shrink_to_fit();
-    return v;
+void printHeaders(ofstream& os, string prefix, string postfix) {
+    os << prefix << "Min" << postfix << ";";
+    //os << prefix << "M3s" << postfix << ";";
+    //os << prefix << "M2s" << postfix << ";";
+    //os << prefix << "M1s" << postfix << ";";
+    //os << prefix << "Med" << postfix << ";";
+    //os << prefix << "P1s" << postfix << ";";
+    //os << prefix << "P2s" << postfix << ";";
+    //os << prefix << "P3s" << postfix << ";";
+    os << prefix << "Max" << postfix << ";";
+    os << prefix << "Mean" << postfix << ";";
+    os << prefix << "StdDev" << postfix << ";";
+}
+
+void calculateAndPrintStatistics(ofstream& os, std::vector<double> data) {
+    std::sort(data.begin(), data.end());
+    os << gsl_stats_min(&data[0], 1, data.size()) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm3s) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm2s) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm1s) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), 0.5) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp1s) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp2s) << ";";
+    //os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp3s) << ";";
+    os << gsl_stats_max(&data[0], 1, data.size()) << ";";
+    const double mean = gsl_stats_mean(&data[0], 1, data.size());
+    os << mean << ";";
+    os << gsl_stats_sd_m(&data[0], 1, data.size(), mean) << ";";
 }
 
 int main(int argc, char* argv[])
@@ -83,70 +103,19 @@ int main(int argc, char* argv[])
     resultsFile << "jaccardIndex;";
     resultsFile << "logRatio;";
 
-    resultsFile << "inclExclMinA;";
-    resultsFile << "inclExclM3sA;";
-    resultsFile << "inclExclM2sA;";
-    resultsFile << "inclExclM1sA;";
-    resultsFile << "inclExclMedA;";
-    resultsFile << "inclExclP1sA;";
-    resultsFile << "inclExclP2sA;";
-    resultsFile << "inclExclP3sA;";
-    resultsFile << "inclExclMaxA;";
-
-    resultsFile << "inclExclMinB;";
-    resultsFile << "inclExclM3sB;";
-    resultsFile << "inclExclM2sB;";
-    resultsFile << "inclExclM1sB;";
-    resultsFile << "inclExclMedB;";
-    resultsFile << "inclExclP1sB;";
-    resultsFile << "inclExclP2sB;";
-    resultsFile << "inclExclP3sB;";
-    resultsFile << "inclExclMaxB;";
-
-    resultsFile << "inclExclMinX;";
-    resultsFile << "inclExclM3sX;";
-    resultsFile << "inclExclM2sX;";
-    resultsFile << "inclExclM1sX;";
-    resultsFile << "inclExclMedX;";
-    resultsFile << "inclExclP1sX;";
-    resultsFile << "inclExclP2sX;";
-    resultsFile << "inclExclP3sX;";
-    resultsFile << "inclExclMaxX;";
-
-    resultsFile << "maxLikeMinA;";
-    resultsFile << "maxLikeM3sA;";
-    resultsFile << "maxLikeM2sA;";
-    resultsFile << "maxLikeM1sA;";
-    resultsFile << "maxLikeMedA;";
-    resultsFile << "maxLikeP1sA;";
-    resultsFile << "maxLikeP2sA;";
-    resultsFile << "maxLikeP3sA;";
-    resultsFile << "maxLikeMaxA;";
-
-    resultsFile << "maxLikeMinB;";
-    resultsFile << "maxLikeM3sB;";
-    resultsFile << "maxLikeM2sB;";
-    resultsFile << "maxLikeM1sB;";
-    resultsFile << "maxLikeMedB;";
-    resultsFile << "maxLikeP1sB;";
-    resultsFile << "maxLikeP2sB;";
-    resultsFile << "maxLikeP3sB;";
-    resultsFile << "maxLikeMaxB;";
-
-    resultsFile << "maxLikeMinX;";
-    resultsFile << "maxLikeM3sX;";
-    resultsFile << "maxLikeM2sX;";
-    resultsFile << "maxLikeM1sX;";
-    resultsFile << "maxLikeMedX;";
-    resultsFile << "maxLikeP1sX;";
-    resultsFile << "maxLikeP2sX;";
-    resultsFile << "maxLikeP3sX;";
-    resultsFile << "maxLikeMaxX;";
+    printHeaders(resultsFile, "inclExcl", "A");
+    printHeaders(resultsFile, "inclExcl", "B");
+    printHeaders(resultsFile, "inclExcl", "X");
+    printHeaders(resultsFile, "maxLike", "A");
+    printHeaders(resultsFile, "maxLike", "B");
+    printHeaders(resultsFile, "maxLike", "X");
 
     resultsFile << "maxNumIterationsReachedCount;";
+    resultsFile << "avgNumIterations;";
     resultsFile << "iterationAbortedCount" << endl;
 
-
+    // TODO number of iterations
+    // standard dev and  mean
 
 
     for(string fileName : jointCardFileNames) {
@@ -160,7 +129,7 @@ int main(int argc, char* argv[])
         const double jaccardIndex = trueCardX/static_cast<double>(trueCardA+trueCardB+trueCardX);
         const double logRatio = std::log10(trueCardA) - std::log10(trueCardB);
 
-        if (jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 1) continue;
+        if (jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 1) continue; // TODO filter interesting cardinalities
 
         cout << trueCardA << " " << trueCardB << " " << trueCardX << " " << p << " " << q << endl;
 
@@ -175,11 +144,13 @@ int main(int argc, char* argv[])
         std::vector<double> maxLikeEstimatedCardX;
         int maxNumIterationsReachedCount = 0;
         int iterationAbortedCount = 0;
+        long numIterationsTotal = 0;
+        int size = 0;
 
         while (getline(statisticFile, line))
         {
-            const vector<int> jointStatistic = readCounts(line);
-            assert(jointStatistic.size() == 5*(q+2));
+            TwoHyperLogLogStatistic jointStatistic = TwoHyperLogLogStatistic::fromString(line);
+            assert(jointStatistic.getQ() == q);
 
             {
                 double estCardA = 0.;
@@ -197,13 +168,17 @@ int main(int argc, char* argv[])
                 double estCardX = 0.;
                 bool maxNumIterationsReached;
                 bool iterationAborted;
-                maxLikelihoodTwoHyperLogLogEstimation2(jointStatistic, estCardA, estCardB, estCardX, maxNumIterationsReached, iterationAborted);
+                int numIterations;
+                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, maxNumIterationsReached, iterationAborted, numIterations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 maxLikeEstimatedCardX.push_back(estCardX/trueCardX-1.);
                 if (maxNumIterationsReached) maxNumIterationsReachedCount+=1;
                 if (iterationAborted) iterationAbortedCount += 1;
+                numIterationsTotal += numIterations;
             }
+
+            size += 1;
 
         }
 
@@ -221,67 +196,15 @@ int main(int argc, char* argv[])
         resultsFile << jaccardIndex << ";";
         resultsFile << logRatio << ";";
 
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardA[0], 1, inExclEstimatedCardA.size(), 1.0) << ";";
-
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardB[0], 1, inExclEstimatedCardB.size(), 1.0) << ";";
-
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&inExclEstimatedCardX[0], 1, inExclEstimatedCardX.size(), 1.0) << ";";
-
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardA[0], 1, maxLikeEstimatedCardA.size(), 1.0) << ";";
-
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardB[0], 1, maxLikeEstimatedCardB.size(), 1.0) << ";";
-
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), 0.0) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pm3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pm2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pm1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), 0.5) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pp1s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pp2s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), pp3s) << ";";
-        resultsFile << gsl_stats_quantile_from_sorted_data(&maxLikeEstimatedCardX[0], 1, maxLikeEstimatedCardX.size(), 1.0) << ";";
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardA);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardB);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardX);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardA);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardB);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardX);
 
         resultsFile << maxNumIterationsReachedCount << ";";
+        resultsFile << (numIterationsTotal/(double)size) << ";";
         resultsFile << iterationAbortedCount << endl;
     }
 }

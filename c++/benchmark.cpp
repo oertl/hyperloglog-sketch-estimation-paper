@@ -26,7 +26,7 @@ const int maxPplusQ = 64;
 
 const int numLoops = 100;
 
-const int numData = 1000;
+const size_t desiredNumData = 1000;
 
 const string seedFileName = "../data/hll/seed.dat";
 const string cardFileName = "../data/cardinalities.dat";
@@ -77,7 +77,9 @@ void run(const int p, const int q, const string& resultsFileName) {
 
     cout << "seedSize "  << seeds.size() << endl;
 
-    assert(numData <= seeds.size());
+    const size_t numData = min(desiredNumData, seeds.size());
+
+    cout << "numData "  << numData << endl;
 
     vector<long> cardinalities;
     {
@@ -195,7 +197,7 @@ void run(const int p, const int q, const string& resultsFileName) {
             auto elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start);
             flajoletCorrectedWithoutRegisterScan = elapsed.count()/(double)dataSize;
         }
-        
+
         {
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {

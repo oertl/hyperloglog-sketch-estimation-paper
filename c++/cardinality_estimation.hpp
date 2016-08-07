@@ -16,6 +16,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multimin.h>
 
+#include "two_hyperloglog_statistic.hpp"
 
 int getPFromNumberRegisters(int m) {
     int p;
@@ -27,12 +28,6 @@ int getPFromNumberRegisters(int m) {
 
 int getPFromCounts(const std::vector<int>& c) {
     int m = std::accumulate(c.begin(), c.end(), 0);
-    return getPFromNumberRegisters(m);
-}
-
-int getPFromJointStatistic(const std::vector<int>& jointStatistic) {
-    size_t l = jointStatistic.size()/5;
-    const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
     return getPFromNumberRegisters(m);
 }
 
@@ -187,7 +182,7 @@ class OptimalLinearCountingEstimator {
         std::vector<double> results(m+1);
         results[m] = 0;
         for (int c = m-1; c >= 0; --c) {
-            results[c] = results[c + 1] + m/(double)c; 
+            results[c] = results[c + 1] + m/(double)c;
         }
         return results;
     }
@@ -319,7 +314,7 @@ double flajoletEstimate(const std::vector<int>& c) {
         eStar = e;
     }
     else {
-        if (e <= ldexp(1., 32)) { // is not part of original estimate
+        if (e <= ldexp(1., 32)) { // is not part of original algorithm
             eStar = -std::pow(2., 32)*std::log1p(-ldexp(e, -32));
         }
         else {
@@ -329,7 +324,6 @@ double flajoletEstimate(const std::vector<int>& c) {
     return eStar;
 }
 
-// lower bound estimate obtained by applying Jensen's inequality
 double strongLowerBoundEstimate(const std::vector<int>& c) {
     int m = std::accumulate(c.begin(), c.end(), 0);
     int q = c.size()-2;
@@ -348,7 +342,6 @@ double strongLowerBoundEstimate(const std::vector<int>& c) {
     return m*x;
 }
 
-// using log(1+x) >= 2*x/(x+2)
 double weakLowerBoundEstimate(const std::vector<int>& c) {
     int m = std::accumulate(c.begin(), c.end(), 0);
     int q = c.size()-2;
@@ -397,46 +390,35 @@ double strongUpperBoundEstimate(const std::vector<int>& c) {
     return std::ldexp(m*std::log1p((m-c[0])/(ldexp(z, kPrime))), kPrime);
 }
 
-void inclusionExclusionTwoHyperLogLogEstimation(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
-    const int q = jointStatistic.size()/5-2;
-    const int p = getPFromJointStatistic(jointStatistic);
-    std::vector<int> countsAX(q+2);
-    std::vector<int> countsBX(q+2);
-    std::vector<int> countsABX(q+2);
-    for (int i = 0; i < q+2; ++i) {
-        countsAX[i]  = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*2 + i] + jointStatistic[(q+2)*4 + i];
-        countsBX[i]  = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*3 + i];
-        countsABX[i] = jointStatistic[(q+2)*0 + i] + jointStatistic[(q+2)*1 + i] + jointStatistic[(q+2)*4 + i];
-    }
+void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
 
-    const MaxLikelihoodEstimator estimator(p,q);
+    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
 
-    const double cardinalityAX = estimator(countsAX);
-    const double cardinalityBX = estimator(countsBX);
-    const double cardinalityABX = estimator(countsABX);
+    const double cardinalityAX = estimator(jointStatistic.get1Counts());
+    const double cardinalityBX = estimator(jointStatistic.get2Counts());
+    const double cardinalityABX = estimator(jointStatistic.getMaxCounts());
 
     cardinalityA = cardinalityABX - cardinalityBX;
     cardinalityB = cardinalityABX - cardinalityAX;
     cardinalityX = std::max(0., cardinalityBX + cardinalityAX - cardinalityABX);
-
 }
-
-
 
 // the minimum of this function gives the max likelihood estimate
 void eval_joint_log_likelihood_function_and_derivatives(
-    const std::vector<int>& jointStatistic,
-    const double la,
-    const double lb,
-    const double lx,
+    const TwoHyperLogLogStatistic& jointStatistic,
+    const double phiA,
+    const double phiB,
+    const double phiX,
     double& f,
     double& fa,
     double& fb,
     double& fx) {
 
-    const int q = jointStatistic.size()/5-2;
+    const int q = jointStatistic.getQ();
 
-    assert(size_t((q+2)*5)==jointStatistic.size());
+    const double expPhiA = std::exp(phiA);
+    const double expPhiB = std::exp(phiB);
+    const double expPhiX = std::exp(phiX);
 
     f = 0.;
     fa = 0.;
@@ -446,230 +428,183 @@ void eval_joint_log_likelihood_function_and_derivatives(
     double term1a = 0;
     double term1b = 0;
     double term1x = 0;
+    const double pow2q = std::ldexp(1., -q);
+    double expPhiApow2k = expPhiA * pow2q;
+    double expPhiBpow2k = expPhiB * pow2q;
+    double expPhiXpow2k = expPhiX * pow2q;
+
+    const double expPhiAdivAX = expPhiA / (expPhiA + expPhiX);   // TODO handle division by 0
+    const double expPhiXdivAX = expPhiX / (expPhiA + expPhiX);
+    const double expPhiBdivBX = expPhiB / (expPhiB + expPhiX);
+    const double expPhiXdivBX = expPhiX / (expPhiB + expPhiX);
 
     for (int k = q; k >= 0; --k) {
-        double pow2k = std::ldexp(1., -k);
-        const int cEqual    = jointStatistic[(q+2)*0+k];
-        const int cLarger2  = jointStatistic[(q+2)*1+k];
-        const int cSmaller1 = jointStatistic[(q+2)*2+k];
-        const int cSmaller2 = jointStatistic[(q+2)*3+k];
-        const int cLarger1  = jointStatistic[(q+2)*4+k];
-        term1a += (cEqual + cSmaller1 + cLarger1 ) * pow2k;
-        term1b += (cEqual + cLarger2  + cSmaller2) * pow2k;
-        term1x += (cEqual + cSmaller1 + cSmaller2) * pow2k;
+        const int cEqual    = jointStatistic.getEqualCounts()[k];
+        const int cLarger2  = jointStatistic.getLarger2Counts()[k];
+        const int cSmaller1 = jointStatistic.getSmaller1Counts()[k];
+        const int cSmaller2 = jointStatistic.getSmaller2Counts()[k];
+        const int cLarger1  = jointStatistic.getLarger1Counts()[k];
+        term1a += (cEqual + cSmaller1 + cLarger1 ) * expPhiApow2k;
+        term1b += (cEqual + cLarger2  + cSmaller2) * expPhiBpow2k;
+        term1x += (cEqual + cSmaller1 + cSmaller2) * expPhiXpow2k;
+        expPhiApow2k += expPhiApow2k;
+        expPhiBpow2k += expPhiBpow2k;
+        expPhiXpow2k += expPhiXpow2k;
     }
 
+    expPhiApow2k = expPhiA * pow2q;
+    expPhiBpow2k = expPhiB * pow2q;
+    expPhiXpow2k = expPhiX * pow2q;
     for (int k = q+1; k >= 1; --k) {
-
-        const int cEqual    = jointStatistic[(q+2)*0+k];
-        const int cLarger2  = jointStatistic[(q+2)*1+k];
-        const int cSmaller1 = jointStatistic[(q+2)*2+k];
-        const int cSmaller2 = jointStatistic[(q+2)*3+k];
-        const int cLarger1  = jointStatistic[(q+2)*4+k];
-
-        double pow2k = std::ldexp(1., -std::min(q, k));
+        const int cEqual    = jointStatistic.getEqualCounts()[k];
+        const int cLarger2  = jointStatistic.getLarger2Counts()[k];
+        const int cSmaller1 = jointStatistic.getSmaller1Counts()[k];
+        const int cSmaller2 = jointStatistic.getSmaller2Counts()[k];
+        const int cLarger1  = jointStatistic.getLarger1Counts()[k];
 
         double expm1a;
         double expm1b;
         double expm1ax;
         double expm1bx;
 
+        const double expPhiAXpow2k = expPhiApow2k + expPhiXpow2k;
+        const double expPhiBXpow2k = expPhiBpow2k + expPhiXpow2k;
+
         if (cLarger1 > 0 || cEqual > 0) {
-            expm1a = -std::expm1(-la * pow2k);
+            expm1a = -std::expm1(-expPhiApow2k);
         }
         if (cLarger2 > 0 || cEqual > 0) {
-            expm1b = -std::expm1(-lb * pow2k);
+            expm1b = -std::expm1(-expPhiBpow2k);
         }
         if (cSmaller1 > 0 || cEqual > 0) {
-            expm1ax = -std::expm1(-(la+lx) * pow2k);
+            expm1ax = -std::expm1(-expPhiAXpow2k);
         }
         if (cSmaller2 > 0 || cEqual > 0) {
-            expm1bx = -std::expm1(-(lb+lx) * pow2k);
+            expm1bx = -std::expm1(-expPhiBXpow2k);
         }
 
         if (cSmaller1 > 0) {
             f  -= cSmaller1 * std::log(expm1ax);
-            double tmp = cSmaller1 * pow2k * (1-expm1ax) / expm1ax;
-            fa -= tmp;
-            fx -= tmp;
+            double tmp = cSmaller1 * (1-expm1ax) * (expPhiAXpow2k / expm1ax);
+            fa -= tmp * expPhiAdivAX;
+            fx -= tmp * expPhiXdivAX;
         }
 
         if (cLarger1 > 0) {
             f  -= cLarger1 * std::log(expm1a);
-            fa -= cLarger1 * pow2k * (1-expm1a) / expm1a;
+            fa -= cLarger1 * (1-expm1a) * (expPhiApow2k / expm1a);
         }
 
         if (cSmaller2 > 0) {
             f  -= cSmaller2 * std::log(expm1bx);
-            double tmp = cSmaller2 * pow2k * (1-expm1bx) / expm1bx;
-            fb -= tmp;
-            fx -= tmp;
+            double tmp = cSmaller2 * (1-expm1bx) * (expPhiBXpow2k / expm1bx);
+            fb -= tmp * expPhiBdivBX;
+            fx -= tmp * expPhiXdivBX;
         }
 
         if (cLarger2 > 0) {
             f  -= cLarger2 * std::log(expm1b);
-            fb -= cLarger2 * pow2k * (1-expm1b) / expm1b;
+            fb -= cLarger2 * (1-expm1b) * (expPhiBpow2k / expm1b);
         }
 
         if (cEqual > 0) {
 
-            double expm1x = -std::expm1(-lx * pow2k);
+            double expm1x = -std::expm1(-expPhiXpow2k);
             double x = expm1a * expm1b * (1 - expm1x) + expm1x;
             f  -= cEqual * std::log(x);
-            fa -= cEqual * pow2k * ((1 - expm1ax) * expm1b)/x;
-            fb -= cEqual * pow2k * ((1 - expm1bx) * expm1a)/x;
-            fx -= cEqual * pow2k * ((1 - expm1x) *(1 - expm1a * expm1b))/x;
+            fa -= cEqual * ((((1 - expm1ax) * expm1b)/x) * expPhiApow2k);
+            fb -= cEqual * ((((1 - expm1bx) * expm1a)/x) * expPhiBpow2k);
+            fx -= cEqual * ((((1 - expm1x) *(1 - expm1a * expm1b))/x) * expPhiXpow2k);
+        }
+
+        if (k <= q) {
+            expPhiApow2k += expPhiApow2k;
+            expPhiBpow2k += expPhiBpow2k;
+            expPhiXpow2k += expPhiXpow2k;
         }
     }
 
-    f += term1a * la + term1b * lb + term1x * lx;
+    f += term1a + term1b + term1x;
     fa += term1a;
     fb += term1b;
     fx += term1x;
+
 }
 
-void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *x, void *params, double *g, gsl_vector *dg)
+void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi, void *params, double *f, gsl_vector *fGrad)
 {
-    const double la = std::exp(gsl_vector_get(x, 0));
-    const double lb = std::exp(gsl_vector_get(x, 1));
-    const double lx = std::exp(gsl_vector_get(x, 2));
-    //const std::vector<int>& jointStatistic= *((std::vector<int>*)params);
 
-    double f, fa, fb, fx;
+    const double phiA = gsl_vector_get(phi, 0);
+    const double phiB = gsl_vector_get(phi, 1);
+    const double phiX = gsl_vector_get(phi, 2);
+
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+
+    double fa, fb, fx;
 
     eval_joint_log_likelihood_function_and_derivatives(
-        *((std::vector<int>*)params),
-        la, lb, lx,
-        f, fa, fb, fx);
+        jointStatistic,
+        phiA, phiB, phiX,
+        *f, fa, fb, fx);
 
-    //if (f > std::numeric_limits<double>::max()) {
-    //  f = std::numeric_limits<double>::max();
-    //}
-    *g = f;
-    gsl_vector_set(dg, 0, fa*la);
-    gsl_vector_set(dg, 1, fb*lb);
-    gsl_vector_set(dg, 2, fx*lx);
+    gsl_vector_set(fGrad, 0, fa);
+    gsl_vector_set(fGrad, 1, fb);
+    gsl_vector_set(fGrad, 2, fx);
 
 }
 
-void log_likelihood_function_derivatives_for_gsl(const gsl_vector *x, void *params, gsl_vector *df)
+void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *params, gsl_vector *fGrad)
 {
-    double tmp;
-    log_likelihood_function_value_and_derivatives_for_gsl(x,params, &tmp, df);
-}
-
-double log_likelihood_function_value_for_gsl(const gsl_vector *x, void *params)
-{
-    gsl_vector *grad = gsl_vector_alloc(3);
     double f;
-    log_likelihood_function_value_and_derivatives_for_gsl(x, params, &f, grad);
-    gsl_vector_free (grad);
+    log_likelihood_function_value_and_derivatives_for_gsl(phi, params, &f, fGrad);
+}
+
+double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params)
+{
+    gsl_vector *fGrad = gsl_vector_alloc(3);
+    double f;
+    log_likelihood_function_value_and_derivatives_for_gsl(phi, params, &f, fGrad);
+    gsl_vector_free (fGrad);
     return f;
 }
 
-
-void maxLikelihoodTwoHyperLogLogEstimation(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted) {
-
-    const int maxNumIterations = 10000;
-
-    size_t l = jointStatistic.size()/5;
-    const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
-
-    double initialCardinalityA;
-    double initialCardinalityB;
-    double initialCardinalityX;
-    inclusionExclusionTwoHyperLogLogEstimation(jointStatistic, initialCardinalityA, initialCardinalityB, initialCardinalityX);
-
-    // set initial vector
-    gsl_vector *x = gsl_vector_alloc(3);
-    gsl_vector_set (x, 0, std::log(std::max(1.,initialCardinalityA)/m));
-    gsl_vector_set (x, 1, std::log(std::max(1.,initialCardinalityB)/m));
-    gsl_vector_set (x, 2, std::log(std::max(1.,initialCardinalityX)/m));
-
-    // set initial simplex size
-    gsl_vector *step_size = gsl_vector_alloc(3);
-    gsl_vector_set_all(step_size, 1.);
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted, int& numIterations) {
 
 
-    gsl_multimin_function my_func;
+    const double eps = 1e-5;
 
-    my_func.n = 3;
-    my_func.f = log_likelihood_function_value_for_gsl;
-    my_func.params = &const_cast<std::vector<int>&>(jointStatistic);
-
-
-    //const gsl_multimin_fdfminimizer_type *T = gsl_multimin_fdfminimizer_steepest_descent;
-    const gsl_multimin_fminimizer_type *T =  gsl_multimin_fminimizer_nmsimplex2;
-    gsl_multimin_fminimizer *s = gsl_multimin_fminimizer_alloc (T, 3); // 3 dimensions
-    gsl_multimin_fminimizer_set (s, &my_func, x, step_size);
-
-    int status;
-    size_t iter = 0;
-    do
-    {
-        iter++;
-        status = gsl_multimin_fminimizer_iterate(s);
-
-        if (status) {
-            if (status == GSL_ENOPROG) {
-                iterationAborted = true;
-                break;
-            }
-            std::cout << "error!" << std::endl;
-            exit(-1);
-        }
-        //double cardmin = gsl_vector_min(gsl_multimin_fminimizer_x(s));
-        double size = gsl_multimin_fminimizer_size(s);
-        //std::cout << "size = " << size << std::endl;
-        //std::cout << "cardmin = " << cardmin << std::endl;
-        status = gsl_multimin_test_size(size, 1e-5);
-        if (status != GSL_CONTINUE) {
-            break;
-        }
-        if(iter >= maxNumIterations) {
-            maxNumIterationsReached = true;
-            break;
-        }
-
-    }
-    while (true);
-
-
-    //std::cout << iter << std::endl;
-
-    cardinalityA = std::exp(gsl_vector_get(s->x, 0)) * m;
-    cardinalityB = std::exp(gsl_vector_get(s->x, 1)) * m;
-    cardinalityX = std::exp(gsl_vector_get(s->x, 2)) * m;
-
-    gsl_multimin_fminimizer_free(s);
-    gsl_vector_free(x);
-    gsl_vector_free(step_size);
-
-}
-
-void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted) {
-
-    const int maxNumIterations = 10000;
+    const int maxNumIterations = 100000;
 
     maxNumIterationsReached = false;
     iterationAborted = false;
 
-    size_t l = jointStatistic.size()/5;
-    const int m = std::accumulate(&jointStatistic[l*0], &jointStatistic[l*1], 0) + std::accumulate(&jointStatistic[l*2], &jointStatistic[l*3], 0) + std::accumulate(&jointStatistic[l*3], &jointStatistic[l*4], 0);
-
-    double initialCardinalityA;
-    double initialCardinalityB;
-    double initialCardinalityX;
-    inclusionExclusionTwoHyperLogLogEstimation(jointStatistic, initialCardinalityA, initialCardinalityB, initialCardinalityX);
+    const int m = jointStatistic.getNumRegisters();
 
     // set initial vector
-    double lastA = std::log(std::max(1.,initialCardinalityA)/m);
-    double lastB = std::log(std::max(1.,initialCardinalityB)/m);
-    double lastX = std::log(std::max(1.,initialCardinalityX)/m);
-    gsl_vector *x = gsl_vector_alloc(3);
-    gsl_vector_set (x, 0, lastA);
-    gsl_vector_set (x, 1, lastB);
-    gsl_vector_set (x, 2, lastX);
+    // TODO improve initial values
+
+
+    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
+
+    const double cardinalityAX = estimator(jointStatistic.get1Counts());
+    const double cardinalityBX = estimator(jointStatistic.get2Counts());
+    const double cardinalityABX = estimator(jointStatistic.getMaxCounts());
+
+    const double cardinalityMin = estimator(jointStatistic.getMinCounts());
+
+    const double initalStepFactor = 2.;
+
+    double initCadinalityA = 1.;
+    double initCadinalityB = 1.;
+    double initCadinalityX = 1.;
+
+    double lastPhiA = std::log(initCadinalityA/m);
+    double lastPhiB = std::log(initCadinalityB/m);
+    double lastPhiX = std::log(initCadinalityX/m);
+    gsl_vector *phi = gsl_vector_alloc(3);
+    gsl_vector_set(phi, 0, lastPhiA);
+    gsl_vector_set(phi, 1, lastPhiB);
+    gsl_vector_set(phi, 2, lastPhiX);
 
     gsl_multimin_function_fdf my_func;
 
@@ -677,16 +612,16 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
     my_func.f = log_likelihood_function_value_for_gsl;
     my_func.df = log_likelihood_function_derivatives_for_gsl;
     my_func.fdf = log_likelihood_function_value_and_derivatives_for_gsl;
-    my_func.params = &const_cast<std::vector<int>&>(jointStatistic);
+    my_func.params = &const_cast<TwoHyperLogLogStatistic&>(jointStatistic);
 
     const gsl_multimin_fdfminimizer_type *T =  gsl_multimin_fdfminimizer_vector_bfgs2;
-    gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc (T, 3); // 3 dimensions
-    gsl_multimin_fdfminimizer_set (s, &my_func, x, 1, 0.1);
+    gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc(T, 3); // 3 dimensions
+    gsl_multimin_fdfminimizer_set(s, &my_func, phi, std::log(initalStepFactor), 0.1);
 
-    size_t iter = 0;
+    numIterations = 0;
     do
     {
-        iter++;
+        numIterations++;
         int status = gsl_multimin_fdfminimizer_iterate(s);
 
         if (status) {
@@ -698,23 +633,23 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
             exit(-1);
         }
 
-        const gsl_vector* current_x = gsl_multimin_fdfminimizer_x(s);
-        double currentA = gsl_vector_get(current_x, 0);
-        double currentB = gsl_vector_get(current_x, 1);
-        double currentX = gsl_vector_get(current_x, 2);
+        const gsl_vector* currentPhi = gsl_multimin_fdfminimizer_x(s);
+        double currentPhiA = gsl_vector_get(currentPhi, 0);
+        double currentPhiB = gsl_vector_get(currentPhi, 1);
+        double currentPhiX = gsl_vector_get(currentPhi, 2);
 
         if (
-            std::fabs(currentA - lastA) <= 1e-5 &&
-            std::fabs(currentB - lastB) <= 1e-5 &&
-            std::fabs(currentX - lastX) <= 1e-5) {
+            std::fabs(currentPhiA - lastPhiA) <= eps &&
+            std::fabs(currentPhiB - lastPhiB) <= eps &&
+            std::fabs(currentPhiX - lastPhiX) <= eps) {
             break;
         }
 
-        lastA = currentA;
-        lastB = currentB;
-        lastX = currentX;
+        lastPhiA = currentPhiA;
+        lastPhiB = currentPhiB;
+        lastPhiX = currentPhiX;
 
-        if(iter >= maxNumIterations) {
+        if(numIterations >= maxNumIterations) {
             maxNumIterationsReached = true;
             break;
         }
@@ -725,11 +660,9 @@ void maxLikelihoodTwoHyperLogLogEstimation2(const std::vector<int>& jointStatist
     cardinalityB = std::exp(gsl_vector_get(s->x, 1)) * m;
     cardinalityX = std::exp(gsl_vector_get(s->x, 2)) * m;
 
-    gsl_multimin_fdfminimizer_free (s);
-    gsl_vector_free (x);
+    gsl_multimin_fdfminimizer_free(s);
+    gsl_vector_free(phi);
 
 }
-
-
 
 #endif // _CARDINALITY_ESTIMATION_HPP_
