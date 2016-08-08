@@ -115,7 +115,7 @@ public:
                 cEqual[val1] += 1;
             }
         }
-        return TwoHyperLogLogStatistic(cSmaller1, cSmaller2, cLarger1, cLarger2, cEqual);
+        return TwoHyperLogLogStatistic(cEqual, cSmaller1, cSmaller2, cLarger1, cLarger2);
     }
 
     void add(std::uint_fast64_t hashValue) {
