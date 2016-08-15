@@ -51,7 +51,7 @@ task generateRandomHyperLogLogData(type: Exec) {
 
 task buildJointHyperLogLogDataGenerator(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp"
+    inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
     outputs.files "$project.cppDir/joint_hyperloglog_data_generator"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'g++','-std=c++11','-Wall','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
@@ -233,6 +233,27 @@ task figures {
 }
 
 //#########################
+// intersection
+//#########################
+
+task buildIntersectionCalculation(type: Exec) {
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/intersection_calculation.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
+    outputs.files "$project.cppDir/intersection_calculation"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-std=c++11','-Wall','intersection_calculation.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','intersection_calculation'
+}
+
+task doIntersectionCalculation(type: Exec) {
+    workingDir project.cppDir
+    inputs.files "$project.cppDir/intersection_calculation", "$project.cppDir/param.txt", "$project.dataDir/hll_joint/joint_cardinalities.dat"
+    outputs.files "$project.paperDir/intersection.csv"
+    standardOutput = new FileOutputStream("$project.cppDir/intersection_calculation.out")
+    commandLine './intersection_calculation'
+    dependsOn 'buildIntersectionCalculation','generateSimulatedCardinalities'
+}
+
+//#########################
 // paper
 //#########################
 
@@ -260,6 +281,7 @@ task pdflatex2(type: Exec) {
     inputs.files "$project.paperDir/paper.bbl",
         "$project.paperDir/paper.blg",
         "$project.paperDir/paper.tex",
+        "$project.paperDir/intersection.csv",
         "$project.paperDir/helper.svg",
         "$project.paperDir/max_likelihood_avg_exec_time.svg",
         "$project.paperDir/corrected_raw_avg_exec_time.svg",
@@ -320,6 +342,7 @@ task pdflatex3(type: Exec) {
     inputs.files "$project.paperDir/paper.bbl",
         "$project.paperDir/paper.blg",
         "$project.paperDir/paper.tex",
+        "$project.paperDir/intersection.csv",
         "$project.paperDir/helper.pdf",
         "$project.paperDir/helper.pdf_tex",
         "$project.paperDir/max_likelihood_avg_exec_time.pdf",

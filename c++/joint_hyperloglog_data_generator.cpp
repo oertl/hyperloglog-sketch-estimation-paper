@@ -2,7 +2,7 @@
 //# Copyright 2016 Otmar Ertl #
 //#############################
 
-#include "cardinality_estimation.hpp"
+#include "two_hyperloglog_statistic.hpp"
 #include "hyperloglog.hpp"
 
 #include <iostream>

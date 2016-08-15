@@ -14,7 +14,7 @@ dataDir = '../data/'
 def readData(filename):
     csv.field_size_limit(sys.maxsize)
     with open(dataDir + filename , 'r') as file:
-        reader = csv.reader(file, skipinitialspace=True,delimiter=' ')
+        reader = csv.reader(file, skipinitialspace=True)
         return numpy.array([[float(e) for e in r] for r in reader][1:])
 
 def createFigure(p, q, dataSource, figureName):

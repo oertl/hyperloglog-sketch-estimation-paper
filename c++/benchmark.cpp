@@ -230,18 +230,18 @@ void run(const int p, const int q, const string& resultsFileName) {
         }*/
 
         outputFile << cardinality;
-        //outputFile << " " << maxLikelihoodWithRegisterScan;
-        outputFile << " " << maxLikelihoodWithoutRegisterScan;
-        //outputFile << " " << flajoletWithRegisterScan;
-        //outputFile << " " << flajoletWithoutRegisterScan;
-        outputFile << " " << outerLoopIterationsCountSum/(double)dataSize;
-        outputFile << " " << innerLoop1IterationsCountSum/(double)dataSize;
-        outputFile << " " << innerLoop2IterationsCountSum/(double)dataSize;
-        outputFile << " " << logEvaluationCountSum/(double)dataSize;
-        outputFile << " " << flajoletCorrectedWithoutRegisterScan;
-        outputFile << " " << flajoletCorrectedSmallCorrectionIterationsSum/(double)dataSize;
-        outputFile << " " << flajoletCorrectedLargeCorrectionIterationsSum/(double)dataSize;
-        outputFile << " " << flajoletCorrectedWithoutRegisterScanPrecalculated;
+        //outputFile << "," << maxLikelihoodWithRegisterScan;
+        outputFile << "," << maxLikelihoodWithoutRegisterScan;
+        //outputFile << "," << flajoletWithRegisterScan;
+        //outputFile << "," << flajoletWithoutRegisterScan;
+        outputFile << "," << outerLoopIterationsCountSum/(double)dataSize;
+        outputFile << "," << innerLoop1IterationsCountSum/(double)dataSize;
+        outputFile << "," << innerLoop2IterationsCountSum/(double)dataSize;
+        outputFile << "," << logEvaluationCountSum/(double)dataSize;
+        outputFile << "," << flajoletCorrectedWithoutRegisterScan;
+        outputFile << "," << flajoletCorrectedSmallCorrectionIterationsSum/(double)dataSize;
+        outputFile << "," << flajoletCorrectedLargeCorrectionIterationsSum/(double)dataSize;
+        outputFile << "," << flajoletCorrectedWithoutRegisterScanPrecalculated;
         outputFile << endl;
     }
 

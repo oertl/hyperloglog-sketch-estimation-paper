@@ -17,6 +17,7 @@
 \usepackage{verbatim}
 \usepackage{subfig}
 \usepackage{hyperref}
+\usepackage{csvsimple}
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
 % SYMBOLS
@@ -1114,12 +1115,9 @@ While the union of two sets that are represented by HyperLogLog sketches can be 
 -
 \left\vert\symSetS_1 \cup \symSetS_2\right\vert.
 \end{equation}
-Unfortunately, this approach can be very inaccurate. Due to estimation errors of HyperLogLog sketches the result of \eqref{equ:inclusion-exclusion} can be even negative.
+Unfortunately, this approach can be very inaccurate. Due to estimation errors of HyperLogLog sketches the result of \eqref{equ:inclusion-exclusion} can even be negative. Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to also use it for the estimation of set operations. Moreover, it was recently pointed out without special consideration of HyperLogLog sketches, that the application of the maximum likelihood method to the joint likelihood function of two probabilistic data structures which represent the intersection operands gives better intersection cardinality estimates \cite{Ting2016}.
 
-Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to also use it for the estimation of set operations. 
-Assume two given  HyperLogLog sketches with register values $\boldsymbol{\symRegValVariate}_1$ and $\boldsymbol{\symRegValVariate}_2$ representing the sets $\symSetS_1$ and $\symSetS_2$, respectively. The goal is to find estimates for the cardinalities of the pair-wise disjoint sets $\symSetX = \symSetS_1\cap\symSetS_2$, $\symSetA = \symSetS_1\setminus\symSetS_2$, and $\symSetB = \symSetS_2\setminus\symSetS_1$. 
-
-The Poisson approximation allows us to assume that the elements of $\symSetA$ are inserted into the HyperLogLog sketch representing $\symSetS_1$ at rate $\symPoissonRate_\symSetA$. Similarly, the elements of $\symSetB$ are inserted into the HyperLogLog sketch representing $\symSetS_2$ at rate $\symPoissonRate_\symSetB$. Furthermore, we assume that elements of $\symSetX$ are inserted into both HyperLogLog sketches simultaneously at rate $\symPoissonRate_\symSetX$. The goal is now to find estimates, $\symPoissonRateEstimate_\symSetA$, $\symPoissonRateEstimate_\symSetB$, and $\symPoissonRateEstimate_\symSetX$ for the rates which could also be good estimates for the wanted cardinalities of $\symSetA$, $\symSetB$, and $\symSetX$. 
+Assume two given  HyperLogLog sketches with register values $\boldsymbol{\symRegValVariate}_1$ and $\boldsymbol{\symRegValVariate}_2$ representing the sets $\symSetS_1$ and $\symSetS_2$, respectively. The goal is to find estimates for the cardinalities of the pair-wise disjoint sets $\symSetX = \symSetS_1\cap\symSetS_2$, $\symSetA = \symSetS_1\setminus\symSetS_2$, and $\symSetB = \symSetS_2\setminus\symSetS_1$. The Poisson approximation allows us to assume that the elements of $\symSetA$ are inserted into the HyperLogLog sketch representing $\symSetS_1$ at rate $\symPoissonRate_\symSetA$. Similarly, the elements of $\symSetB$ are inserted into the HyperLogLog sketch representing $\symSetS_2$ at rate $\symPoissonRate_\symSetB$. Furthermore, we assume that elements of $\symSetX$ are inserted into both HyperLogLog sketches simultaneously at rate $\symPoissonRate_\symSetX$. The goal is now to find estimates, $\symPoissonRateEstimate_\symSetA$, $\symPoissonRateEstimate_\symSetB$, and $\symPoissonRateEstimate_\symSetX$ for the rates which could also be good estimates for the wanted cardinalities of $\symSetA$, $\symSetB$, and $\symSetX$. 
 
 \subsection{Joint log-likelihood funtion}
 In order to get maximum-likelihood estimators for $\symPoissonRateEstimate_\symSetA$, $\symPoissonRateEstimate_\symSetB$, and $\symPoissonRateEstimate_\symSetX$ we need to derive the joint probability distribution of two HyperLogLog sketches. Under the Poisson model the register values are independent and identically distributed. Therefore, we first derive the joint probability distribution for a single register that has value $\symRegValVariate_1$ in the first HyperLogLog sketch representing $\symSetS_1$ and value $\symRegValVariate_2$ in the second HyperLogLog sketch representing $\symSetS_2$. 
@@ -1603,7 +1601,7 @@ The transformed log-likelihood function can be written as
 )=
 \\
 \begin{aligned}
-=&-
+&-
 \sum_{\symRegVal=0}^{\symRegRange}
 \left(
   \symCountVariate^{<}_{1\symRegVal}+
@@ -1854,7 +1852,50 @@ e^{\symX_1+\symX_2+\symX_3}-e^{\symX_1}-e^{\symX_2}+1
 
 \subsection{Results}
 
-TODO
+TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x}
+
+\begin{table}
+\centering
+\caption{The list of cases for which the cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$ have been estimated given two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$, respectively.}
+\label{tbl:joint_estimation_cases}
+\csvreader[tabular=r|r|r|r|r|r, table head=\# & $|\symSetA|$ & $|\symSetB|$ & $|\symSetX|$ & $\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$ & $\log_{10}\!\left(\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}\right)$\\\hline]
+{intersection.csv}{trueCardA=\trueCardA,trueCardB=\trueCardB,trueCardX=\trueCardX,trueJaccardIdx=\trueJaccardIdx ,trueLogRatio=\trueLogRatio}{
+\thecsvrow & \trueCardA & \trueCardB & \trueCardX & \trueJaccardIdx & \trueLogRatio
+}
+\end{table}
+
+\begin{table}
+\centering
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\label{tbl:joint_estimation_a}
+\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+{intersection.csv}{inclExclMeanA=\inclExclMeanA,inclExclStdDevA=\inclExclStdDevA,
+maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
+\thecsvrow & \inclExclMeanA & \inclExclStdDevA & \maxLikeMeanA & \maxLikeStdDevA
+}
+\end{table}
+
+\begin{table}
+\centering
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\label{tbl:joint_estimation_b}
+\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+{intersection.csv}{inclExclMeanB=\inclExclMeanB,inclExclStdDevB=\inclExclStdDevB,
+maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
+\thecsvrow & \inclExclMeanB & \inclExclStdDevB & \maxLikeMeanB & \maxLikeStdDevB
+}
+\end{table}
+
+\begin{table}
+\centering
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\label{tbl:joint_estimation_x}
+\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+{intersection.csv}{inclExclMeanX=\inclExclMeanX,inclExclStdDevX=\inclExclStdDevX,
+maxLikeMeanX=\maxLikeMeanX,maxLikeStdDevX=\maxLikeStdDevX}{
+\thecsvrow & \inclExclMeanX & \inclExclStdDevX & \maxLikeMeanX & \maxLikeStdDevX
+}
+\end{table}
 
 \section{Conclusion and future work}
 

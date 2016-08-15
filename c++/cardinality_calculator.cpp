@@ -30,7 +30,7 @@ template <typename T> void printToFile(const string& fileName, const T* data, si
     for (size_t c = 0; c < numCardinalities; ++c) {
         for (size_t s = 0; s < numSketches; ++s) {
             if (s>0) {
-                file << " ";
+                file << ",";
             }
             file << data[c*numSketches+s];
         }
