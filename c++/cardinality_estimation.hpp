@@ -215,32 +215,6 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
     return (alpha*m)*m/z;
 }
 
-class OptimalLinearCountingEstimator {
-
-    const int p;
-    const int m = 1 << p;
-    const std::vector<double> results = initResults(m);
-
-    static std::vector<double> initResults(int m) {
-
-        std::vector<double> results(m+1);
-        results[m] = 0;
-        for (int c = m-1; c >= 0; --c) {
-            results[c] = results[c + 1] + m/(double)c;
-        }
-        return results;
-    }
-
-public:
-
-    OptimalLinearCountingEstimator(const int p_) : p(p_) {}
-
-    double operator()(const std::vector<int>& c) const {
-        return results[c[0]];
-    }
-};
-
-
 class CorrectedRawEstimator {
     const int p;
     const int q;
