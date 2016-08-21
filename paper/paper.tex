@@ -1553,6 +1553,7 @@ $\symCountVariate^{>}_{2\symRegVal}$,
 $\symCountVariate^{<}_{2\symRegVal}$,
 and $\symCountVariate^{=}_{\symRegVal}$ are defined as
 \begin{equation}
+\label{equ:sufficient_joint_statistic}
 \begin{aligned}
 \symCountVariate^{>}_{1\symRegVal}&:=\left|\lbrace\symIndexI\vert\symRegVal=\symRegValVariate_{1\symIndexI}>
 \symRegValVariate_{2\symIndexI}\rbrace\right|,
@@ -1584,6 +1585,10 @@ The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have
 The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the maximum likelihood cardinality estimates for the first and second HyperLogLog sketch, respectively. This means that the maximum-likelihood makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach would give $\symPoissonRateEstimate_2$ as estimate. This result is questionable, because there is no evidence at all, that the sets $\symSetS_1$ and $\symSetS_2$ really have common elements.
 
 If it is given that the two HyperLogLog sketches represent disjoint sets, we know in advance that $\symPoissonRate_\symSetXSuffix=0$. In this case \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively. As expected, these two functions are equivalent to the individual log-likelihood functions \eqref{equ:log_likelihood_single} of both HyperLogLog sketches.
+
+The inclusion-exclusion method does not use all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}, because the estimates are functions of the three vectors $(\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1})$, 
+$(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$, and 
+$(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$. In contrast, the maximum-likelihood method uses all values of the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
 
 \subsection{Computation of the maximum likelihood estimates}
 The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=\symNumReg e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.

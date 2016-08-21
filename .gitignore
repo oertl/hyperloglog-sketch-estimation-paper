@@ -25,9 +25,11 @@ c++/definecardinalities
 c++/hyperloglog_data_generator
 c++/joint_hyperloglog_data_generator
 c++/cardinality_calculator
+c++/intersection_calculation
 c++/benchmark
 c++/hyperlogloggeneration.out
 c++/cardinality_calculator.out
+c++/intersection_calculation.out
 paper/helper.pdf
 paper/helper.pdf_tex
 paper/max_likelihood_avg_exec_time.pdf
