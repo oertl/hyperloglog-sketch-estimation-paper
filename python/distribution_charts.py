@@ -60,7 +60,7 @@ def createFigure(p, q, dataSource, figureName):
     data50 = numpy.divide(numpy.percentile(data, 50, axis=1), cardinalities)-1.
 
     ax1.plot(cardinalities, datamean, color='black', linewidth=0.75, label='mean', dashes=[1, 2], dash_capstyle='round')
-    ax1.plot(cardinalities, datastdpos, color='black', linewidth=0.75, linestyle = 'dotted', label='stddev', dashes = [1, 4], dash_capstyle='round')
+    ax1.plot(cardinalities, datastdpos, color='black', linewidth=0.75, linestyle = 'dotted', label='stdev', dashes = [1, 4], dash_capstyle='round')
     ax1.plot(cardinalities, datastdneg, color='black', linewidth=0.75, linestyle = 'dotted', dashes = [1, 4], dash_capstyle='round')
     ax1.plot(cardinalities, data50, color='black', linewidth=0.75, linestyle = 'solid', label='median')
     ax1.fill_between(cardinalities, datam3s, datap3s, facecolor='#dddddd', edgecolor='none')

@@ -179,7 +179,7 @@ Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the 
 
 \subsection{Poisson approximation}
 \label{sec:poisson_approximation}
-Due to the statistical dependence of the register values, the probability mass function \eqref{equ:multinomialProbabilityMass} is difficult to analyze. Therefore, a Poisson model can be used \cite{Flajolet2007}, which assumes that the cardinality itself is distributed according to a Poisson distribution
+Due to the statistical dependence of the register values, the probability mass function \eqref{equ:multinomialProbabilityMass} is difficult for further analysis. Therefore, a Poisson model can be used \cite{Flajolet2007}, which assumes that the cardinality itself is distributed according to a Poisson distribution
 \begin{equation}
 \symCardinality \sim \text{Poisson}(\symPoissonRate).
 \end{equation}
@@ -213,7 +213,7 @@ e^{-\symCount_0\frac{\symPoissonRate}{\symNumReg}}
 \left(1-e^{-\frac{\symPoissonRate}{\symNumReg 2^\symRegRange}}\right)^{\!\symCount_{\symRegRange+1}}.
 \end{align}
 Here $\symCount_\symRegVal$ denotes the multiplicity of value $\symRegVal$  in the multiset $\lbrace\symRegVal_1,\ldots,\symRegVal_\symNumReg\rbrace$.
-The final factorization shows that under the Poisson values the register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ are independent and identically distributed. The probability that a register has a value less than or equal to $\symRegVal$ for a given rate $\symPoissonRate$ is defined by
+The final factorization shows that under the Poisson model the register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ are independent and identically distributed. The probability that a register has a value less than or equal to $\symRegVal$ for a given rate $\symPoissonRate$ is defined by
 \begin{equation}
 \label{equ:register_value_distribution}
 \symProbability(\symRegValVariate \leq \symRegVal\vert\symPoissonRate)
@@ -356,7 +356,7 @@ A simple approach to avoid the need of any large range correction is to extend t
 
 \subsection{Derivation of the raw estimator}
 \label{sec:derivation_raw_estimator}
-In order to better understand why the raw estimator fails for small and large cardinalities, we start with a brief and simple derivation without the restriction tolarge cardinalities ($\symCardinality\rightarrow\infty$) and without using complex analysis as in \cite{Flajolet2007}.
+In order to better understand why the raw estimator fails for small and large cardinalities, we start with a brief and simple derivation without the restriction to large cardinalities ($\symCardinality\rightarrow\infty$) and without using complex analysis as in \cite{Flajolet2007}.
 
 Let us assume that the register values have following cumulative distribution function
 \begin{equation}
@@ -448,7 +448,7 @@ If we knew the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg
 = 
 \frac{\symAlpha_\infty\,\symNumReg^2}{2^{-\symRegValVariate'_1}+\ldots+2^{-\symRegValVariate'_\symNumReg}}.
 \end{equation}
-As we have already shown, this estimator is approximately unbiased, because all $\symRegValVariate'_\symIndexI$ follow the assumed distribution. It would be even sufficient, if we know the multiplicity $\symCountVariate'_\symRegVal$
+As we have already shown, this estimator is approximately unbiased, because all $\symRegValVariate'_\symIndexI$ follow the assumed distribution. It would be even sufficient, if we knew the multiplicity $\symCountVariate'_\symRegVal$
 of each $\symRegVal\in\mathbb{Z}$ in $\lbrace\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg\rbrace$, $\symCountVariate'_\symRegVal := \left|\lbrace \symIndexI\vert \symRegVal = \symRegValVariate'_\symIndexI\rbrace\right|$, because the raw estimator can be also written as
 \begin{equation}
 \label{equ:raw_estimate_with_multiplicities}
@@ -663,7 +663,7 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 
 \subsection{Performance}
 \label{sec:corrected_raw_estimation_algorithm}
-In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded precalculated multiplicity vectors of 1000 randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100\,000 algorithm executions for each cardinality value. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. 
+In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded precalculated multiplicity vectors of 1000 randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to 100,000 algorithm executions for each cardinality value. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at 3.3\,GHz. 
 
 The results show that the execution times are nearly constant for $\symRegRange=52$. Using a lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed due to the small probability of saturated registers ($\symCountVariate_{53}>0$) for realistic cardinalities.
 
@@ -679,7 +679,7 @@ The numbers do not yet include the required processing time to extract the multi
 \end{figure}
 
 \section{Maximum likelihood estimation}
-Moreover, we know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. We know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
+We know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. Moreover, we know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
 
 We remark that we are not the first applying the maximum likelihood method to HyperLogLog sketches \cite{Clifford2012}, where the case without stochastic averaging (compare \cref{sec:data_element_insertion}) was considered. The register values are statistically independent by nature in this case which 
 allows factorization of the joint probability mass function and allows a straightforward application of the maximum likelihood method. 
@@ -876,14 +876,14 @@ If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_
 
 \subsection{Computation of the maximum likelihood estimate}
 \label{sec:comp_ml_estimate}
-Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and the secant method, will converge to the root, if the function is negative for the starting points. In the following we start from the secant method to derive the new cardinality estimation algorithm. Even though the secant method has the disadvantage of slower convergence, a single iteration is simpler to calculate as it does not require the evaluation of the first derivative. An iteration step of the secant method can be written as
+Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and the secant method, will converge to the root, provided that the function is negative for the starting points. In the following we start from the secant method to derive the new cardinality estimation algorithm. Even though the secant method has the disadvantage of slower convergence, a single iteration is simpler to calculate as it does not require the evaluation of the first derivative. An iteration step of the secant method can be written as
 \begin{equation}
 \symX_{\symIndexI} = 
 \symX_{\symIndexI-1} -
 \left(\symX_{\symIndexI-1}-\symX_{\symIndexI-2}\right)
 \frac{\symFunc(\symX_{\symIndexI-1})}{\symFunc(\symX_{\symIndexI-1}) - \symFunc(\symX_{\symIndexI-2})}
 \end{equation}
-If $\symX_0 = 0$ with $\symFunc(\symX_0)=-\left(\symNumReg-\symCountVariate_0\right)$, and $\symX_1$ is equal to one of the derived lower bounds \eqref{equ:strong_lower_bound} or \eqref{equ:weak_lower_bound}, the sequence $(\symX_0, \symX_1, \symX_2, \ldots)$ is montone increasing. Using the definitions
+If we set $\symX_0$ equal to 0, for which  $\symFunc(\symX_0)=-\left(\symNumReg-\symCountVariate_0\right)$, and $\symX_1$ equal to one of the derived lower bounds \eqref{equ:strong_lower_bound} or \eqref{equ:weak_lower_bound}, the sequence $(\symX_0, \symX_1, \symX_2, \ldots)$ is montone increasing. Using the definitions
 \begin{equation}
 \Delta\symX_\symIndexI := \symX_\symIndexI-\symX_{\symIndexI-1}
 \end{equation}

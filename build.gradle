@@ -226,8 +226,25 @@ task createDistributionCharts(type: Exec) {
     dependsOn 'generateSimulatedCardinalities','doCardinalityCalculation'
 }
 
+task createComparisonCharts(type: Exec) {
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/comparison.py",
+        "$project.dataDir/12_20_flajolet_small_range_estimates.dat",
+        "$project.dataDir/12_20_flajolet_mid_range_estimates.dat",
+        "$project.dataDir/12_20_max_likelihood_estimates.dat",
+        "$project.dataDir/12_20_corrected_raw_estimates.dat",
+        "$project.dataDir/cardinalities.dat"
+    outputs.files "$project.paperDir/mean_comparison.svg",
+        "$project.paperDir/stdev_comparison.svg",
+        "$project.paperDir/mean_comparison.png",
+        "$project.paperDir/stdev_comparison.png"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'comparison.py'
+    dependsOn 'generateSimulatedCardinalities','doCardinalityCalculation'
+}
+
 task figures {
-    dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts','powerSeriesFunctionFig'
+    dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts','powerSeriesFunctionFig','createComparisonCharts'
     doLast {
     }
 }
