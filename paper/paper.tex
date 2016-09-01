@@ -612,12 +612,22 @@ In order to verify the new estimation algorithm, we generated 10,000 HyperLogLog
 
 \cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}) or the original method (\cref{fig:original_estimate}).
 
+The corrected raw estimator beats the precision of methods that use bias correction \cite{Heule2013,Rhodes2015,Sanfilippo2014}. \cref{fig:stdev_comparison} shows the standard deviation of the raw estimator after bias correction. At the transition region to small cardinalities, for which all previous methods switch over to the linear counting estimator at some point, the corrected raw estimator has smaller variance. Obviously, the previous approaches cannot do better than given by the minimum of both curves for linear counting and raw estimator. In practice, the standard deviation is even larger, because the choice between both estimators must be made based on an estimate and not on the true cardinality, for which the intersection point of both curves represents the ideal transition point.
+
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{raw_corrected_estimate_12_20}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:raw_corrected_estimation_error_12_20}
 \end{figure}
+
+\begin{figure}
+\centering
+\includesvg[width=1\textwidth]{stdev_comparison}
+\caption{Standard deviations of different cardinality estimators as functions of the real cardinality.}
+\label{fig:stdev_comparison}
+\end{figure}
+
 
 The new estimation algorithm also works well for other HyperLogLog configurations. First we considered configurations using a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_16_16}, and \cref{fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives essentially unbiased estimates. Only for very large precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
 
