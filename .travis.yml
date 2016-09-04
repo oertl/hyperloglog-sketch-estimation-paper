@@ -1,7 +1,0 @@
-language: generic # don't install any environment
-
-script: bash ./deploy.sh
-env:
-  global:
-  - ENCRYPTION_LABEL: "454e96d29b3b"
-  - COMMIT_AUTHOR_EMAIL: "otmar.ertl@gmail.com"
