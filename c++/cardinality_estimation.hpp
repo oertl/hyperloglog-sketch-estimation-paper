@@ -621,21 +621,18 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
     const int m = jointStatistic.getNumRegisters();
 
+    // special handling, the sets A u X and B u X are disjoint, therefore X = O
+    if (jointStatistic.getMinCounts()[0] == m) {
+        const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
+        cardinalityX = 0;
+        cardinalityA = estimator(jointStatistic.get1Counts());
+        cardinalityB = estimator(jointStatistic.get2Counts());
+        return;
+    }
+
+    // for all remaining cases the maximum likelihood estimates for A,B,X will be positive
+
     // set initial vector
-    // TODO improve initial values
-
-    // TODO add handling of special cases (all register in 1 are smaller than in 2, etc.)
-
-    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
-
-    //const double cardinalityAX = estimator(jointStatistic.get1Counts());
-    //const double cardinalityBX = estimator(jointStatistic.get2Counts());
-    //const double cardinalityABX = estimator(jointStatistic.getMaxCounts());
-
-    //const double cardinalityMin = estimator(jointStatistic.getMinCounts());
-
-    const double initalStepFactor = 2.;
-
     double initCadinalityA = 1.;
     double initCadinalityB = 1.;
     double initCadinalityX = 1.;
@@ -647,6 +644,8 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     gsl_vector_set(phi, 0, lastPhiA);
     gsl_vector_set(phi, 1, lastPhiB);
     gsl_vector_set(phi, 2, lastPhiX);
+
+    const double initalStepFactor = 2.;
 
     gsl_multimin_function_fdf my_func;
 
@@ -706,85 +705,6 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
 }
 
-void analyticalJointHyperLogLogEstimator(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
-
-    int q = jointStatistic.getQ();
-    int m = jointStatistic.getNumRegisters();
-
-    const std::vector<int>& pmfAX = jointStatistic.get1Counts();
-    const std::vector<int>& pmfBX = jointStatistic.get2Counts();
-    const std::vector<int>& pmfABX = jointStatistic.getMaxCounts();
-
-    double cdfAX[q+1];
-    double cdfBX[q+1];
-    double cdfABX[q+1];
-
-    int sumAX = 0;
-    int sumBX = 0;
-    int sumABX = 0;
-    for(int i = 0; i < q+1; ++i) {
-        sumAX += pmfAX[i];
-        cdfAX[i] = sumAX/(double)m;
-        sumBX += pmfBX[i];
-        cdfBX[i] = sumBX/(double)m;
-        sumABX += pmfABX[i];
-        cdfABX[i] = sumABX/(double)m;
-     }
-
-    // estimate cdfs of A, B, X
-    std::vector<double> cdfA(q+1);
-    std::vector<double> cdfB(q+1);
-    std::vector<double> cdfX(q+1);
-    for(int i = q; i >=0; --i) {
-        if (cdfABX[i] > 0) {
-            cdfX[i] = cdfAX[i] * cdfBX[i] / cdfABX[i];
-            assert(cdfX[i] <= 2);
-        }
-        else {
-            if (i + 1 <= q) {
-                cdfX[i] = cdfX[i+1] * cdfX[i+1];
-            }
-            else {
-                assert(false);
-                cdfX[i] = 1; // TODO
-            }
-        }
-    }
-    for(int i = q; i >=0; --i) {
-        if (cdfBX[i] > 0) {
-            cdfA[i] = cdfABX[i]/cdfBX[i];
-            assert(cdfA[i] <= 2);
-        }
-        else {
-            if (i + 1 <= q) {
-                cdfA[i] = cdfA[i+1] * cdfA[i+1];
-            }
-            else {
-                assert(false);
-                cdfA[i] = 1; // TODO
-            }
-        }
-    }
-    for(int i = q; i >=0; --i) {
-        if (cdfAX[i] > 0) {
-            cdfB[i] = cdfABX[i]/cdfAX[i];
-            assert(cdfB[i] <= 2);
-        }
-        else {
-            if (i + 1 <= q) {
-                cdfB[i] = cdfB[i+1] * cdfB[i+1];
-            }
-            else {
-                assert(false);
-                cdfB[i] = 1; // TODO
-            }
-        }
-    }
-
-    cardinalityA = estimateCardinalityFromCdf(cdfA, m);
-    cardinalityB = estimateCardinalityFromCdf(cdfB, m);
-    cardinalityX = estimateCardinalityFromCdf(cdfX, m);
-}
 
 
 #endif // _CARDINALITY_ESTIMATION_HPP_
