@@ -420,6 +420,18 @@ void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& j
     cardinalityX = std::max(0., cardinalityBX + cardinalityAX - cardinalityABX);
 }
 
+void calcExp(double x, double& a, double& b) {
+    const double ln2 = std::log(2);
+    if (x >= ln2) {
+        a = std::exp(-x);
+        b = 1 - a;
+    }
+    else {
+        b = -std::expm1(-x);
+        a = 1 - b;
+    }
+}
+
 // the minimum of this function gives the max likelihood estimate
 void eval_joint_log_likelihood_function_and_derivatives(
     const TwoHyperLogLogStatistic& jointStatistic,
@@ -483,25 +495,19 @@ void eval_joint_log_likelihood_function_and_derivatives(
         const int cLarger1  = jointStatistic.getLarger1Counts()[k];
 
         if (cLarger1 > 0 || cEqual > 0) {
-            expm1a[k] = -std::expm1(-expPhiApow2k[k]);
-            expa[k] = std::exp(-expPhiApow2k[k]);
+            calcExp(expPhiApow2k[k], expa[k], expm1a[k]);
         }
         if (cLarger2 > 0 || cEqual > 0) {
-            expm1b[k] = -std::expm1(-expPhiBpow2k[k]);
-            expb[k] = std::exp(-expPhiBpow2k[k]);
+            calcExp(expPhiBpow2k[k], expb[k], expm1b[k]);
         }
         if (cSmaller1 > 0 || cEqual > 0) {
-            expm1ax[k] = -std::expm1(-expPhiAXpow2k[k]);
-            expax[k] = std::exp(-expPhiAXpow2k[k]);
+            calcExp(expPhiAXpow2k[k], expax[k], expm1ax[k]);
         }
         if (cSmaller2 > 0 || cEqual > 0) {
-            expm1bx[k] = -std::expm1(-expPhiBXpow2k[k]);
-            expbx[k] = std::exp(-expPhiBXpow2k[k]);
+            calcExp(expPhiBXpow2k[k], expbx[k], expm1bx[k]);
         }
-
         if (cEqual > 0) {
-            expm1x[k] = -std::expm1(-expPhiXpow2k[k]);
-            expx[k] = std::exp(-expPhiXpow2k[k]);
+            calcExp(expPhiXpow2k[k], expx[k], expm1x[k]);
         }
     }
 
@@ -621,9 +627,10 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
     const int m = jointStatistic.getNumRegisters();
 
+    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
+
     // special handling, the sets A u X and B u X are disjoint, therefore X = O
     if (jointStatistic.getMinCounts()[0] == m) {
-        const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
         cardinalityX = 0;
         cardinalityA = estimator(jointStatistic.get1Counts());
         cardinalityB = estimator(jointStatistic.get2Counts());
@@ -633,13 +640,16 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     // for all remaining cases the maximum likelihood estimates for A,B,X will be positive
 
     // set initial vector
-    double initCadinalityA = 1.;
-    double initCadinalityB = 1.;
-    double initCadinalityX = 1.;
 
-    double lastPhiA = std::log(initCadinalityA/m);
-    double lastPhiB = std::log(initCadinalityB/m);
-    double lastPhiX = std::log(initCadinalityX/m);
+    double initCardinality = estimator(jointStatistic.getMaxCounts());
+
+    double initCardinalityA = initCardinality; //estimator(jointStatistic.get1Counts());
+    double initCardinalityB = initCardinality; //estimator(jointStatistic.get2Counts());
+    double initCardinalityX = initCardinality; //std::min(initCardinalityA, initCardinalityB);
+
+    double lastPhiA = std::log(initCardinalityA/m);
+    double lastPhiB = std::log(initCardinalityB/m);
+    double lastPhiX = std::log(initCardinalityX/m);
     gsl_vector *phi = gsl_vector_alloc(3);
     gsl_vector_set(phi, 0, lastPhiA);
     gsl_vector_set(phi, 1, lastPhiB);
@@ -704,7 +714,5 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     gsl_vector_free(phi);
 
 }
-
-
 
 #endif // _CARDINALITY_ESTIMATION_HPP_
