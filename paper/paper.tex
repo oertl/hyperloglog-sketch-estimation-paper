@@ -17,6 +17,7 @@
 \usepackage{verbatim}
 \usepackage{subfig}
 \usepackage{hyperref}
+\usepackage{siunitx}
 \usepackage{csvsimple}
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
@@ -84,6 +85,11 @@
 \symDefine{\symSmallCorrectionFunc}{\sigma}
 \symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
+
+\sisetup{
+fixed-exponent = 2,
+scientific-notation = fixed,
+}
 
 
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
@@ -439,10 +445,10 @@ A random variable $\symRegValVariate'$ with cumulative distribution function \eq
 \label{equ:dist_transformation}
 \symRegValVariate = \min\!\left(\max\!\left(\symRegValVariate', 0\right), \symRegRange+1\right).
 \end{equation}
-Therefore, the register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ can be seen as the result after applying this transformation to a sample $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ of the distribution described by \eqref{equ:assumed_register_val_distribution}. If all registers values of the HyperLogLog sketch lie in the range $[1,\symRegRange]$, they are identical to the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$. In other words, the observed register values are also a plausible sample of the assumed distribution described by \eqref{equ:assumed_register_val_distribution} in this case. Hence, as long as all or at least most register values are in the range $[1,\symRegRange]$ the approximation of \eqref{equ:register_value_distribution} by \eqref{equ:assumed_register_val_distribution} is valid. This explains why the raw estimator works best for intermediate cardinalities. However, for small and large cardinalities many registers have values equal to 0 or $\symRegRange+1$, respectively, which cannot be described by \eqref{equ:assumed_register_val_distribution} and which finally leads to the observed bias.
+Therefore, the register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ can be seen as the result after applying this transformation to a sample $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ of the distribution described by \eqref{equ:assumed_register_val_distribution}. If all registers values of the HyperLogLog sketch fall into the range $[1,\symRegRange]$, they must  be identical to the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$. In other words, the observed register values are also a plausible sample of the assumed distribution described by \eqref{equ:assumed_register_val_distribution} in this case. Hence, as long as all or at least most register values are in the range $[1,\symRegRange]$, the approximation of \eqref{equ:register_value_distribution} by \eqref{equ:assumed_register_val_distribution} is valid. This explains why the raw estimator works best for intermediate cardinalities. However, for small and large cardinalities many registers have values equal to 0 or $\symRegRange+1$, respectively, which cannot be described by \eqref{equ:assumed_register_val_distribution} and finally leads to the observed bias.
 
 \subsection{Corrections to the raw estimator}
-If we knew the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ for which the transformation \eqref{equ:dist_transformation} led to the register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$, we would be able to estimate $\symPoissonRate$ using
+If we knew the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ for which the transformation \eqref{equ:dist_transformation} led to the observed register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$, we would be able to estimate $\symPoissonRate$ using
 \begin{equation}
 \symPoissonRateEstimate 
 = 
@@ -456,7 +462,7 @@ of each $\symRegVal\in\mathbb{Z}$ in $\lbrace\symRegValVariate'_1,\ldots,\symReg
 = 
 \frac{\symAlpha_\infty\,\symNumReg^2}{\sum_{\symRegVal=-\infty}^\infty \symCountVariate'_\symRegVal 2^{-\symRegVal}}.
 \end{equation}
-Due to \eqref{equ:dist_transformation}, the multiplicities $\symCountVariate'_\symRegVal$ and the multiplicities $\symCountVariate_\symRegVal$ for the register values have following relationships
+Due to \eqref{equ:dist_transformation}, the multiplicities $\symCountVariate'_\symRegVal$ and the multiplicities $\symCountVariate_\symRegVal$ for the observed register values have following relationships
 \begin{equation}
 \label{equ:multiplicity_transformation}
 \begin{aligned}
@@ -624,10 +630,9 @@ The corrected raw estimator beats the precision of methods that use bias correct
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{stdev_comparison}
-\caption{Standard deviations of different cardinality estimators as functions of the real cardinality.}
+\caption{Standard deviations of different cardinality estimators as functions of the true cardinality.}
 \label{fig:stdev_comparison}
 \end{figure}
-
 
 The new estimation algorithm also works well for other HyperLogLog configurations. First we considered configurations using a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_16_16}, and \cref{fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision. Again, the new algorithm gives essentially unbiased estimates. Only for very large precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
 
@@ -1581,7 +1586,7 @@ and $\symCountVariate^{=}_{\symRegVal}$ are defined as
 \symRegValVariate_{2\symIndexI}\rbrace\right|.
 \end{aligned}
 \end{equation}
-These $5\symNumReg$ values are sufficient for estimating $\symPoissonRate_\symSetA$, $\symPoissonRate_\symSetB$, and $\symPoissonRate_\symSetX$. Actually, the set of these constants can be further reduced, because $\symCountVariate^{>}_{10}=\symCountVariate^{>}_{20}=
+These $5\symNumReg$ values are sufficient for estimating $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$. Actually, the set of these constants can be further reduced, because $\symCountVariate^{>}_{10}=\symCountVariate^{>}_{20}=
 \symCountVariate^{<}_{1(\symRegRange+1)}=\symCountVariate^{<}_{2(\symRegRange+1)}=0$
 always holds.
 
@@ -1873,7 +1878,7 @@ TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref
 \centering
 \caption{The list of cases for which the cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$ have been estimated given two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$, respectively.}
 \label{tbl:joint_estimation_cases}
-\csvreader[tabular=r|r|r|r|r|r, table head=\# & $|\symSetA|$ & $|\symSetB|$ & $|\symSetX|$ & $\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$ & $\log_{10}\!\left(\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}\right)$\\\hline]
+\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r|r, table head=\# & $|\symSetA|$ & $|\symSetB|$ & $|\symSetX|$ & $\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$ & $\log_{10}\!\left(\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}\right)$\\\hline]
 {intersection.csv}{trueCardA=\trueCardA,trueCardB=\trueCardB,trueCardX=\trueCardX,trueJaccardIdx=\trueJaccardIdx ,trueLogRatio=\trueLogRatio}{
 \thecsvrow & \trueCardA & \trueCardB & \trueCardX & \trueJaccardIdx & \trueLogRatio
 }
@@ -1883,7 +1888,7 @@ TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref
 \centering
 \caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
 \label{tbl:joint_estimation_a}
-\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
 {intersection.csv}{inclExclMeanA=\inclExclMeanA,inclExclStdDevA=\inclExclStdDevA,
 maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
 \thecsvrow & \inclExclMeanA & \inclExclStdDevA & \maxLikeMeanA & \maxLikeStdDevA
@@ -1894,7 +1899,7 @@ maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
 \centering
 \caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
 \label{tbl:joint_estimation_b}
-\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
 {intersection.csv}{inclExclMeanB=\inclExclMeanB,inclExclStdDevB=\inclExclStdDevB,
 maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
 \thecsvrow & \inclExclMeanB & \inclExclStdDevB & \maxLikeMeanB & \maxLikeStdDevB
@@ -1905,7 +1910,7 @@ maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
 \centering
 \caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
 \label{tbl:joint_estimation_x}
-\csvreader[tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
 {intersection.csv}{inclExclMeanX=\inclExclMeanX,inclExclStdDevX=\inclExclStdDevX,
 maxLikeMeanX=\maxLikeMeanX,maxLikeStdDevX=\maxLikeStdDevX}{
 \thecsvrow & \inclExclMeanX & \inclExclStdDevX & \maxLikeMeanX & \maxLikeStdDevX

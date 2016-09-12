@@ -23,6 +23,8 @@ const int minP = 4;
 const int maxP = 22;
 const int maxPplusQ = 64;
 
+const int analyzeP = 20;
+
 const double pm3s = (1.-erf(3./sqrt(2.)))/2.;
 const double pp3s = (1.+erf(3./sqrt(2.)))/2.;
 const double pm2s = (1.-erf(2./sqrt(2.)))/2.;
@@ -118,6 +120,8 @@ int main(int argc, char* argv[])
     resultsFile << "maxNumIterations,";
     resultsFile << "iterationAbortedCount" << endl;
 
+    int evaluationCounter = 0;
+
     for(const string& fileName : jointCardFileNames) {
 
         const long trueCardA = stol(fileName.substr(0, 11));
@@ -129,7 +133,7 @@ int main(int argc, char* argv[])
         const double jaccardIndex = trueCardX/static_cast<double>(trueCardA+trueCardB+trueCardX);
         const double logRatio = std::log10(trueCardA) - std::log10(trueCardB);
 
-        if (jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 1) continue; // TODO filter interesting cardinalities
+        if (analyzeP != p || jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 2) continue; // TODO filter cardinality combinations for table
 
         cout << trueCardA << " " << trueCardB << " " << trueCardX << " " << p << " " << q << endl;
 
@@ -173,7 +177,6 @@ int main(int argc, char* argv[])
                 bool maxNumIterationsReached = false;
                 bool iterationAborted = false;
                 int numIterations = 0;
-                //analyticalJointHyperLogLogEstimator(jointStatistic, estCardA, estCardB, estCardX);
                 maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, maxNumIterationsReached, iterationAborted, numIterations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
@@ -183,9 +186,11 @@ int main(int argc, char* argv[])
                 if (iterationAborted) iterationAbortedCount += 1;
                 numIterationsTotal += numIterations;
                 maxNumIterations = std::max(maxNumIterations, numIterations);
+
             }
 
             size += 1;
+            evaluationCounter += 1;
 
         }
 
@@ -209,5 +214,7 @@ int main(int argc, char* argv[])
         resultsFile << (numIterationsTotal/(double)size) << ",";
         resultsFile << maxNumIterations << ",";
         resultsFile << iterationAbortedCount << endl;
+
     }
+    cout << "number of evaluation = " << evaluationCounter << endl;
 }
