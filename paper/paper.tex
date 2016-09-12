@@ -86,12 +86,6 @@
 \symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
 
-\sisetup{
-fixed-exponent = 2,
-scientific-notation = fixed,
-}
-
-
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
 \subtitle{Draft version}
 \author{Otmar Ertl \\ otmar.ertl@gmail.com}
@@ -1874,13 +1868,19 @@ e^{\symX_1+\symX_2+\symX_3}-e^{\symX_1}-e^{\symX_2}+1
 
 TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x}
 
+
 \begin{table}
 \centering
 \caption{The list of cases for which the cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$ have been estimated given two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$, respectively.}
 \label{tbl:joint_estimation_cases}
 \csvreader[before reading=\footnotesize, tabular=r|r|r|r|r|r, table head=\# & $|\symSetA|$ & $|\symSetB|$ & $|\symSetX|$ & $\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$ & $\log_{10}\!\left(\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}\right)$\\\hline]
 {intersection.csv}{trueCardA=\trueCardA,trueCardB=\trueCardB,trueCardX=\trueCardX,trueJaccardIdx=\trueJaccardIdx ,trueLogRatio=\trueLogRatio}{
-\thecsvrow & \trueCardA & \trueCardB & \trueCardX & \trueJaccardIdx & \trueLogRatio
+\thecsvrow & 
+\num{\trueCardA} & 
+\num{\trueCardB} & 
+\num{\trueCardX} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\trueJaccardIdx} & 
+\num[scientific-notation = fixed,round-mode = places,round-precision = 3]{\trueLogRatio}
 }
 \end{table}
 
@@ -1891,7 +1891,11 @@ TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref
 \csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
 {intersection.csv}{inclExclMeanA=\inclExclMeanA,inclExclStdDevA=\inclExclStdDevA,
 maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
-\thecsvrow & \inclExclMeanA & \inclExclStdDevA & \maxLikeMeanA & \maxLikeStdDevA
+\thecsvrow & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanA} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevA} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanA} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevA}
 }
 \end{table}
 
@@ -1899,11 +1903,16 @@ maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
 \centering
 \caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
 \label{tbl:joint_estimation_b}
-\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
+\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head= {\#} & {IE mean} & {IE stdev} & {ML mean} & {ML stdev}\\\hline]
 {intersection.csv}{inclExclMeanB=\inclExclMeanB,inclExclStdDevB=\inclExclStdDevB,
 maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
-\thecsvrow & \inclExclMeanB & \inclExclStdDevB & \maxLikeMeanB & \maxLikeStdDevB
+\thecsvrow & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanB} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevB} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanB} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevB}
 }
+
 \end{table}
 
 \begin{table}
@@ -1913,7 +1922,11 @@ maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
 \csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
 {intersection.csv}{inclExclMeanX=\inclExclMeanX,inclExclStdDevX=\inclExclStdDevX,
 maxLikeMeanX=\maxLikeMeanX,maxLikeStdDevX=\maxLikeStdDevX}{
-\thecsvrow & \inclExclMeanX & \inclExclStdDevX & \maxLikeMeanX & \maxLikeStdDevX
+\thecsvrow & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanX} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevX} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanX} & 
+\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevX}
 }
 \end{table}
 
