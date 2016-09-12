@@ -618,9 +618,9 @@ double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params
 
 void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted, int& numIterations) {
 
-    const double eps = 1e-5;
-
-    const int maxNumIterations = 100000;
+    const double eps = 1e-6;
+    const double initalStepFactor = 2;
+    const int maxNumIterations = 10000;
 
     maxNumIterationsReached = false;
     iterationAborted = false;
@@ -629,23 +629,24 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
     const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
 
+    double cardinalityAX = estimator(jointStatistic.get1Counts());
+    double cardinalityBX = estimator(jointStatistic.get2Counts());
+
     // special handling, the sets A u X and B u X are disjoint, therefore X = O
     if (jointStatistic.getMinCounts()[0] == m) {
         cardinalityX = 0;
-        cardinalityA = estimator(jointStatistic.get1Counts());
-        cardinalityB = estimator(jointStatistic.get2Counts());
+        cardinalityA = cardinalityAX;
+        cardinalityB = cardinalityBX;
         return;
     }
-
     // for all remaining cases the maximum likelihood estimates for A,B,X will be positive
 
-    // set initial vector
+    double cardinalityABX = estimator(jointStatistic.getMaxCounts());
 
-    double initCardinality = estimator(jointStatistic.getMaxCounts());
-
-    double initCardinalityA = initCardinality; //estimator(jointStatistic.get1Counts());
-    double initCardinalityB = initCardinality; //estimator(jointStatistic.get2Counts());
-    double initCardinalityX = initCardinality; //std::min(initCardinalityA, initCardinalityB);
+    // set initial vector using inclusion exclusion principle
+    double initCardinalityA = std::max(1., cardinalityABX - cardinalityBX);
+    double initCardinalityB = std::max(1., cardinalityABX - cardinalityAX);
+    double initCardinalityX = std::max(1., cardinalityAX + cardinalityBX - cardinalityABX);
 
     double lastPhiA = std::log(initCardinalityA/m);
     double lastPhiB = std::log(initCardinalityB/m);
@@ -654,8 +655,6 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     gsl_vector_set(phi, 0, lastPhiA);
     gsl_vector_set(phi, 1, lastPhiB);
     gsl_vector_set(phi, 2, lastPhiX);
-
-    const double initalStepFactor = 2.;
 
     gsl_multimin_function_fdf my_func;
 
