@@ -449,27 +449,15 @@ void eval_joint_log_likelihood_function_and_derivatives(
     const double expPhiB = std::exp(phiB);
     const double expPhiX = std::exp(phiX);
 
-    const double expPhiAdivAX = expPhiA / (expPhiA + expPhiX);   // TODO handle division by 0?
-    const double expPhiXdivAX = expPhiX / (expPhiA + expPhiX);
-    const double expPhiBdivBX = expPhiB / (expPhiB + expPhiX);
-    const double expPhiXdivBX = expPhiX / (expPhiB + expPhiX);
-
-
     double expm1a[q+1];  // 1-exp(-exp(phiA/2^k))
     double expm1b[q+1];  // 1-exp(-exp(phiB/2^k))
-    double expm1ax[q+1]; // 1-exp(-exp(phiA/2^k)-exp(phiX/2^k))
-    double expm1bx[q+1]; // 1-exp(-exp(phiB/2^k)-exp(phiX/2^k))
     double expa[q+1];  // exp(-exp(phiA/2^k))
     double expb[q+1];  // exp(-exp(phiB/2^k))
-    double expax[q+1]; // exp(-exp(phiA/2^k)-exp(phiX/2^k))
-    double expbx[q+1]; // exp(-exp(phiB/2^k)-exp(phiX/2^k))
     double expm1x[q+1];
     double expx[q+1];
     double expPhiApow2k[q+1]; // exp(phiA/2^k)
     double expPhiBpow2k[q+1]; // exp(phiB/2^k)
     double expPhiXpow2k[q+1]; // exp(phiX/2^k)
-    double expPhiAXpow2k[q+1]; //exp(phiA/2^k) + exp(phiX/2^k)
-    double expPhiBXpow2k[q+1]; //exp(phiB/2^k) + exp(phiX/2^k)
 
     expPhiApow2k[0] = expPhiA;
     expPhiBpow2k[0] = expPhiB;
@@ -480,33 +468,14 @@ void eval_joint_log_likelihood_function_and_derivatives(
         expPhiXpow2k[k] = expPhiXpow2k[k-1] * 0.5;
     }
 
-    for (int k = 0; k <= q; ++k) {
-        expPhiAXpow2k[k] = expPhiApow2k[k] + expPhiXpow2k[k];
-        expPhiBXpow2k[k] = expPhiBpow2k[k] + expPhiXpow2k[k];
-    }
-
-
     for (int k = q; k >= 1; --k) {
-
-        const int cEqual    = jointStatistic.getEqualCounts()[k];
-        const int cLarger2  = jointStatistic.getLarger2Counts()[k];
-        const int cSmaller1 = jointStatistic.getSmaller1Counts()[k];
-        const int cSmaller2 = jointStatistic.getSmaller2Counts()[k];
-        const int cLarger1  = jointStatistic.getLarger1Counts()[k];
-
-        if (cLarger1 > 0 || cEqual > 0) {
+        if (jointStatistic.get1Count(k) > 0) {
             calcExp(expPhiApow2k[k], expa[k], expm1a[k]);
         }
-        if (cLarger2 > 0 || cEqual > 0) {
+        if (jointStatistic.get2Count(k) > 0) {
             calcExp(expPhiBpow2k[k], expb[k], expm1b[k]);
         }
-        if (cSmaller1 > 0 || cEqual > 0) {
-            calcExp(expPhiAXpow2k[k], expax[k], expm1ax[k]);
-        }
-        if (cSmaller2 > 0 || cEqual > 0) {
-            calcExp(expPhiBXpow2k[k], expbx[k], expm1bx[k]);
-        }
-        if (cEqual > 0) {
+        if (jointStatistic.getMinCount(k) > 0) {
             calcExp(expPhiXpow2k[k], expx[k], expm1x[k]);
         }
     }
@@ -521,29 +490,24 @@ void eval_joint_log_likelihood_function_and_derivatives(
     double term1x = 0;
 
     for (int k = q; k >= 0; --k) {
-        const int cEqual    = jointStatistic.getEqualCounts()[k];
-        const int cLarger2  = jointStatistic.getLarger2Counts()[k];
-        const int cSmaller1 = jointStatistic.getSmaller1Counts()[k];
-        const int cSmaller2 = jointStatistic.getSmaller2Counts()[k];
-        const int cLarger1  = jointStatistic.getLarger1Counts()[k];
-        term1a += (cEqual + cSmaller1 + cLarger1 ) * expPhiApow2k[k];
-        term1b += (cEqual + cLarger2  + cSmaller2) * expPhiBpow2k[k];
-        term1x += (cEqual + cSmaller1 + cSmaller2) * expPhiXpow2k[k];
+        term1a += jointStatistic.get1Count(k) * expPhiApow2k[k];
+        term1b += jointStatistic.get2Count(k) * expPhiBpow2k[k];
+        term1x += jointStatistic.getMinCount(k) * expPhiXpow2k[k];
     }
 
     for (int kk = q+1; kk >= 1; --kk) {
         const int k = std::min(kk, q);
-        const int cEqual    = jointStatistic.getEqualCounts()[k];
-        const int cLarger2  = jointStatistic.getLarger2Counts()[k];
-        const int cSmaller1 = jointStatistic.getSmaller1Counts()[k];
-        const int cSmaller2 = jointStatistic.getSmaller2Counts()[k];
-        const int cLarger1  = jointStatistic.getLarger1Counts()[k];
+        const int cEqual    = jointStatistic.getEqualCount(k);
+        const int cLarger2  = jointStatistic.getLarger2Count(k);
+        const int cSmaller1 = jointStatistic.getSmaller1Count(k);
+        const int cSmaller2 = jointStatistic.getSmaller2Count(k);
+        const int cLarger1  = jointStatistic.getLarger1Count(k);
 
         if (cSmaller1 > 0) {
-            f  -= cSmaller1 * std::log(expm1ax[k]);
-            double tmp = cSmaller1 * expax[k] * (expPhiAXpow2k[k] / expm1ax[k]);
-            fa -= tmp * expPhiAdivAX;
-            fx -= tmp * expPhiXdivAX;
+            f  -= cSmaller1 * std::log(expm1x[k] + expx[k]*expm1a[k]);
+            double tmp = cSmaller1 * expa[k] * expx[k] /(expm1x[k] + expx[k] *expm1a[k]);
+            fa -= tmp * expPhiApow2k[k];
+            fx -= tmp * expPhiXpow2k[k];
         }
 
         if (cLarger1 > 0) {
@@ -552,10 +516,10 @@ void eval_joint_log_likelihood_function_and_derivatives(
         }
 
         if (cSmaller2 > 0) {
-            f  -= cSmaller2 * std::log(expm1bx[k]);
-            double tmp = cSmaller2 * expbx[k] * (expPhiBXpow2k[k] / expm1bx[k]);
-            fb -= tmp * expPhiBdivBX;
-            fx -= tmp * expPhiXdivBX;
+            f  -= cSmaller2 * std::log(expm1x[k] + expx[k]*expm1b[k]);
+            double tmp = cSmaller2 * expb[k] * expx[k] /(expm1x[k] + expx[k] *expm1b[k]);
+            fb -= tmp * expPhiBpow2k[k];
+            fx -= tmp * expPhiXpow2k[k];
         }
 
         if (cLarger2 > 0) {
@@ -564,10 +528,11 @@ void eval_joint_log_likelihood_function_and_derivatives(
         }
 
         if (cEqual > 0) {
-            f  -= cEqual * std::log(expm1a[k] * expm1b[k] * expx[k] + expm1x[k]);
-            fa -= cEqual * (((expax[k] * expm1b[k])/(expm1a[k] * expm1b[k] * expx[k] + expm1x[k])) * expPhiApow2k[k]);
-            fb -= cEqual * (((expbx[k] * expm1a[k])/(expm1a[k] * expm1b[k] * expx[k] + expm1x[k])) * expPhiBpow2k[k]);
-            fx -= cEqual * (((expx[k] *(1 - expm1a[k] * expm1b[k]))/(expm1a[k] * expm1b[k] * expx[k] + expm1x[k])) * expPhiXpow2k[k]);
+            double tmp = expm1a[k] * expm1b[k] * expx[k] + expm1x[k];
+            f  -= cEqual * std::log(tmp);
+            fa -= cEqual * (((expx[k] * expa[k] * expm1b[k])/tmp) * expPhiApow2k[k]);
+            fb -= cEqual * (((expx[k] * expb[k] * expm1a[k])/tmp) * expPhiBpow2k[k]);
+            fx -= cEqual * (((expx[k] *(expa[k] * expm1b[k] + expb[k] * expm1a[k] + expa[k] * expb[k]))/tmp) * expPhiXpow2k[k]);
         }
 
     }
@@ -633,7 +598,7 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     double cardinalityBX = estimator(jointStatistic.get2Counts());
 
     // special handling, the sets A u X and B u X are disjoint, therefore X = O
-    if (jointStatistic.getMinCounts()[0] == m) {
+    if (jointStatistic.getMinCount(0) == m) {
         cardinalityX = 0;
         cardinalityA = cardinalityAX;
         cardinalityB = cardinalityBX;

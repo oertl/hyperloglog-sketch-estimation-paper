@@ -102,6 +102,42 @@ public:
         return result;
     }
 
+    const int getSmaller1Count(const std::size_t idx) const {
+        return smaller1[idx];
+    }
+
+    const int getSmaller2Count(const std::size_t idx) const {
+        return smaller2[idx];
+    }
+
+    const int getLarger1Count(const std::size_t idx) const {
+        return larger1[idx];
+    }
+
+    const int getLarger2Count(const std::size_t idx) const {
+        return larger2[idx];
+    }
+
+    const int getEqualCount(const std::size_t idx) const {
+        return equal[idx];
+    }
+
+    const int get1Count(const std::size_t idx) const {
+        return smaller1[idx] + equal[idx] + larger1[idx];
+    }
+
+    const int get2Count(const std::size_t idx) const {
+        return smaller2[idx] + equal[idx] + larger2[idx];
+    }
+
+    const int getMaxCount(const std::size_t idx) const {
+        return larger1[idx] + equal[idx] + larger2[idx];
+    }
+
+    const int getMinCount(const std::size_t idx) const {
+        return smaller1[idx] + equal[idx] + smaller2[idx];
+    }
+
     int getNumRegisters() const {
         return
             std::accumulate(equal.begin(), equal.end(), 0) +
