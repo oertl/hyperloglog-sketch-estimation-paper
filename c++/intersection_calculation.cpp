@@ -124,14 +124,15 @@ int main(int argc, char* argv[])
 
     for(const string& fileName : jointCardFileNames) {
 
-        const long trueCardA = stol(fileName.substr(0, 11));
-        const long trueCardB = stol(fileName.substr(12, 23));
+        long trueCardA = stol(fileName.substr(0, 11));
+        long trueCardB = stol(fileName.substr(12, 23));
+
         const long trueCardX = stol(fileName.substr(24, 35));
         int p = stoi(fileName.substr(36, 38));
         int q = stoi(fileName.substr(39, 41));
 
         const double jaccardIndex = trueCardX/static_cast<double>(trueCardA+trueCardB+trueCardX);
-        const double logRatio = std::log10(trueCardA) - std::log10(trueCardB);
+        double logRatio = std::log10(trueCardA) - std::log10(trueCardB);
 
         if (analyzeP != p || jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 2) continue; // TODO filter cardinality combinations for table
 
@@ -192,6 +193,13 @@ int main(int argc, char* argv[])
             size += 1;
             evaluationCounter += 1;
 
+        }
+
+        if(logRatio < 0) {
+            swap(inExclEstimatedCardA, inExclEstimatedCardB);
+            swap(maxLikeEstimatedCardA, maxLikeEstimatedCardB);
+            swap(trueCardA, trueCardB);
+            logRatio = -logRatio;
         }
 
         resultsFile << trueCardA << ",";
