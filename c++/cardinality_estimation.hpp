@@ -421,7 +421,7 @@ void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& j
 }
 
 void calcExp(double x, double& a, double& b) {
-    const double ln2 = std::log(2);
+    static const double ln2 = std::log(2);
     if (x >= ln2) {
         a = std::exp(-x);
         b = 1 - a;
@@ -449,34 +449,28 @@ void eval_joint_log_likelihood_function_and_derivatives(
     const double expPhiB = std::exp(phiB);
     const double expPhiX = std::exp(phiX);
 
-    double expm1a[q+1];  // 1-exp(-exp(phiA/2^k))
-    double expm1b[q+1];  // 1-exp(-exp(phiB/2^k))
-    double expa[q+1];  // exp(-exp(phiA/2^k))
-    double expb[q+1];  // exp(-exp(phiB/2^k))
-    double expm1x[q+1];
-    double expx[q+1];
-    double expPhiApow2k[q+1]; // exp(phiA/2^k)
-    double expPhiBpow2k[q+1]; // exp(phiB/2^k)
-    double expPhiXpow2k[q+1]; // exp(phiX/2^k)
+    double xa[q+1], ya[q+1], za[q+1];
+    double xb[q+1], yb[q+1], zb[q+1];
+    double xx[q+1], yx[q+1], zx[q+1];
 
-    expPhiApow2k[0] = expPhiA;
-    expPhiBpow2k[0] = expPhiB;
-    expPhiXpow2k[0] = expPhiX;
+    xa[0] = expPhiA;
+    xb[0] = expPhiB;
+    xx[0] = expPhiX;
     for (int k = 1; k <= q; ++k) {
-        expPhiApow2k[k] = expPhiApow2k[k-1] * 0.5;
-        expPhiBpow2k[k] = expPhiBpow2k[k-1] * 0.5;
-        expPhiXpow2k[k] = expPhiXpow2k[k-1] * 0.5;
+        xa[k] = xa[k-1] * 0.5;
+        xb[k] = xb[k-1] * 0.5;
+        xx[k] = xx[k-1] * 0.5;
     }
 
     for (int k = q; k >= 1; --k) {
         if (jointStatistic.get1Count(k) > 0) {
-            calcExp(expPhiApow2k[k], expa[k], expm1a[k]);
+            calcExp(xa[k], ya[k], za[k]);
         }
         if (jointStatistic.get2Count(k) > 0) {
-            calcExp(expPhiBpow2k[k], expb[k], expm1b[k]);
+            calcExp(xb[k], yb[k], zb[k]);
         }
         if (jointStatistic.getMinCount(k) > 0) {
-            calcExp(expPhiXpow2k[k], expx[k], expm1x[k]);
+            calcExp(xx[k], yx[k], zx[k]);
         }
     }
 
@@ -490,51 +484,54 @@ void eval_joint_log_likelihood_function_and_derivatives(
     double term1x = 0;
 
     for (int k = q; k >= 0; --k) {
-        term1a += jointStatistic.get1Count(k) * expPhiApow2k[k];
-        term1b += jointStatistic.get2Count(k) * expPhiBpow2k[k];
-        term1x += jointStatistic.getMinCount(k) * expPhiXpow2k[k];
+        term1a += jointStatistic.get1Count(k) * xa[k];
+        term1b += jointStatistic.get2Count(k) * xb[k];
+        term1x += jointStatistic.getMinCount(k) * xx[k];
     }
 
     for (int kk = q+1; kk >= 1; --kk) {
         const int k = std::min(kk, q);
-        const int cEqual    = jointStatistic.getEqualCount(k);
-        const int cLarger2  = jointStatistic.getLarger2Count(k);
+
         const int cSmaller1 = jointStatistic.getSmaller1Count(k);
-        const int cSmaller2 = jointStatistic.getSmaller2Count(k);
-        const int cLarger1  = jointStatistic.getLarger1Count(k);
-
         if (cSmaller1 > 0) {
-            f  -= cSmaller1 * std::log(expm1x[k] + expx[k]*expm1a[k]);
-            double tmp = cSmaller1 * expa[k] * expx[k] /(expm1x[k] + expx[k] *expm1a[k]);
-            fa -= tmp * expPhiApow2k[k];
-            fx -= tmp * expPhiXpow2k[k];
+            double arg = zx[k] + yx[k]*za[k];
+            f  -= cSmaller1 * std::log(arg);
+            double tmp = cSmaller1 * ya[k] * yx[k] / arg;
+            fa -= tmp * xa[k];
+            fx -= tmp * xx[k];
         }
 
+        const int cLarger1  = jointStatistic.getLarger1Count(k);
         if (cLarger1 > 0) {
-            f  -= cLarger1 * std::log(expm1a[k]);
-            fa -= cLarger1 * expa[k] * (expPhiApow2k[k] / expm1a[k]);
+            f  -= cLarger1 * std::log(za[k]);
+            fa -= cLarger1 * ya[k] * xa[k] / za[k];
         }
 
+        const int cSmaller2 = jointStatistic.getSmaller2Count(k);
         if (cSmaller2 > 0) {
-            f  -= cSmaller2 * std::log(expm1x[k] + expx[k]*expm1b[k]);
-            double tmp = cSmaller2 * expb[k] * expx[k] /(expm1x[k] + expx[k] *expm1b[k]);
-            fb -= tmp * expPhiBpow2k[k];
-            fx -= tmp * expPhiXpow2k[k];
+            double arg = zx[k] + yx[k]*zb[k];
+            f  -= cSmaller2 * std::log(arg);
+            double tmp = cSmaller2 * yb[k] * yx[k] / arg;
+            fb -= tmp * xb[k];
+            fx -= tmp * xx[k];
         }
 
+        const int cLarger2  = jointStatistic.getLarger2Count(k);
         if (cLarger2 > 0) {
-            f  -= cLarger2 * std::log(expm1b[k]);
-            fb -= cLarger2 * expb[k] * (expPhiBpow2k[k] / expm1b[k]);
+            f  -= cLarger2 * std::log(zb[k]);
+            fb -= cLarger2 * yb[k] * xb[k] / zb[k];
         }
 
+        const int cEqual    = jointStatistic.getEqualCount(k);
         if (cEqual > 0) {
-            double tmp = expm1a[k] * expm1b[k] * expx[k] + expm1x[k];
-            f  -= cEqual * std::log(tmp);
-            fa -= cEqual * (((expx[k] * expa[k] * expm1b[k])/tmp) * expPhiApow2k[k]);
-            fb -= cEqual * (((expx[k] * expb[k] * expm1a[k])/tmp) * expPhiBpow2k[k]);
-            fx -= cEqual * (((expx[k] *(expa[k] * expm1b[k] + expb[k] * expm1a[k] + expa[k] * expb[k]))/tmp) * expPhiXpow2k[k]);
+            double arg = za[k] * zb[k] * yx[k] + zx[k];
+            f  -= cEqual * std::log(arg);
+            double yazb = ya[k]*zb[k];
+            double ybza = yb[k]*za[k];
+            fa -= cEqual * (((yx[k] * yazb)/arg) * xa[k]);
+            fb -= cEqual * (((yx[k] * ybza)/arg) * xb[k]);
+            fx -= cEqual * (((yx[k] *(yazb + ybza + ya[k] * yb[k]))/arg) * xx[k]);
         }
-
     }
 
     f += term1a + term1b + term1x;
