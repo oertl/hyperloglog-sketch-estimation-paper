@@ -580,7 +580,7 @@ double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params
 
 void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted, int& numIterations) {
 
-    const double eps = 1e-6;
+    const double eps = 1e-2;
     const double initalStepFactor = 2;
     const int maxNumIterations = 10000;
 
@@ -588,6 +588,7 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     iterationAborted = false;
 
     const int m = jointStatistic.getNumRegisters();
+    const double relativeErrorLimit = eps/(sqrt(m));
 
     const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
 
@@ -650,9 +651,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         double currentPhiX = gsl_vector_get(currentPhi, 2);
 
         if (
-            std::fabs(currentPhiA - lastPhiA) <= eps &&
-            std::fabs(currentPhiB - lastPhiB) <= eps &&
-            std::fabs(currentPhiX - lastPhiX) <= eps) {
+            std::fabs(currentPhiA - lastPhiA) <= relativeErrorLimit &&
+            std::fabs(currentPhiB - lastPhiB) <= relativeErrorLimit &&
+            std::fabs(currentPhiX - lastPhiX) <= relativeErrorLimit) {
             break;
         }
 
