@@ -441,7 +441,9 @@ void eval_joint_log_likelihood_function_and_derivatives(
     double& f,
     double& fa,
     double& fb,
-    double& fx) {
+    double& fx,
+    bool calcValue,
+    bool calcDerivative) {
 
     const int q = jointStatistic.getQ();
 
@@ -449,104 +451,110 @@ void eval_joint_log_likelihood_function_and_derivatives(
     const double expPhiB = std::exp(phiB);
     const double expPhiX = std::exp(phiX);
 
-    double xa[q+1], ya[q+1], za[q+1];
-    double xb[q+1], yb[q+1], zb[q+1];
-    double xx[q+1], yx[q+1], zx[q+1];
-
-    xa[0] = expPhiA;
-    xb[0] = expPhiB;
-    xx[0] = expPhiX;
-    for (int k = 1; k <= q; ++k) {
-        xa[k] = xa[k-1] * 0.5;
-        xb[k] = xb[k-1] * 0.5;
-        xx[k] = xx[k-1] * 0.5;
-    }
-
-    for (int k = q; k >= 1; --k) {
-        if (jointStatistic.get1Count(k) > 0) {
-            calcExp(xa[k], ya[k], za[k]);
-        }
-        if (jointStatistic.get2Count(k) > 0) {
-            calcExp(xb[k], yb[k], zb[k]);
-        }
-        if (jointStatistic.getMinCount(k) > 0) {
-            calcExp(xx[k], yx[k], zx[k]);
-        }
-    }
-
     f = 0.;
     fa = 0.;
     fb = 0.;
     fx = 0.;
 
-    double term1a = 0;
-    double term1b = 0;
-    double term1x = 0;
+    double linTermA = 0;
+    double linTermB = 0;
+    double linTermX = 0;
 
-    for (int k = q; k >= 0; --k) {
-        term1a += jointStatistic.get1Count(k) * xa[k];
-        term1b += jointStatistic.get2Count(k) * xb[k];
-        term1x += jointStatistic.getMinCount(k) * xx[k];
-    }
+    double pow2k = ldexp(1., -q);
+    for (int k = q + 1; k >= 1; --k) {
 
-    for (int kk = q+1; kk >= 1; --kk) {
-        const int k = std::min(kk, q);
+        int cSmaller1 = jointStatistic.getSmaller1Count(k);
+        int cLarger1 = jointStatistic.getLarger1Count(k);
+        int cSmaller2 = jointStatistic.getSmaller2Count(k);
+        int cLarger2 = jointStatistic.getLarger2Count(k);
+        int cEqual = jointStatistic.getEqualCount(k);
 
-        const int cSmaller1 = jointStatistic.getSmaller1Count(k);
+        double xak, yak, zak;
+        double xbk, ybk, zbk;
+        double xxk, yxk, zxk;
+
+        if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
+            xak = expPhiA * pow2k;
+            calcExp(xak, yak, zak);
+        }
+        if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
+            xbk = expPhiB * pow2k;
+            calcExp(xbk, ybk, zbk);
+        }
+        if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
+            xxk = expPhiX * pow2k;
+            calcExp(xxk, yxk, zxk);
+        }
+
         if (cSmaller1 > 0) {
-            double arg = zx[k] + yx[k]*za[k];
-            f  -= cSmaller1 * std::log(arg);
-            double tmp = cSmaller1 * ya[k] * yx[k] / arg;
-            fa -= tmp * xa[k];
-            fx -= tmp * xx[k];
+            double arg = zxk + yxk*zak;
+            if (calcValue) f  -= cSmaller1 * std::log(arg);
+            if (calcDerivative) {
+                double tmp = cSmaller1 * yak * yxk / arg;
+                fa -= tmp * xak;
+                fx -= tmp * xxk;
+            }
         }
 
-        const int cLarger1  = jointStatistic.getLarger1Count(k);
         if (cLarger1 > 0) {
-            f  -= cLarger1 * std::log(za[k]);
-            fa -= cLarger1 * ya[k] * xa[k] / za[k];
+            if (calcValue) f  -= cLarger1 * std::log(zak);
+            if (calcDerivative) fa -= cLarger1 * yak * xak / zak;
         }
 
-        const int cSmaller2 = jointStatistic.getSmaller2Count(k);
         if (cSmaller2 > 0) {
-            double arg = zx[k] + yx[k]*zb[k];
-            f  -= cSmaller2 * std::log(arg);
-            double tmp = cSmaller2 * yb[k] * yx[k] / arg;
-            fb -= tmp * xb[k];
-            fx -= tmp * xx[k];
+            double arg = zxk + yxk*zbk;
+            if (calcValue) f  -= cSmaller2 * std::log(arg);
+            if (calcDerivative) {
+                double tmp = cSmaller2 * ybk * yxk / arg;
+                fb -= tmp * xbk;
+                fx -= tmp * xxk;
+            }
         }
 
-        const int cLarger2  = jointStatistic.getLarger2Count(k);
         if (cLarger2 > 0) {
-            f  -= cLarger2 * std::log(zb[k]);
-            fb -= cLarger2 * yb[k] * xb[k] / zb[k];
+            if (calcValue) f  -= cLarger2 * std::log(zbk);
+            if (calcDerivative) fb -= cLarger2 * ybk * xbk / zbk;
         }
 
-        const int cEqual    = jointStatistic.getEqualCount(k);
         if (cEqual > 0) {
-            double arg = za[k] * zb[k] * yx[k] + zx[k];
-            f  -= cEqual * std::log(arg);
-            double yazb = ya[k]*zb[k];
-            double ybza = yb[k]*za[k];
-            fa -= cEqual * (((yx[k] * yazb)/arg) * xa[k]);
-            fb -= cEqual * (((yx[k] * ybza)/arg) * xb[k]);
-            fx -= cEqual * (((yx[k] *(yazb + ybza + ya[k] * yb[k]))/arg) * xx[k]);
+            double arg = zak * zbk * yxk + zxk;
+            if (calcValue) f  -= cEqual * std::log(arg);
+            if (calcDerivative) {
+                double yazb = yak*zbk;
+                double ybza = ybk*zak;
+                double tmp = cEqual * yxk / arg;
+                fa -= tmp * yazb * xak;
+                fb -= tmp * ybza * xbk;
+                fx -= tmp * (yazb + ybza + yak * ybk) * xxk;
+            }
+        }
+        if (k <= q) {
+            linTermA += cSmaller1 + cEqual + cLarger1;
+            linTermB += cSmaller2 + cEqual + cLarger2;
+            linTermX += cSmaller1 + cEqual + cSmaller2;
+            linTermA *= 0.5;
+            linTermB *= 0.5;
+            linTermX *= 0.5;
+            pow2k += pow2k;
         }
     }
 
-    f += term1a + term1b + term1x;
-    fa += term1a;
-    fb += term1b;
-    fx += term1x;
+    linTermA += jointStatistic.get1Count(0);
+    linTermB += jointStatistic.get2Count(0);
+    linTermX += jointStatistic.getMinCount(0);
+    linTermA *= expPhiA;
+    linTermB *= expPhiB;
+    linTermX *= expPhiX;
+
+    f += linTermA + linTermB + linTermX;
+    fa += linTermA;
+    fb += linTermB;
+    fx += linTermX;
 
 }
 
 void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi, void *params, double *f, gsl_vector *fGrad)
 {
-
-    const double phiA = gsl_vector_get(phi, 0);
-    const double phiB = gsl_vector_get(phi, 1);
-    const double phiX = gsl_vector_get(phi, 2);
 
     const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
 
@@ -554,8 +562,8 @@ void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi
 
     eval_joint_log_likelihood_function_and_derivatives(
         jointStatistic,
-        phiA, phiB, phiX,
-        *f, fa, fb, fx);
+        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
+        *f, fa, fb, fx, true, true);
 
     gsl_vector_set(fGrad, 0, fa);
     gsl_vector_set(fGrad, 1, fb);
@@ -565,16 +573,31 @@ void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi
 
 void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *params, gsl_vector *fGrad)
 {
-    double f;
-    log_likelihood_function_value_and_derivatives_for_gsl(phi, params, &f, fGrad);
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+
+    double fa, fb, fx, f;
+
+    eval_joint_log_likelihood_function_and_derivatives(
+        jointStatistic,
+        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
+        f, fa, fb, fx, false, true);
+
+    gsl_vector_set(fGrad, 0, fa);
+    gsl_vector_set(fGrad, 1, fb);
+    gsl_vector_set(fGrad, 2, fx);
 }
 
 double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params)
 {
-    gsl_vector *fGrad = gsl_vector_alloc(3);
-    double f;
-    log_likelihood_function_value_and_derivatives_for_gsl(phi, params, &f, fGrad);
-    gsl_vector_free (fGrad);
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+
+    double fa, fb, fx, f;
+
+    eval_joint_log_likelihood_function_and_derivatives(
+        jointStatistic,
+        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
+        f, fa, fb, fx, true, false);
+
     return f;
 }
 
