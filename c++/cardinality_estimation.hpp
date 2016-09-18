@@ -629,13 +629,13 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     double initCardinalityB = std::max(1., cardinalityABX - cardinalityAX);
     double initCardinalityX = std::max(1., cardinalityAX + cardinalityBX - cardinalityABX);
 
-    double lastPhiA = std::log(initCardinalityA/m);
-    double lastPhiB = std::log(initCardinalityB/m);
-    double lastPhiX = std::log(initCardinalityX/m);
+    double phiA = std::log(initCardinalityA/m);
+    double phiB = std::log(initCardinalityB/m);
+    double phiX = std::log(initCardinalityX/m);
     gsl_vector *phi = gsl_vector_alloc(3);
-    gsl_vector_set(phi, 0, lastPhiA);
-    gsl_vector_set(phi, 1, lastPhiB);
-    gsl_vector_set(phi, 2, lastPhiX);
+    gsl_vector_set(phi, 0, phiA);
+    gsl_vector_set(phi, 1, phiB);
+    gsl_vector_set(phi, 2, phiX);
 
     gsl_multimin_function_fdf my_func;
 
@@ -650,23 +650,23 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
     for(numIterations = 0; numIterations < maxNumIterations; numIterations++)
     {
+        double phiPrimeA = phiA;
+        double phiPrimeB = phiB;
+        double phiPrimeX = phiX;
+
         gsl_multimin_fdfminimizer_iterate(solver);
-        const gsl_vector* currentPhi = gsl_multimin_fdfminimizer_x(solver);
-        double currentPhiA = gsl_vector_get(currentPhi, 0);
-        double currentPhiB = gsl_vector_get(currentPhi, 1);
-        double currentPhiX = gsl_vector_get(currentPhi, 2);
+
+        const gsl_vector* phi = gsl_multimin_fdfminimizer_x(solver);
+        phiA = gsl_vector_get(phi, 0);
+        phiB = gsl_vector_get(phi, 1);
+        phiX = gsl_vector_get(phi, 2);
 
         if (
-            std::fabs(currentPhiA - lastPhiA) <= relativeErrorLimit &&
-            std::fabs(currentPhiB - lastPhiB) <= relativeErrorLimit &&
-            std::fabs(currentPhiX - lastPhiX) <= relativeErrorLimit) {
+            std::fabs(phiA - phiPrimeA) <= relativeErrorLimit &&
+            std::fabs(phiB - phiPrimeB) <= relativeErrorLimit &&
+            std::fabs(phiX - phiPrimeX) <= relativeErrorLimit) {
             break;
         }
-
-        lastPhiA = currentPhiA;
-        lastPhiB = currentPhiB;
-        lastPhiX = currentPhiX;
-
     }
 
     cardinalityA = std::exp(gsl_vector_get(solver->x, 0)) * m;

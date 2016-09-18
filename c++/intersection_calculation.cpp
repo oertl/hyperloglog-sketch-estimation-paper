@@ -63,10 +63,10 @@ void printHeaders(ofstream& os, string prefix, string postfix) {
     os << prefix << "Max" << postfix << ",";
     os << prefix << "Mean" << postfix << ",";
     os << prefix << "StdDev" << postfix << ",";
-    os << prefix << "RootMeanSquareDev" << postfix << ",";
+    os << prefix << "RMSE" << postfix << ",";
 }
 
-void calculateAndPrintStatistics(ofstream& os, std::vector<double> data) {
+void calculateAndPrintStatistics(ofstream& os, std::vector<double> data, double& stdev, double& rmse) {
     std::sort(data.begin(), data.end());
     os << gsl_stats_min(&data[0], 1, data.size()) << ",";
     os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm3s) << ",";
@@ -78,9 +78,11 @@ void calculateAndPrintStatistics(ofstream& os, std::vector<double> data) {
     os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp3s) << ",";
     os << gsl_stats_max(&data[0], 1, data.size()) << ",";
     const double mean = gsl_stats_mean(&data[0], 1, data.size());
+    stdev = gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), mean);
+    rmse = gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), 0);
     os << mean << ",";
-    os << gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), mean) << ",";
-    os << gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), 0) << ",";
+    os << stdev << ",";
+    os << rmse << ",";
 }
 
 int main(int argc, char* argv[])
@@ -116,6 +118,13 @@ int main(int argc, char* argv[])
     printHeaders(resultsFile, "maxLike", "B");
     printHeaders(resultsFile, "maxLike", "X");
     printHeaders(resultsFile, "maxLike", "JaccardIdx");
+
+    resultsFile << "improvementStdevA,";
+    resultsFile << "improvementRmseA,";
+    resultsFile << "improvementStdevB,";
+    resultsFile << "improvementRmseB,";
+    resultsFile << "improvementStdevX,";
+    resultsFile << "improvementRmseX,";
 
     resultsFile << "avgNumIterations,";
     resultsFile << "maxNumIterations" << endl;
@@ -203,14 +212,27 @@ int main(int argc, char* argv[])
         resultsFile << jaccardIndex << ",";
         resultsFile << logRatio << ",";
 
-        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardA);
-        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardB);
-        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardX);
-        calculateAndPrintStatistics(resultsFile, inExclJaccardIdx);
-        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardA);
-        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardB);
-        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardX);
-        calculateAndPrintStatistics(resultsFile, maxLikeJaccardIdx);
+        double inExclRmseA, inExclStdevA, inExclRmseB, inExclStdevB, inExclRmseX, inExclStdevX;
+        double maxLikeRmseA, maxLikeStdevA, maxLikeRmseB, maxLikeStdevB, maxLikeRmseX, maxLikeStdevX;
+
+        double inExclRmseJaccard, inExclStdevJaccard;
+        double maxLikeRmseJaccard, maxLikeStdevJaccard;
+
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardA, inExclStdevA, inExclRmseA);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardB, inExclStdevB, inExclRmseB);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardX, inExclStdevX, inExclRmseX);
+        calculateAndPrintStatistics(resultsFile, inExclJaccardIdx, inExclStdevJaccard, inExclRmseJaccard);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardA, maxLikeStdevA, maxLikeRmseA);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardB, maxLikeStdevB, maxLikeRmseB);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardX, maxLikeStdevX, maxLikeRmseX);
+        calculateAndPrintStatistics(resultsFile, maxLikeJaccardIdx, maxLikeStdevJaccard, maxLikeRmseJaccard);
+
+        resultsFile << inExclStdevA/maxLikeStdevA  << ",";
+        resultsFile << inExclRmseA/maxLikeRmseA  << ",";
+        resultsFile << inExclStdevB/maxLikeStdevB  << ",";
+        resultsFile << inExclRmseB/maxLikeRmseB  << ",";
+        resultsFile << inExclStdevX/maxLikeStdevX  << ",";
+        resultsFile << inExclRmseX/maxLikeRmseX  << ",";
 
         resultsFile << (numIterationsTotal/(double)size) << ",";
         resultsFile << maxNumIterations << endl;

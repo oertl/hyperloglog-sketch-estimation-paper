@@ -19,6 +19,7 @@
 \usepackage{hyperref}
 \usepackage{siunitx}
 \usepackage{csvsimple}
+\usepackage{multirow}
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
 % SYMBOLS
@@ -85,6 +86,11 @@
 \symDefine{\symSmallCorrectionFunc}{\sigma}
 \symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
+
+\newcommand{\numformat}[1]{{\num[scientific-notation = true,round-mode = places,round-precision = 3, output-exponent-marker = \ensuremath{\mathrm{e}}]{#1}}}
+
+\newcommand{\numformattwo}[1]{{\num[scientific-notation = fixed,round-mode = places,round-precision = 3]{#1}}}
+
 
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
 \subtitle{Draft version}
@@ -1694,29 +1700,6 @@ The transformed log-likelihood function can be written as
 )=
 \\
 \begin{aligned}
-&-
-\sum_{\symRegVal=0}^{\symRegRange}
-\left(
-  \symCountVariate^{<}_{1\symRegVal}+
-  \symCountVariate^{=}_{\symRegVal}+
-  \symCountVariate^{>}_{1\symRegVal}
-\right)
-\symX_{\symSetASuffix\symRegVal}
-+
-\left(
-  \symCountVariate^{<}_{2\symRegVal}+
-  \symCountVariate^{=}_{\symRegVal}+
-  \symCountVariate^{>}_{2\symRegVal}
-\right)
-\symX_{\symSetBSuffix\symRegVal}
-+
-\left(
-  \symCountVariate^{<}_{1\symRegVal}+
-  \symCountVariate^{=}_{\symRegVal}+
-  \symCountVariate^{<}_{2\symRegVal}
-\right)
-\symX_{\symSetXSuffix\symRegVal}
-\\
 &+
 \sum_{\symRegVal=1}^{\symRegRange}
 \symCountVariate^{<}_{1\symRegVal}
@@ -1774,7 +1757,31 @@ The transformed log-likelihood function can be written as
 \symY_{\symSetXSuffix\symRegRange}
 \symZ_{\symSetASuffix\symRegRange}
 \symZ_{\symSetBSuffix\symRegRange}
-\right).
+\right)
+\\
+&-
+\sum_{\symRegVal=0}^{\symRegRange}
+\left(
+  \symCountVariate^{<}_{1\symRegVal}+
+  \symCountVariate^{=}_{\symRegVal}+
+  \symCountVariate^{>}_{1\symRegVal}
+\right)
+\symX_{\symSetASuffix\symRegVal}
++
+\left(
+  \symCountVariate^{<}_{2\symRegVal}+
+  \symCountVariate^{=}_{\symRegVal}+
+  \symCountVariate^{>}_{2\symRegVal}
+\right)
+\symX_{\symSetBSuffix\symRegVal}
++
+\left(
+  \symCountVariate^{<}_{1\symRegVal}+
+  \symCountVariate^{=}_{\symRegVal}+
+  \symCountVariate^{<}_{2\symRegVal}
+\right)
+\symX_{\symSetXSuffix\symRegVal}
+.
 \end{aligned}
 \end{multline}
 Here we introduced the following expressions for simplification:
@@ -2032,6 +2039,54 @@ Quasi-Newton methods are commonly used for finding the maximum. They require the
 \symX_{\symSetXSuffix\symRegVal}
 \end{multline}
 
+\begin{algorithm}
+\caption{Joint cardinality estimation.}
+\label{alg:joint_cardinality_estimation}
+\begin{algorithmic}
+\Function {EstimateCardinalities}
+{
+$
+\boldsymbol\symCountVariate^{<}_{1},
+\boldsymbol\symCountVariate^{<}_{2},
+\boldsymbol\symCountVariate^{=},
+\boldsymbol\symCountVariate^{>}_{1},
+\boldsymbol\symCountVariate^{>}_{2}
+$ 
+}
+\State $\symNumReg\gets
+\left\Vert\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}\right\Vert_1$
+\State $\symPoissonRate_{\symSetASuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}$}
+\State $\symPoissonRate_{\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
+\If{$\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$}
+\State \textbf{return} $\left(\symPoissonRate_{\symSetASuffix\symSetXSuffix},\symPoissonRate_{\symSetBSuffix\symSetXSuffix},0\right)$
+\EndIf
+\State $\symPoissonRate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
+\State $\symPhi_\symSetASuffix = \log(\max(1, \symPoissonRate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRate_{\symSetBSuffix\symSetXSuffix})/\symNumReg)$
+\State $\symPhi_\symSetBSuffix = \log(\max(1, \symPoissonRate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRate_{\symSetASuffix\symSetXSuffix})/\symNumReg)$
+\State $\symPhi_\symSetXSuffix = \log(\max(1,
+\symPoissonRate_{\symSetASuffix\symSetXSuffix}+
+\symPoissonRate_{\symSetBSuffix\symSetXSuffix}
+-
+\symPoissonRate_{\symSetASuffix\symSetBSuffix\symSetXSuffix})/\symNumReg)$
+\Repeat
+\State $\symPhi_\symSetASuffix'\gets\symPhi_\symSetASuffix,\ \symPhi'_\symSetBSuffix\gets\symPhi_\symSetBSuffix,\  \symPhi'_\symSetXSuffix\gets\symPhi_\symSetXSuffix$
+\State do BFGS algorithm step 
+\Until{
+$
+\left|\symPhi_\symSetASuffix - \symPhi'_\symSetASuffix\right| < \symError
+\wedge
+\left|\symPhi_\symSetBSuffix - \symPhi'_\symSetBSuffix\right| < \symError
+\wedge
+\left|\symPhi_\symSetXSuffix - \symPhi'_\symSetXSuffix\right| < \symError
+$}
+\State \textbf{return} $\left(
+\symNumReg e^{\symPhi_\symSetASuffix},
+\symNumReg e^{\symPhi_\symSetBSuffix},
+\symNumReg e^{\symPhi_\symSetXSuffix}
+\right)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 
 \subsection{Results}
@@ -2049,54 +2104,132 @@ TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref
 \num{\trueCardA} & 
 \num{\trueCardB} & 
 \num{\trueCardX} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\trueJaccardIdx} & 
-\num[scientific-notation = fixed,round-mode = places,round-precision = 3]{\trueLogRatio}
+\numformat{\trueJaccardIdx} & 
+\numformattwo{\trueLogRatio}
 }
 \end{table}
 
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_a}
-\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
-{intersection.csv}{inclExclMeanA=\inclExclMeanA,inclExclStdDevA=\inclExclStdDevA,
-maxLikeMeanA=\maxLikeMeanA,maxLikeStdDevA=\maxLikeStdDevA}{
+\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+ & 
+\multicolumn{3}{c||}{inclusion-exclusion principle}
+&
+\multicolumn{3}{c||}{maximum likelihood method}
+&
+\multicolumn{1}{c}{improvement}
+\\
+\# & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{rmse ratio}
+\\\hline]
+{intersection.csv}{
+inclExclMeanA=\inclExclMeanA,
+inclExclStdDevA=\inclExclStdDevA,
+inclExclRMSEA=\inclExclRMSEA,
+maxLikeMeanA=\maxLikeMeanA,
+maxLikeStdDevA=\maxLikeStdDevA,
+maxLikeRMSEA=\maxLikeRMSEA,
+improvementRmseA=\improvementRmseA
+}{
 \thecsvrow & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanA} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevA} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanA} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevA}
+\numformat{\inclExclMeanA} & 
+\numformat{\inclExclStdDevA} & 
+\numformat{\inclExclRMSEA} & 
+\numformat{\maxLikeMeanA} & 
+\numformat{\maxLikeStdDevA} & 
+\numformat{\maxLikeRMSEA} &
+\numformattwo{\improvementRmseA}
 }
 \end{table}
 
+
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_b}
-\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head= {\#} & {IE mean} & {IE stdev} & {ML mean} & {ML stdev}\\\hline]
-{intersection.csv}{inclExclMeanB=\inclExclMeanB,inclExclStdDevB=\inclExclStdDevB,
-maxLikeMeanB=\maxLikeMeanB,maxLikeStdDevB=\maxLikeStdDevB}{
+\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+ & 
+\multicolumn{3}{c||}{inclusion-exclusion principle}
+&
+\multicolumn{3}{c||}{maximum likelihood method}
+&
+\multicolumn{1}{c}{improvement}
+\\
+\# & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{rmse ratio}
+\\\hline]
+{intersection.csv}{
+inclExclMeanB=\inclExclMeanB,
+inclExclStdDevB=\inclExclStdDevB,
+inclExclRMSEB=\inclExclRMSEB,
+maxLikeMeanB=\maxLikeMeanB,
+maxLikeStdDevB=\maxLikeStdDevB,
+maxLikeRMSEB=\maxLikeRMSEB,
+improvementRmseB=\improvementRmseB
+}{
 \thecsvrow & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanB} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevB} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanB} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevB}
+\numformat{\inclExclMeanB} & 
+\numformat{\inclExclStdDevB} & 
+\numformat{\inclExclRMSEB} & 
+\numformat{\maxLikeMeanB} & 
+\numformat{\maxLikeStdDevB} & 
+\numformat{\maxLikeRMSEB} &
+\numformattwo{\improvementRmseB}
 }
-
 \end{table}
 
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the inclusion-exlusion (IE) principle and the maximum likelihood method (ML), respectively.}
+\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_x}
-\csvreader[before reading=\footnotesize, tabular=r|r|r|r|r, table head=\# & IE mean & IE stdev & ML mean & ML stdev\\\hline]
-{intersection.csv}{inclExclMeanX=\inclExclMeanX,inclExclStdDevX=\inclExclStdDevX,
-maxLikeMeanX=\maxLikeMeanX,maxLikeStdDevX=\maxLikeStdDevX}{
+\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+ & 
+\multicolumn{3}{c||}{inclusion-exclusion principle}
+&
+\multicolumn{3}{c||}{maximum likelihood method}
+&
+\multicolumn{1}{c}{improvement}
+\\
+\# & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} & 
+\multicolumn{1}{c|}{mean} & 
+\multicolumn{1}{c|}{stdev} & 
+\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{rmse ratio}
+\\\hline]
+{intersection.csv}{
+inclExclMeanX=\inclExclMeanX,
+inclExclStdDevX=\inclExclStdDevX,
+inclExclRMSEX=\inclExclRMSEX,
+maxLikeMeanX=\maxLikeMeanX,
+maxLikeStdDevX=\maxLikeStdDevX,
+maxLikeRMSEX=\maxLikeRMSEX,
+improvementRmseX=\improvementRmseX
+}{
 \thecsvrow & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclMeanX} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\inclExclStdDevX} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeMeanX} & 
-\num[scientific-notation = true,round-mode = places,round-precision = 3]{\maxLikeStdDevX}
+\numformat{\inclExclMeanX} & 
+\numformat{\inclExclStdDevX} & 
+\numformat{\inclExclRMSEX} & 
+\numformat{\maxLikeMeanX} & 
+\numformat{\maxLikeStdDevX} & 
+\numformat{\maxLikeRMSEX} &
+\numformattwo{\improvementRmseX}
 }
 \end{table}
 
