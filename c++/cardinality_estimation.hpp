@@ -469,63 +469,63 @@ void eval_joint_log_likelihood_function_and_derivatives(
         int cLarger2 = jointStatistic.getLarger2Count(k);
         int cEqual = jointStatistic.getEqualCount(k);
 
-        double xak, yak, zak;
-        double xbk, ybk, zbk;
-        double xxk, yxk, zxk;
+        double xa = 0, ya = 0, za = 0;
+        double xb = 0, yb = 0, zb = 0;
+        double xx = 0, yx = 0, zx = 0;
 
         if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
-            xak = expPhiA * pow2k;
-            calcExp(xak, yak, zak);
+            xa = expPhiA * pow2k;
+            calcExp(xa, ya, za);
         }
         if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
-            xbk = expPhiB * pow2k;
-            calcExp(xbk, ybk, zbk);
+            xb = expPhiB * pow2k;
+            calcExp(xb, yb, zb);
         }
         if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
-            xxk = expPhiX * pow2k;
-            calcExp(xxk, yxk, zxk);
+            xx = expPhiX * pow2k;
+            calcExp(xx, yx, zx);
         }
 
         if (cSmaller1 > 0) {
-            double arg = zxk + yxk*zak;
+            double arg = zx + yx*za;
             if (calcValue) f  -= cSmaller1 * std::log(arg);
             if (calcDerivative) {
-                double tmp = cSmaller1 * yak * yxk / arg;
-                fa -= tmp * xak;
-                fx -= tmp * xxk;
+                double tmp = cSmaller1 * ya * yx / arg;
+                fa -= tmp * xa;
+                fx -= tmp * xx;
             }
         }
 
         if (cLarger1 > 0) {
-            if (calcValue) f  -= cLarger1 * std::log(zak);
-            if (calcDerivative) fa -= cLarger1 * yak * xak / zak;
+            if (calcValue) f  -= cLarger1 * std::log(za);
+            if (calcDerivative) fa -= cLarger1 * ya * xa / za;
         }
 
         if (cSmaller2 > 0) {
-            double arg = zxk + yxk*zbk;
+            double arg = zx + yx*zb;
             if (calcValue) f  -= cSmaller2 * std::log(arg);
             if (calcDerivative) {
-                double tmp = cSmaller2 * ybk * yxk / arg;
-                fb -= tmp * xbk;
-                fx -= tmp * xxk;
+                double tmp = cSmaller2 * yb * yx / arg;
+                fb -= tmp * xb;
+                fx -= tmp * xx;
             }
         }
 
         if (cLarger2 > 0) {
-            if (calcValue) f  -= cLarger2 * std::log(zbk);
-            if (calcDerivative) fb -= cLarger2 * ybk * xbk / zbk;
+            if (calcValue) f  -= cLarger2 * std::log(zb);
+            if (calcDerivative) fb -= cLarger2 * yb * xb / zb;
         }
 
         if (cEqual > 0) {
-            double arg = zak * zbk * yxk + zxk;
+            double arg = za * zb * yx + zx;
             if (calcValue) f  -= cEqual * std::log(arg);
             if (calcDerivative) {
-                double yazb = yak*zbk;
-                double ybza = ybk*zak;
-                double tmp = cEqual * yxk / arg;
-                fa -= tmp * yazb * xak;
-                fb -= tmp * ybza * xbk;
-                fx -= tmp * (yazb + ybza + yak * ybk) * xxk;
+                double yazb = ya*zb;
+                double ybza = yb*za;
+                double tmp = cEqual * yx / arg;
+                fa -= tmp * yazb * xa;
+                fb -= tmp * ybza * xb;
+                fx -= tmp * (yazb + ybza + ya * yb) * xx;
             }
         }
         if (k <= q) {
@@ -550,7 +550,6 @@ void eval_joint_log_likelihood_function_and_derivatives(
     fa += linTermA;
     fb += linTermB;
     fx += linTermX;
-
 }
 
 void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi, void *params, double *f, gsl_vector *fGrad)
@@ -601,14 +600,11 @@ double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params
     return f;
 }
 
-void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& maxNumIterationsReached, bool& iterationAborted, int& numIterations) {
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations) {
 
     const double eps = 1e-2;
     const double initalStepFactor = 2;
     const int maxNumIterations = 10000;
-
-    maxNumIterationsReached = false;
-    iterationAborted = false;
 
     const int m = jointStatistic.getNumRegisters();
     const double relativeErrorLimit = eps/(sqrt(m));
@@ -623,10 +619,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         cardinalityX = 0;
         cardinalityA = cardinalityAX;
         cardinalityB = cardinalityBX;
+        numIterations = 0;
         return;
     }
-    // for all remaining cases the maximum likelihood estimates for A,B,X will be positive
-
     double cardinalityABX = estimator(jointStatistic.getMaxCounts());
 
     // set initial vector using inclusion exclusion principle
@@ -653,21 +648,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     gsl_multimin_fdfminimizer *solver = gsl_multimin_fdfminimizer_alloc(gsl_multimin_fdfminimizer_vector_bfgs2, 3); // 3 dimensions
     gsl_multimin_fdfminimizer_set(solver, &my_func, phi, std::log(initalStepFactor), 0.1);
 
-    numIterations = 0;
-    do
+    for(numIterations = 0; numIterations < maxNumIterations; numIterations++)
     {
-        numIterations++;
-        int status = gsl_multimin_fdfminimizer_iterate(solver);
-
-        if (status) {
-            if (status == GSL_ENOPROG) {
-                iterationAborted = true;
-                break;
-            }
-            std::cout << "error!" << std::endl;
-            exit(-1);
-        }
-
+        gsl_multimin_fdfminimizer_iterate(solver);
         const gsl_vector* currentPhi = gsl_multimin_fdfminimizer_x(solver);
         double currentPhiA = gsl_vector_get(currentPhi, 0);
         double currentPhiB = gsl_vector_get(currentPhi, 1);
@@ -684,12 +667,7 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         lastPhiB = currentPhiB;
         lastPhiX = currentPhiX;
 
-        if(numIterations >= maxNumIterations) {
-            maxNumIterationsReached = true;
-            break;
-        }
     }
-    while (true);
 
     cardinalityA = std::exp(gsl_vector_get(solver->x, 0)) * m;
     cardinalityB = std::exp(gsl_vector_get(solver->x, 1)) * m;

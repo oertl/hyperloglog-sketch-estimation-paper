@@ -63,6 +63,7 @@ void printHeaders(ofstream& os, string prefix, string postfix) {
     os << prefix << "Max" << postfix << ",";
     os << prefix << "Mean" << postfix << ",";
     os << prefix << "StdDev" << postfix << ",";
+    os << prefix << "RootMeanSquareDev" << postfix << ",";
 }
 
 void calculateAndPrintStatistics(ofstream& os, std::vector<double> data) {
@@ -78,7 +79,8 @@ void calculateAndPrintStatistics(ofstream& os, std::vector<double> data) {
     os << gsl_stats_max(&data[0], 1, data.size()) << ",";
     const double mean = gsl_stats_mean(&data[0], 1, data.size());
     os << mean << ",";
-    os << gsl_stats_sd_m(&data[0], 1, data.size(), mean) << ",";
+    os << gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), mean) << ",";
+    os << gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), 0) << ",";
 }
 
 int main(int argc, char* argv[])
@@ -115,10 +117,8 @@ int main(int argc, char* argv[])
     printHeaders(resultsFile, "maxLike", "X");
     printHeaders(resultsFile, "maxLike", "JaccardIdx");
 
-    resultsFile << "maxNumIterationsReachedCount,";
     resultsFile << "avgNumIterations,";
-    resultsFile << "maxNumIterations,";
-    resultsFile << "iterationAbortedCount" << endl;
+    resultsFile << "maxNumIterations" << endl;
 
     int evaluationCounter = 0;
 
@@ -149,9 +149,7 @@ int main(int argc, char* argv[])
         std::vector<double> maxLikeEstimatedCardB;
         std::vector<double> maxLikeEstimatedCardX;
         std::vector<double> maxLikeJaccardIdx;
-        int maxNumIterationsReachedCount = 0;
         int maxNumIterations = 0;
-        int iterationAbortedCount = 0;
         long numIterationsTotal = 0;
         int size = 0;
 
@@ -175,16 +173,12 @@ int main(int argc, char* argv[])
                 double estCardA = 0.;
                 double estCardB = 0.;
                 double estCardX = 0.;
-                bool maxNumIterationsReached = false;
-                bool iterationAborted = false;
                 int numIterations = 0;
-                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, maxNumIterationsReached, iterationAborted, numIterations);
+                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 maxLikeEstimatedCardX.push_back(estCardX/trueCardX-1.);
                 maxLikeJaccardIdx.push_back((estCardX/(estCardA+estCardB+estCardX))/jaccardIndex-1.);
-                if (maxNumIterationsReached) maxNumIterationsReachedCount+=1;
-                if (iterationAborted) iterationAbortedCount += 1;
                 numIterationsTotal += numIterations;
                 maxNumIterations = std::max(maxNumIterations, numIterations);
 
@@ -218,11 +212,9 @@ int main(int argc, char* argv[])
         calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardX);
         calculateAndPrintStatistics(resultsFile, maxLikeJaccardIdx);
 
-        resultsFile << maxNumIterationsReachedCount << ",";
         resultsFile << (numIterationsTotal/(double)size) << ",";
-        resultsFile << maxNumIterations << ",";
-        resultsFile << iterationAbortedCount << endl;
+        resultsFile << maxNumIterations << endl;
 
     }
-    cout << "number of evaluation = " << evaluationCounter << endl;
+    cout << "number of evaluations = " << evaluationCounter << endl;
 }
