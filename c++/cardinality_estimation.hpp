@@ -420,15 +420,15 @@ void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& j
     cardinalityX = std::max(0., cardinalityBX + cardinalityAX - cardinalityABX);
 }
 
-void calcExp(double x, double& a, double& b) {
+void calcExp(double x, double& y, double& z) {
     static const double ln2 = std::log(2);
     if (x >= ln2) {
-        a = std::exp(-x);
-        b = 1 - a;
+        y = std::exp(-x);
+        z = 1 - y;
     }
     else {
-        b = -std::expm1(-x);
-        a = 1 - b;
+        z = -std::expm1(-x);
+        y = 1 - z;
     }
 }
 
