@@ -1424,41 +1424,28 @@ e^{-\frac{\symPoissonRate_\symSetASuffix + \symPoissonRate_\symSetBSuffix + \sym
 \end{multline}
 
 The logarithm of the joint probability mass function can be written using Iverson bracket notation ($\left[\text{true}\right]:=1$, $\left[\text{false}\right]:=0$) as
-\begin{align}
+\begin{multline}
 \label{equ:joint_log_pmf_single_register}
 \log(\symProbabilityMass(\symRegVal_1,\symRegVal_2))
-=&
--\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\symRegVal_1}}
-\left[\symRegVal_1\leq\symRegRange\right]
--
-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\symRegVal_2}}
-\left[\symRegVal_2\leq\symRegRange\right]
--
-\frac{\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1,\symRegVal_2\right)}}
-\left[\symRegVal_1\leq\symRegRange\vee\symRegVal_2\leq\symRegRange\right]
-\nonumber\\
+=\\
+\begin{aligned}
 &
-+
 \log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_1}}}\right)
 \left[1\leq\symRegVal_1<\symRegVal_2\right]
-\nonumber\\
-&
 +
 \log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}\right)
 \left[\symRegVal_2<\symRegVal_1\right]
-\nonumber\\
-&
+\\
 +
+&
 \log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal_2}}}\right)
 \left[1\leq\symRegVal_2<\symRegVal_1\right]
-\nonumber\\
-&
 +
 \log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal_2, \symRegRange\right)}}}\right)
 \left[\symRegVal_1<\symRegVal_2\right]
-\nonumber\\
-&
+\\
 +
+&
 \log\!\left(
 1
 -e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}
@@ -1467,8 +1454,20 @@ e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNum
 +
 e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1, \symRegRange\right)}}}
 \right)
-\left[1\leq\symRegVal_1=\symRegVal_2\right].
-\end{align}
+\left[1\leq\symRegVal_1=\symRegVal_2\right]
+\\
+-
+&
+\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\symRegVal_1}}
+\left[\symRegVal_1\leq\symRegRange\right]
+-
+\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\symRegVal_2}}
+\left[\symRegVal_2\leq\symRegRange\right]
+-
+\frac{\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal_1,\symRegVal_2\right)}}
+\left[\symRegVal_1\leq\symRegRange\vee\symRegVal_2\leq\symRegRange\right]
+\end{aligned}
+\end{multline}
 
 Since the values for different registers are independent under the Poisson model, we are now able to write the joint probability mass function for all registers in both HyperLogLog sketches
 \begin{equation}
@@ -1496,7 +1495,7 @@ In order to get the maximum likelihood estimates $\symPoissonRateEstimate_\symSe
 \log(\symProbabilityMass(\symRegValVariate_{1\symIndexI},\symRegValVariate_{2\symIndexJ}))
 \end{equation}
 Insertion of \eqref{equ:joint_log_pmf_single_register} results in the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches
-\begin{align}
+\begin{multline}
 \label{equ:log_likelihood_pair}
 \log \symLikelihood(
 \symPoissonRate_\symSetASuffix,
@@ -1507,8 +1506,40 @@ Insertion of \eqref{equ:joint_log_pmf_single_register} results in the generaliza
 \boldsymbol{\symRegValVariate}_2
 )
 =
+\\
+\begin{aligned}
 &
+\sum_{\symRegVal=1}^{\symRegRange}
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal}}}\right)
+\symCountVariate^{<}_{1\symRegVal}
++
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal}}}\right)
+\symCountVariate^{<}_{2\symRegVal}
+\\
++
+&
+\sum_{\symRegVal=1}^{\symRegRange+1}
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\symCountVariate^{>}_{1\symRegVal}
++
+\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
+\symCountVariate^{>}_{2\symRegVal}
+\\
++
+&
+\sum_{\symRegVal=1}^{\symRegRange+1}
+\log\!\left(
+1
+-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
 -
+e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
++
+e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
+\right)
+\symCountVariate^{=}_{\symRegVal}
+\\
+-
+&
 \frac{\symPoissonRate_\symSetASuffix}{\symNumReg}
 \sum_{\symRegVal=0}^{\symRegRange}
 \frac{
@@ -1524,8 +1555,6 @@ Insertion of \eqref{equ:joint_log_pmf_single_register} results in the generaliza
   \symCountVariate^{=}_{\symRegVal}+
   \symCountVariate^{>}_{2\symRegVal}
 }{2^{\symRegVal}}
-\nonumber\\
-&
 -
 \frac{\symPoissonRate_\symSetXSuffix}{\symNumReg}
 \sum_{\symRegVal=0}^{\symRegRange}
@@ -1533,39 +1562,9 @@ Insertion of \eqref{equ:joint_log_pmf_single_register} results in the generaliza
   \symCountVariate^{<}_{1\symRegVal}+
   \symCountVariate^{=}_{\symRegVal}+
   \symCountVariate^{<}_{2\symRegVal}
-}{2^{\symRegVal}}
-\nonumber\\
-&
-+
-\sum_{\symRegVal=1}^{\symRegRange}
-\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal}}}\right)
-\symCountVariate^{<}_{1\symRegVal}
-+
-\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\symRegVal}}}\right)
-\symCountVariate^{<}_{2\symRegVal}
-\nonumber\\
-&
-+
-\sum_{\symRegVal=1}^{\symRegRange+1}
-\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetASuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
-\symCountVariate^{>}_{1\symRegVal}
-+
-\log\!\left(1-e^{-\frac{\symPoissonRate_\symSetBSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
-\symCountVariate^{>}_{2\symRegVal}
-\nonumber\\
-&
-+
-\sum_{\symRegVal=1}^{\symRegRange+1}
-\log\!\left(
-1
--e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
--
-e^{-\frac{\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
-+
-e^{-\frac{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix}{\symNumReg 2^{\min\left(\symRegVal,\symRegRange\right)}}}
-\right)
-\symCountVariate^{=}_{\symRegVal},
-\end{align}
+}{2^{\symRegVal}},
+\end{aligned}
+\end{multline}
 where the constants $\symCountVariate^{>}_{1\symRegVal}$,
 $\symCountVariate^{<}_{1\symRegVal}$,
 $\symCountVariate^{>}_{2\symRegVal}$,
@@ -1613,85 +1612,6 @@ $(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \bolds
 The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=\symNumReg e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
 
 The transformed log-likelihood function can be written as
-%\begin{multline}
-%\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix):=
-%\log \symLikelihood(
-%\symNumReg e^{\symPhi_\symSetASuffix},
-%\symNumReg e^{\symPhi_\symSetBSuffix},
-%\symNumReg e^{\symPhi_\symSetXSuffix}
-%\vert
-%\boldsymbol{\symRegValVariate}_1,
-%\boldsymbol{\symRegValVariate}_2
-%)=
-%\\
-%\begin{aligned}
-%&-
-%\sum_{\symRegVal=0}^{\symRegRange}
-%\left(
-%  \symCountVariate^{<}_{1\symRegVal}+
-%  \symCountVariate^{=}_{\symRegVal}+
-%  \symCountVariate^{>}_{1\symRegVal}
-%\right)
-%\frac{e^{\symPhi_\symSetASuffix}}{2^{\symRegVal}}
-%+
-%\left(
-%  \symCountVariate^{<}_{2\symRegVal}+
-%  \symCountVariate^{=}_{\symRegVal}+
-%  \symCountVariate^{>}_{2\symRegVal}
-%\right)
-%\frac{e^{\symPhi_\symSetBSuffix}}{2^{\symRegVal}}
-%+
-%\left(
-%  \symCountVariate^{<}_{1\symRegVal}+
-%  \symCountVariate^{=}_{\symRegVal}+
-%  \symCountVariate^{<}_{2\symRegVal}
-%\right)
-%\frac{e^{\symPhi_\symSetXSuffix}}{2^{\symRegVal}}
-%\\
-%&+
-%\sum_{\symRegVal=1}^{\symRegRange}
-%\symCountVariate^{<}_{1\symRegVal}
-%\log\!\left(1-e^{-\frac{e^{\symPhi_\symSetASuffix}
-%+e^{\symPhi_\symSetXSuffix}
-%}{2^{\symRegVal}}}\right)
-%+
-%\symCountVariate^{<}_{2\symRegVal}
-%\log\!\left(1-e^{-\frac{e^{\symPhi_\symSetBSuffix}
-%+
-%e^{\symPhi_\symSetXSuffix}
-%}{2^{\symRegVal}}}\right)
-%\\
-%&+
-%\sum_{\symRegVal=1}^{\symRegRange+1}
-%\symCountVariate^{>}_{1\symRegVal}
-%\log\!\left(1-e^{-\frac{e^{\symPhi_\symSetASuffix}
-%}{2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
-%+
-%\symCountVariate^{>}_{2\symRegVal}
-%\log\!\left(1-e^{-\frac{e^{\symPhi_\symSetBSuffix}
-%}{2^{\min\left(\symRegVal,\symRegRange\right)}}}\right)
-%\\
-%&+
-%\sum_{\symRegVal=1}^{\symRegRange+1}
-%\symCountVariate^{=}_{\symRegVal}
-%\log\!\left(
-%1
-%-e^{-\frac{e^{\symPhi_\symSetASuffix}
-%+e^{\symPhi_\symSetXSuffix}
-%}{2^{\min\left(\symRegVal,\symRegRange\right)}}}
-%-
-%e^{-\frac{e^{\symPhi_\symSetBSuffix}
-%+e^{\symPhi_\symSetXSuffix}
-%}{2^{\min\left(\symRegVal,\symRegRange\right)}}}
-%+
-%e^{-\frac{e^{\symPhi_\symSetASuffix}
-%+e^{\symPhi_\symSetBSuffix}
-%+e^{\symPhi_\symSetXSuffix}
-%}{2^{\min\left(\symRegVal,\symRegRange\right)}}}
-%\right).
-%\end{aligned}
-%\end{multline}
-
 \begin{multline}
 \label{equ:max_likelihood_phi_func}
 \symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix):=
@@ -2031,7 +1951,7 @@ Quasi-Newton methods are commonly used for finding the maximum of such multi-dim
 \end{multline}
 
 The calculation of \eqref{equ:max_likelihood_phi_func} and its derivatives requires some care when calculating $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$. Since $\symX_{\ast\symRegVal}$ is nonnegative, the value range of both is $[0,1]$. In order to reduce the numerical error of $\symZ_{\ast\symRegVal}$ for small $\symX_{\ast\symRegVal}$, it is essential to use the function $\texttt{expm1}(\symX):=e^\symX-1$ that is available in most programming languages. If $\symX_{\ast\symRegVal}$ is smaller than $\log(2)$, we calculate $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$ via $\symZ_{\ast\symRegVal} = 
--\texttt{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$ and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and only a single exponential function evaluation is needed.
+-\texttt{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$ and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and only a single exponential function needs to be evaluated.
 
 Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. The arguments of all logarithms are in the range $[0,1]$. The case that some argument is equal to zero which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\min(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
 Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuffix\symRegVal}
@@ -2114,10 +2034,10 @@ $}
 
 
 \subsection{Results}
-We used the popular Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm to solve this optimization. We used the implementation provided by the GNU scientific library \cite{Galassi2016}.
+We used the popular Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm to solve this optimization problem. We used the implementation provided by the GNU scientific library \cite{Galassi2016}.
 
 
-TODO see \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x}
+TODO see results \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x}
 
 
 \begin{table}
