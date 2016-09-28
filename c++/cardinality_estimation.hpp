@@ -525,7 +525,7 @@ void eval_joint_log_likelihood_function_and_derivatives(
                 double tmp = cEqual * yx / arg;
                 fa -= tmp * yazb * xa;
                 fb -= tmp * ybza * xb;
-                fx -= tmp * (yazb + ybza + ya * yb) * xx;
+                fx -= tmp * (ya + ybza) * xx;
             }
         }
         if (k <= q) {
