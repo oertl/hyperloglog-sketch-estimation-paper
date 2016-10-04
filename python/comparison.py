@@ -48,6 +48,10 @@ def calculate(filename, doBiasCorrection):
     datastd = numpy.std(relative_error, axis=1)
     return (datamean, datastd)
 
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
+
 fig1, ax1 = plt.subplots(subplot_kw=dict(xlim=[cardinalities[0],cardinalities[-1]], ylim=[0.0, 0.025], xscale='log', yscale='linear'))
 
 fig1.set_size_inches(10, 5)
@@ -67,9 +71,6 @@ ax2.xaxis.grid(b=True, which='major', color='gray', linestyle='--',dash_capstyle
 ax2.set_xlabel("cardinality")
 ax2.set_ylabel("bias")
 
-
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
 
 for c in config:
     (mean, stddev) = calculate(c[0], c[2])
