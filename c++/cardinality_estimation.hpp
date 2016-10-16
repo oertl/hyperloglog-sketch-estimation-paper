@@ -555,7 +555,9 @@ void eval_joint_log_likelihood_function_and_derivatives(
 void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi, void *params, double *f, gsl_vector *fGrad)
 {
 
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
+    int& numFunctionEvaluations = *((int*)(((void**)(params))[1]));
+    int& numGradientEvaluations = *((int*)(((void**)(params))[2]));
 
     double fa, fb, fx;
 
@@ -563,6 +565,9 @@ void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi
         jointStatistic,
         gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
         *f, fa, fb, fx, true, true);
+
+    numFunctionEvaluations += 1;
+    numGradientEvaluations += 1;
 
     gsl_vector_set(fGrad, 0, fa);
     gsl_vector_set(fGrad, 1, fb);
@@ -572,7 +577,8 @@ void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi
 
 void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *params, gsl_vector *fGrad)
 {
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
+    int& numGradientEvaluations = *((int*)(((void**)(params))[2]));
 
     double fa, fb, fx, f;
 
@@ -581,6 +587,8 @@ void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *pa
         gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
         f, fa, fb, fx, false, true);
 
+    numGradientEvaluations += 1;
+
     gsl_vector_set(fGrad, 0, fa);
     gsl_vector_set(fGrad, 1, fb);
     gsl_vector_set(fGrad, 2, fx);
@@ -588,7 +596,8 @@ void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *pa
 
 double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params)
 {
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)params);
+    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
+    int& numFunctionEvaluations = *((int*)(((void**)(params))[1]));
 
     double fa, fb, fx, f;
 
@@ -597,10 +606,12 @@ double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params
         gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
         f, fa, fb, fx, true, false);
 
+    numFunctionEvaluations += 1;
+
     return f;
 }
 
-void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations) {
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations, int& numFunctionEvaluations, int& numGradientEvaluations) {
 
     const double eps = 1e-2;
     const double initalStepFactor = 2;
@@ -608,6 +619,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
 
     const int m = jointStatistic.getNumRegisters();
     const double relativeErrorLimit = eps/(sqrt(m));
+
+    numFunctionEvaluations = 0;
+    numGradientEvaluations = 0;
 
     const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
 
@@ -643,10 +657,15 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     my_func.f = log_likelihood_function_value_for_gsl;
     my_func.df = log_likelihood_function_derivatives_for_gsl;
     my_func.fdf = log_likelihood_function_value_and_derivatives_for_gsl;
-    my_func.params = &const_cast<TwoHyperLogLogStatistic&>(jointStatistic);
+    void* parameters[3];
+    parameters[0] = &const_cast<TwoHyperLogLogStatistic&>(jointStatistic);
+    parameters[1] = &numFunctionEvaluations;
+    parameters[2] = &numGradientEvaluations;
+    my_func.params = parameters;
 
     gsl_multimin_fdfminimizer *solver = gsl_multimin_fdfminimizer_alloc(gsl_multimin_fdfminimizer_vector_bfgs2, 3); // 3 dimensions
     gsl_multimin_fdfminimizer_set(solver, &my_func, phi, std::log(initalStepFactor), 0.1);
+
 
     for(numIterations = 0; numIterations < maxNumIterations; numIterations++)
     {

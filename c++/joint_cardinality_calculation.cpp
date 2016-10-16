@@ -37,7 +37,7 @@ const double median = 0.5;
 const string intersectDataPathName = "../data/hll_joint/";
 const string paperPathName = "../paper/";
 const string jointCardFileName = intersectDataPathName + "joint_cardinalities.dat";
-const string resultsFileName = paperPathName + "intersection.csv";
+const string resultsFileName = paperPathName + "joint_cardinality_calculation.csv";
 
 
 template <typename T> void printToFile(const string& fileName, const T* data, size_t numSketches, bool append) {
@@ -108,15 +108,21 @@ int main(int argc, char* argv[])
     resultsFile << "trueCardX,";
 
     resultsFile << "trueJaccardIdx,";
-    resultsFile << "trueLogRatio,";
+    resultsFile << "trueRatio,";
 
     printHeaders(resultsFile, "inclExcl", "A");
     printHeaders(resultsFile, "inclExcl", "B");
     printHeaders(resultsFile, "inclExcl", "X");
+    printHeaders(resultsFile, "inclExcl", "AX");
+    printHeaders(resultsFile, "inclExcl", "BX");
+    printHeaders(resultsFile, "inclExcl", "ABX");
     printHeaders(resultsFile, "inclExcl", "JaccardIdx");
     printHeaders(resultsFile, "maxLike", "A");
     printHeaders(resultsFile, "maxLike", "B");
     printHeaders(resultsFile, "maxLike", "X");
+    printHeaders(resultsFile, "maxLike", "AX");
+    printHeaders(resultsFile, "maxLike", "BX");
+    printHeaders(resultsFile, "maxLike", "ABX");
     printHeaders(resultsFile, "maxLike", "JaccardIdx");
 
     resultsFile << "improvementStdevA,";
@@ -125,7 +131,15 @@ int main(int argc, char* argv[])
     resultsFile << "improvementRmseB,";
     resultsFile << "improvementStdevX,";
     resultsFile << "improvementRmseX,";
+    resultsFile << "improvementStdevAX,";
+    resultsFile << "improvementRmseAX,";
+    resultsFile << "improvementStdevBX,";
+    resultsFile << "improvementRmseBX,";
+    resultsFile << "improvementStdevABX,";
+    resultsFile << "improvementRmseABX,";
 
+    resultsFile << "avgNumFunctionEvaluations,";
+    resultsFile << "avgNumGradientEvaluations,";
     resultsFile << "avgNumIterations,";
     resultsFile << "maxNumIterations" << endl;
 
@@ -143,7 +157,7 @@ int main(int argc, char* argv[])
         const double jaccardIndex = trueCardX/static_cast<double>(trueCardA+trueCardB+trueCardX);
         double logRatio = std::log10(trueCardA) - std::log10(trueCardB);
 
-        if (analyzeP != p || jaccardIndex < 1e-3 || jaccardIndex > 0.1 || std::fabs(logRatio) > 2) continue; // TODO filter cardinality combinations for table
+        if (analyzeP != p || jaccardIndex < 1e-3 || jaccardIndex > 0.2 || std::fabs(logRatio) > 2) continue; // TODO filter cardinality combinations for table
 
         cout << trueCardA << " " << trueCardB << " " << trueCardX << " " << p << " " << q << endl;
 
@@ -153,13 +167,21 @@ int main(int argc, char* argv[])
         std::vector<double> inExclEstimatedCardA;
         std::vector<double> inExclEstimatedCardB;
         std::vector<double> inExclEstimatedCardX;
+        std::vector<double> inExclEstimatedCardAX;
+        std::vector<double> inExclEstimatedCardBX;
+        std::vector<double> inExclEstimatedCardABX;
         std::vector<double> inExclJaccardIdx;
         std::vector<double> maxLikeEstimatedCardA;
         std::vector<double> maxLikeEstimatedCardB;
         std::vector<double> maxLikeEstimatedCardX;
+        std::vector<double> maxLikeEstimatedCardAX;
+        std::vector<double> maxLikeEstimatedCardBX;
+        std::vector<double> maxLikeEstimatedCardABX;
         std::vector<double> maxLikeJaccardIdx;
         int maxNumIterations = 0;
         long numIterationsTotal = 0;
+        long numFunctionEvaluationsTotal = 0;
+        long numGradientEvaluationsTotal = 0;
         int size = 0;
 
         while (getline(statisticFile, line))
@@ -175,6 +197,9 @@ int main(int argc, char* argv[])
                 inExclEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 inExclEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 inExclEstimatedCardX.push_back(estCardX/trueCardX-1.);
+                inExclEstimatedCardAX.push_back((estCardA+estCardX)/(trueCardA+trueCardX)-1.);
+                inExclEstimatedCardBX.push_back((estCardB+estCardX)/(trueCardB+trueCardX)-1.);
+                inExclEstimatedCardABX.push_back((estCardA+estCardB+estCardX)/(trueCardA+trueCardB+trueCardX)-1.);
                 inExclJaccardIdx.push_back((estCardX/(estCardA+estCardB+estCardX))/jaccardIndex-1.);
             }
 
@@ -183,14 +208,20 @@ int main(int argc, char* argv[])
                 double estCardB = 0.;
                 double estCardX = 0.;
                 int numIterations = 0;
-                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations);
+                int numFunctionEvaluations = 0;
+                int numGradientEvaluations = 0;
+                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations, numFunctionEvaluations, numGradientEvaluations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 maxLikeEstimatedCardX.push_back(estCardX/trueCardX-1.);
                 maxLikeJaccardIdx.push_back((estCardX/(estCardA+estCardB+estCardX))/jaccardIndex-1.);
+                maxLikeEstimatedCardAX.push_back((estCardA+estCardX)/(trueCardA+trueCardX)-1.);
+                maxLikeEstimatedCardBX.push_back((estCardB+estCardX)/(trueCardB+trueCardX)-1.);
+                maxLikeEstimatedCardABX.push_back((estCardA+estCardB+estCardX)/(trueCardA+trueCardB+trueCardX)-1.);
                 numIterationsTotal += numIterations;
                 maxNumIterations = std::max(maxNumIterations, numIterations);
-
+                numFunctionEvaluationsTotal += numFunctionEvaluations;
+                numGradientEvaluationsTotal += numGradientEvaluations;
             }
 
             size += 1;
@@ -200,20 +231,23 @@ int main(int argc, char* argv[])
 
         if(logRatio < 0) {
             swap(inExclEstimatedCardA, inExclEstimatedCardB);
+            swap(inExclEstimatedCardAX, inExclEstimatedCardBX);
             swap(maxLikeEstimatedCardA, maxLikeEstimatedCardB);
+            swap(maxLikeEstimatedCardAX, maxLikeEstimatedCardBX);
             swap(trueCardA, trueCardB);
             logRatio = -logRatio;
         }
+        const double ratio = static_cast<double>(trueCardA)/static_cast<double>(trueCardB);
 
         resultsFile << trueCardA << ",";
         resultsFile << trueCardB << ",";
         resultsFile << trueCardX << ",";
 
         resultsFile << jaccardIndex << ",";
-        resultsFile << logRatio << ",";
+        resultsFile << ratio << ",";
 
-        double inExclRmseA, inExclStdevA, inExclRmseB, inExclStdevB, inExclRmseX, inExclStdevX;
-        double maxLikeRmseA, maxLikeStdevA, maxLikeRmseB, maxLikeStdevB, maxLikeRmseX, maxLikeStdevX;
+        double inExclRmseA, inExclStdevA, inExclRmseB, inExclStdevB, inExclRmseX, inExclStdevX, inExclRmseAX, inExclStdevAX, inExclRmseBX, inExclStdevBX, inExclRmseABX, inExclStdevABX;
+        double maxLikeRmseA, maxLikeStdevA, maxLikeRmseB, maxLikeStdevB, maxLikeRmseX, maxLikeStdevX, maxLikeRmseAX, maxLikeStdevAX, maxLikeRmseBX, maxLikeStdevBX, maxLikeRmseABX, maxLikeStdevABX;
 
         double inExclRmseJaccard, inExclStdevJaccard;
         double maxLikeRmseJaccard, maxLikeStdevJaccard;
@@ -221,10 +255,16 @@ int main(int argc, char* argv[])
         calculateAndPrintStatistics(resultsFile, inExclEstimatedCardA, inExclStdevA, inExclRmseA);
         calculateAndPrintStatistics(resultsFile, inExclEstimatedCardB, inExclStdevB, inExclRmseB);
         calculateAndPrintStatistics(resultsFile, inExclEstimatedCardX, inExclStdevX, inExclRmseX);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardAX, inExclStdevAX, inExclRmseAX);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardBX, inExclStdevBX, inExclRmseBX);
+        calculateAndPrintStatistics(resultsFile, inExclEstimatedCardABX, inExclStdevABX, inExclRmseABX);
         calculateAndPrintStatistics(resultsFile, inExclJaccardIdx, inExclStdevJaccard, inExclRmseJaccard);
         calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardA, maxLikeStdevA, maxLikeRmseA);
         calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardB, maxLikeStdevB, maxLikeRmseB);
         calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardX, maxLikeStdevX, maxLikeRmseX);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardAX, maxLikeStdevAX, maxLikeRmseAX);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardBX, maxLikeStdevBX, maxLikeRmseBX);
+        calculateAndPrintStatistics(resultsFile, maxLikeEstimatedCardABX, maxLikeStdevABX, maxLikeRmseABX);
         calculateAndPrintStatistics(resultsFile, maxLikeJaccardIdx, maxLikeStdevJaccard, maxLikeRmseJaccard);
 
         resultsFile << inExclStdevA/maxLikeStdevA  << ",";
@@ -233,7 +273,15 @@ int main(int argc, char* argv[])
         resultsFile << inExclRmseB/maxLikeRmseB  << ",";
         resultsFile << inExclStdevX/maxLikeStdevX  << ",";
         resultsFile << inExclRmseX/maxLikeRmseX  << ",";
+        resultsFile << inExclStdevAX/maxLikeStdevAX  << ",";
+        resultsFile << inExclRmseAX/maxLikeRmseAX  << ",";
+        resultsFile << inExclStdevBX/maxLikeStdevBX  << ",";
+        resultsFile << inExclRmseBX/maxLikeRmseBX  << ",";
+        resultsFile << inExclStdevABX/maxLikeStdevABX  << ",";
+        resultsFile << inExclRmseABX/maxLikeRmseABX  << ",";
 
+        resultsFile << (numFunctionEvaluationsTotal/(double)size) << ",";
+        resultsFile << (numGradientEvaluationsTotal/(double)size) << ",";
         resultsFile << (numIterationsTotal/(double)size) << ",";
         resultsFile << maxNumIterations << endl;
 

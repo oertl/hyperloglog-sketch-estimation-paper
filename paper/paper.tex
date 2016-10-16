@@ -1128,18 +1128,32 @@ We also measured the performance of \cref{alg:estimate_ml} using the same test s
 
 \section{Cardinality estimation of set intersections and differences}
 
-While the union of two sets that are represented by HyperLogLog sketches can be straightforwardly computed \eqref{equ:hll_union}, the computation of cardinalities of other set operations like intersections and differences is more challenging. A common approach to calculate the cardinality of intersections is the inclusion-exclusion principle
+While the union of two sets that are represented by HyperLogLog sketches can be straightforwardly computed \eqref{equ:hll_union}, the computation of cardinalities of other set operations like intersections and differences is more challenging. The conventional approach uses the relationships
 \begin{equation}
-\label{equ:inclusion-exclusion}
+\label{equ:conventional_approach}
+\begin{aligned}
+\left\vert\symSetS_1 \setminus \symSetS_2\right\vert
+&=
+\left\vert\symSetS_1 \cup \symSetS_2\right\vert
+-
+\left\vert\symSetS_2\right\vert,
+\\
+\left\vert\symSetS_2 \setminus \symSetS_1\right\vert
+&=
+\left\vert\symSetS_1 \cup \symSetS_2\right\vert
+-
+\left\vert\symSetS_1\right\vert,
+\\
 \left\vert\symSetS_1 \cap \symSetS_2\right\vert
-=  
+&=  
 \left\vert\symSetS_1\right\vert  
 +
 \left\vert\symSetS_2\right\vert
 -
-\left\vert\symSetS_1 \cup \symSetS_2\right\vert.
+\left\vert\symSetS_1 \cup \symSetS_2\right\vert,
+\end{aligned}
 \end{equation}
-Unfortunately, this approach can be very inaccurate. Due to estimation errors of HyperLogLog sketches the result of \eqref{equ:inclusion-exclusion} can even be negative. 
+and the fact that HyperLogLog sketches can be easily merged using \eqref{equ:hll_union}. The last equation is also known as inclusion-exclusion principle and can be used to calculate the intersection size. Unfortunately, the estimation error does not scale well for inclusion-exclusion principle. For small intersection sizes the estimation error can get very large \cite{Dasgupta2015}. In the worst case, the estimate can be even negative without additional restriction. Therefore, it was proposed to combine HyperLogLog sketches with MinHash sketches \cite{Pascoe2013, Cohen2016}, which improves the estimation error, even though at the expense of significant more space consumption. 
 
 It was recently pointed out without special focus on HyperLogLog sketches, that the application of the maximum likelihood method to the joint likelihood function of two probabilistic data structures, which represent the intersection operands, gives better intersection size estimates \cite{Ting2016}. For HyperLogLog sketches recorded without stochastic averaging (compare \cref{sec:data_element_insertion}) this was also shown in \cite{Cohen2016}, where also an algorithm based on the maximum likelihood principle was outlined. However, in practice, HyperLogLog sketches are recorded using stochastic averaging because of the much cheaper element insertions as described by \cref{alg:insert}. Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to apply this approach also for the estimation of set operation result sizes.
 
@@ -1970,19 +1984,56 @@ given by
 The calculation of \eqref{equ:max_likelihood_phi_func} and its derivatives requires some care when calculating $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$. Since $\symX_{\ast\symRegVal}$ is nonnegative, we have $\symY_{\ast\symRegVal},\symZ_{\ast\symRegVal}\in[0,1]$. In order to reduce the numerical error of $\symZ_{\ast\symRegVal}$ for small $\symX_{\ast\symRegVal}$, it is essential to use the function $\texttt{expm1}(\symX):=e^\symX-1$ that is available in most programming languages. If $\symX_{\ast\symRegVal}$ is smaller than $\log(2)$, we calculate $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$ via $\symZ_{\ast\symRegVal} = 
 -\texttt{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$ and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and still only a single exponential function needs to be evaluated.
 
-Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. The arguments of all logarithms are in range $[0,1]$. The case that some argument vanishes, which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is at least in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\min(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
+Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. The arguments of all logarithms are in range $[0,1]$. The case that some argument vanishes, which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is at least in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
 Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuffix\symRegVal}
 +
 \symY_{\symSetXSuffix\symRegVal}
 \symZ_{\symSetASuffix\symRegVal}
 \geq
-\min(\symZ_{\symSetXSuffix\symRegVal},\symZ_{\symSetASuffix\symRegVal})
+\frac{\symZ_{\symSetXSuffix\symRegVal}}{2}
++
+\frac{
+\symZ_{\symSetXSuffix\symRegVal}+
+\symY_{\symSetXSuffix\symRegVal}
+\symZ_{\symSetASuffix\symRegVal}
+}{2}
+\geq
+\frac{
+\symZ_{\symSetXSuffix\symRegVal}+
+\symZ_{\symSetASuffix\symRegVal}
+}{2}
+\geq
+\frac{
+\max(\symZ_{\symSetXSuffix\symRegVal},
+\symZ_{\symSetASuffix\symRegVal})
+}{2}
 =
-1-e^{-\frac{\min(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^\symRegVal}}
+\frac{1}{2}
+\left(1-e^{-\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal}}}\right)
 \approx
-\frac{\min(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^\symRegVal}
+\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal+1}}
 $.
-The last approximation is valid, if $\min(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll\symNumReg 2^\symRegVal$, and shows that the argument of the logarithm is large enough to be accurately represented by double-precision floating-point numbers. Similar argumentation holds for all other logarithmic terms and also the divisions that appear in \eqref{equ:df_dphi}.
+The last approximation is valid, if $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll\symNumReg 2^{\symRegVal+1}$, and shows that the argument of the logarithm is large enough to be accurately represented by double-precision floating-point numbers. Similar argumentation holds for all other logarithmic terms and also the divisions that appear in \eqref{equ:df_dphi}.
+
+\cref{alg:joint_cardinality_estimation} demonstrates the calculation of the estimates given $\boldsymbol\symCountVariate^{>}_{1}$,
+$\boldsymbol\symCountVariate^{<}_{1}$,
+$\boldsymbol\symCountVariate^{>}_{2}$,
+$\boldsymbol\symCountVariate^{<}_{2}$, and
+$\boldsymbol\symCountVariate^{=}$. First, a case is distinguished, where
+all registers have a value equal to zero in at least one of both HyperLogLog sketches, that is $\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$. In this case it is certain that the HyperLogLog sketches represent disjoint sets and their corresponding  cardinality estimates can be  used for $\symPoissonRateEstimate_{\symSetASuffix}$ and $\symPoissonRateEstimate_{\symSetBSuffix}$, respectively.
+
+%TODO
+%In all other cases the cardinality of $\symSetA$ and $\symSetB$ 
+
+
+%The initial guess values are important to ensure fast convergence of the optimization algorithm. An obvious choice are the cardinality estimates obtained by using the conventional approach \eqref{equ:conventional_approach}. 
+
+%As demonstrated by we In all other cases, the maximum-likelihood estimates for $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$ will be non-zero. We use the conventional approach to get start values for the estimates of $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$, respectively. However, in order to ensure that the values are positive we restrict them to values greater than or equal to 1.
+
+
+
+We used the popular Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} to solve this optimization problem. We used the implementation provided by the GNU scientific library \cite{Galassi2016}.
+
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2001,19 +2052,28 @@ $\boldsymbol\symCountVariate^{=}$
 \State $\symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}$}
 \State $\symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
 \If{$\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$}
-\State \textbf{return} $(\symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix},\symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix},0)$
-\comm{0.3}{$\symSetA$ and $\symSetB$ are disjoint and $\symSetX$ is empty in this case}
+\State $\symPoissonRateEstimate_{\symSetASuffix}\gets
+\symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix},\ 
+\symPoissonRateEstimate_{\symSetBSuffix}\gets
+\symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix},\
+\symPoissonRateEstimate_{\symSetXSuffix}\gets0$
+\comm{0.27}{in this case $\symSetS_1\cap\symSetS_2 = \symSetX = \emptyset$ holds}
+\State \textbf{return} $(
+\symPoissonRateEstimate_{\symSetASuffix},
+\symPoissonRateEstimate_{\symSetBSuffix},
+\symPoissonRateEstimate_{\symSetXSuffix}
+)$
 \EndIf
-\State $\symPoissonRate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
-\State $\symPhi_\symSetASuffix = \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix})/\symNumReg)$
-\State $\symPhi_\symSetBSuffix = \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix})/\symNumReg)$
-\State $\symPhi_\symSetXSuffix = \log(\max(1,
+\State $\symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
+\State $\symPhi_\symSetASuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix})/\symNumReg)$
+\State $\symPhi_\symSetBSuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix})/\symNumReg)$
+\State $\symPhi_\symSetXSuffix \gets \log(\max(1,
 \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix}+
 \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix}
 -
 \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix})/\symNumReg)$
 \State $\symStopDelta\gets\symStopEpsilon/\sqrt{\symNumReg}$
-\comm{0.3}{$\symStopEpsilon = 10^{-2}$}
+\comm{0.27}{$\symStopEpsilon = 10^{-2}$}
 \Repeat
 \State 
 $
@@ -2030,67 +2090,101 @@ $
 \symFunc,
 \nabla\symFunc
 $}
+\comm{0.27}{e.g. BFGS update step}
 \Until{
 $\max(
 \left|\symPhi_\symSetASuffix - \symPhi'_\symSetASuffix\right|,
 \left|\symPhi_\symSetBSuffix - \symPhi'_\symSetBSuffix\right|,
 \left|\symPhi_\symSetXSuffix - \symPhi'_\symSetXSuffix\right|) \leq \symStopDelta
 $}
-\State \textbf{return} $\left(
-\symNumReg e^{\symPhi_\symSetASuffix},
-\symNumReg e^{\symPhi_\symSetBSuffix},
-\symNumReg e^{\symPhi_\symSetXSuffix}
-\right)$
+\State 
+$
+\symPoissonRateEstimate_{\symSetASuffix}
+\gets \symNumReg e^{\symPhi_\symSetASuffix},\ \symPoissonRateEstimate_{\symSetBSuffix}
+\gets \symNumReg e^{\symPhi_\symSetBSuffix},\ 
+\symPoissonRateEstimate_{\symSetXSuffix}
+\gets \symNumReg e^{\symPhi_\symSetXSuffix}
+$
+\State \textbf{return} $(
+\symPoissonRateEstimate_{\symSetASuffix},
+\symPoissonRateEstimate_{\symSetBSuffix},
+\symPoissonRateEstimate_{\symSetXSuffix}
+)$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 
 
 \subsection{Results}
-We used the popular Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} to solve this optimization problem. We used the implementation provided by the GNU scientific library \cite{Galassi2016}.
 
 
-TODO see results \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x}
+
+TODO see results \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x},
+\cref{tbl:joint_estimation_abx}
 
 
 \begin{table}
 \centering
-\caption{List of true cardinalities of the pair-wise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$ was investigated. 
+\caption{List of true cardinalities of the pair-wise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$ was investigated. The average number of function \eqref{equ:max_likelihood_phi_func} and gradient evaluations \eqref{equ:df_dphi} are also given as needed by our implementation of \cref{alg:joint_cardinality_estimation} that uses the BFGS algorithm.
 }
 \label{tbl:joint_estimation_cases}
-\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r, table head=\# & $|\symSetA|$ & $|\symSetB|$ & $|\symSetX|$ & $\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$ & $\log_{10}\!\left(\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}\right)$\\\hline]
-{intersection.csv}{trueCardA=\trueCardA,trueCardB=\trueCardB,trueCardX=\trueCardX,trueJaccardIdx=\trueJaccardIdx ,trueLogRatio=\trueLogRatio}{
+\csvreader[before reading=\tiny, tabular=r|rrr|rr|rr, table head= & 
+\multicolumn{3}{c|}{true cardinalities} &
+\multicolumn{1}{c}{Jaccard index} &
+\multicolumn{1}{c|}{cardinality ratio} &
+\multicolumn{2}{c}{avg number evaluations}
+\\
+\# &  
+\multicolumn{1}{c}{$|\symSetA|$} & 
+\multicolumn{1}{c}{$|\symSetB|$} & 
+\multicolumn{1}{c|}{$|\symSetX|$} & 
+\multicolumn{1}{c}{$\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$} & 
+\multicolumn{1}{c|}{$\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}$} &
+\multicolumn{1}{c}{$\symFunc$} &
+\multicolumn{1}{c}{$\nabla\symFunc$}
+\\\hline]
+{joint_cardinality_calculation.csv}{
+trueCardA=\trueCardA,
+trueCardB=\trueCardB,
+trueCardX=\trueCardX,
+trueJaccardIdx=\trueJaccardIdx,
+trueRatio=\trueRatio,
+avgNumFunctionEvaluations=\avgNumFunctionEvaluations,
+avgNumGradientEvaluations=\avgNumGradientEvaluations,
+}{
 \thecsvrow & 
 \num{\trueCardA} & 
 \num{\trueCardB} & 
 \num{\trueCardX} & 
 \numformat{\trueJaccardIdx} & 
-\numformattwo{\trueLogRatio}
+\numformattwo{\trueRatio} &
+\numformattwo{\avgNumFunctionEvaluations} &
+\numformattwo{\avgNumGradientEvaluations}
 }
 \end{table}
 
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
+\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_a}
-\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
  & 
-\multicolumn{3}{c||}{inclusion-exclusion principle}
+\multicolumn{3}{c|}{conventional approach}
 &
-\multicolumn{3}{c||}{maximum likelihood method}
+\multicolumn{3}{c|}{maximum likelihood method}
 &
 \multicolumn{1}{c}{improvement}
 \\
 \# & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} & 
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} &
 \multicolumn{1}{c}{rmse ratio}
 \\\hline]
-{intersection.csv}{
+{joint_cardinality_calculation.csv}{
 inclExclMeanA=\inclExclMeanA,
 inclExclStdDevA=\inclExclStdDevA,
 inclExclRMSEA=\inclExclRMSEA,
@@ -2110,29 +2204,28 @@ improvementRmseA=\improvementRmseA
 }
 \end{table}
 
-
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
+\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_b}
-\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
  & 
-\multicolumn{3}{c||}{inclusion-exclusion principle}
+\multicolumn{3}{c|}{conventional approach}
 &
-\multicolumn{3}{c||}{maximum likelihood method}
+\multicolumn{3}{c|}{maximum likelihood method}
 &
 \multicolumn{1}{c}{improvement}
 \\
 \# & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} & 
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} &
 \multicolumn{1}{c}{rmse ratio}
 \\\hline]
-{intersection.csv}{
+{joint_cardinality_calculation.csv}{
 inclExclMeanB=\inclExclMeanB,
 inclExclStdDevB=\inclExclStdDevB,
 inclExclRMSEB=\inclExclRMSEB,
@@ -2154,26 +2247,26 @@ improvementRmseB=\improvementRmseB
 
 \begin{table}
 \centering
-\caption{The mean and the standard deviation for the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the inclusion-exlusion principle and the maximum likelihood method, respectively.}
+\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_x}
-\csvreader[before reading=\footnotesize, tabular=r||r|r|r||r|r|r||r, table head=
+\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
  & 
-\multicolumn{3}{c||}{inclusion-exclusion principle}
+\multicolumn{3}{c|}{conventional approach}
 &
-\multicolumn{3}{c||}{maximum likelihood method}
+\multicolumn{3}{c|}{maximum likelihood method}
 &
 \multicolumn{1}{c}{improvement}
 \\
 \# & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} & 
-\multicolumn{1}{c|}{mean} & 
-\multicolumn{1}{c|}{stdev} & 
-\multicolumn{1}{c||}{rmse} &
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} & 
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} &
 \multicolumn{1}{c}{rmse ratio}
 \\\hline]
-{intersection.csv}{
+{joint_cardinality_calculation.csv}{
 inclExclMeanX=\inclExclMeanX,
 inclExclStdDevX=\inclExclStdDevX,
 inclExclRMSEX=\inclExclRMSEX,
@@ -2193,9 +2286,57 @@ improvementRmseX=\improvementRmseX
 }
 \end{table}
 
+\begin{table}
+\centering
+\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\label{tbl:joint_estimation_abx}
+\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
+ & 
+\multicolumn{3}{c|}{conventional approach}
+&
+\multicolumn{3}{c|}{maximum likelihood method}
+&
+\multicolumn{1}{c}{improvement}
+\\
+\# & 
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} & 
+\multicolumn{1}{c}{mean} & 
+\multicolumn{1}{c}{stdev} & 
+\multicolumn{1}{c|}{rmse} &
+\multicolumn{1}{c}{rmse ratio}
+\\\hline]
+{joint_cardinality_calculation.csv}{
+inclExclMeanABX=\inclExclMeanABX,
+inclExclStdDevABX=\inclExclStdDevABX,
+inclExclRMSEABX=\inclExclRMSEABX,
+maxLikeMeanABX=\maxLikeMeanABX,
+maxLikeStdDevABX=\maxLikeStdDevABX,
+maxLikeRMSEABX=\maxLikeRMSEABX,
+improvementRmseABX=\improvementRmseABX
+}{
+\thecsvrow & 
+\numformat{\inclExclMeanABX} & 
+\numformat{\inclExclStdDevABX} & 
+\numformat{\inclExclRMSEABX} & 
+\numformat{\maxLikeMeanABX} & 
+\numformat{\maxLikeStdDevABX} & 
+\numformat{\maxLikeRMSEABX} &
+\numformattwo{\improvementRmseABX}
+}
+\end{table}
+
+
 \section{Conclusion and future work}
 
 TODO
+
+%We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches. All approaches are based on the Poisson approximation. As shown, an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have observed that this approach also works well for Poisson rate estimators that are not perfectly unbiased. Therefore, it would be interesting to investigate which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness if used as cardinality estimator.
+
+%For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum-likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without empirical determined data.
+
+%Finally the maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach significantly improves the cardinality estimates for set intersection, differences, and unions when compared to the inclusion-exclusion principle. An extension to more than two HyperLogLog sketches is possible. However, the effort scales like $\symBigO(2^n)$ if 
 
 \appendix
 

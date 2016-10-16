@@ -249,25 +249,25 @@ task figures {
     }
 }
 
-//#########################
-// intersection
-//#########################
+//#################################
+// joint  cardinality calculation
+//#################################
 
-task buildIntersectionCalculation(type: Exec) {
+task buildJointCardinalityCalculation(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/intersection_calculation.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
-    outputs.files "$project.cppDir/intersection_calculation"
+    inputs.files "$project.cppDir/joint_cardinality_calculation.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
+    outputs.files "$project.cppDir/joint_cardinality_calculation"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','-Wall','intersection_calculation.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','intersection_calculation'
+    commandLine 'g++','-std=c++11','-Wall','joint_cardinality_calculation.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','joint_cardinality_calculation'
 }
 
-task doIntersectionCalculation(type: Exec) {
+task doJointCardinalityCalculation(type: Exec) {
     workingDir project.cppDir
-    inputs.files "$project.cppDir/intersection_calculation", "$project.cppDir/param.txt", "$project.dataDir/hll_joint/joint_cardinalities.dat"
-    outputs.files "$project.paperDir/intersection.csv"
-    standardOutput = new FileOutputStream("$project.cppDir/intersection_calculation.out")
-    commandLine './intersection_calculation'
-    dependsOn 'buildIntersectionCalculation','generateSimulatedCardinalities'
+    inputs.files "$project.cppDir/joint_cardinality_calculation", "$project.cppDir/param.txt", "$project.dataDir/hll_joint/joint_cardinalities.dat"
+    outputs.files "$project.paperDir/joint_cardinality_calculation.csv"
+    standardOutput = new FileOutputStream("$project.cppDir/joint_cardinality_calculation.out")
+    commandLine './joint_cardinality_calculation'
+    dependsOn 'buildJointCardinalityCalculation','generateSimulatedCardinalities'
 }
 
 //#########################
@@ -298,7 +298,7 @@ task pdflatex2(type: Exec) {
     inputs.files "$project.paperDir/paper.bbl",
         "$project.paperDir/paper.blg",
         "$project.paperDir/paper.tex",
-        "$project.paperDir/intersection.csv",
+        "$project.paperDir/joint_cardinality_calculation.csv",
         "$project.paperDir/helper.svg",
         "$project.paperDir/max_likelihood_avg_exec_time.svg",
         "$project.paperDir/corrected_raw_avg_exec_time.svg",
