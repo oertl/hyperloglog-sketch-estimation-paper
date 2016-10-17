@@ -1990,30 +1990,14 @@ Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuf
 \symY_{\symSetXSuffix\symRegVal}
 \symZ_{\symSetASuffix\symRegVal}
 \geq
-\frac{\symZ_{\symSetXSuffix\symRegVal}}{2}
-+
-\frac{
-\symZ_{\symSetXSuffix\symRegVal}+
-\symY_{\symSetXSuffix\symRegVal}
-\symZ_{\symSetASuffix\symRegVal}
-}{2}
-\geq
-\frac{
-\symZ_{\symSetXSuffix\symRegVal}+
-\symZ_{\symSetASuffix\symRegVal}
-}{2}
-\geq
-\frac{
-\max(\symZ_{\symSetXSuffix\symRegVal},
-\symZ_{\symSetASuffix\symRegVal})
-}{2}
+\max(\symZ_{\symSetXSuffix\symRegVal}, \symZ_{\symSetASuffix\symRegVal})
 =
-\frac{1}{2}
-\left(1-e^{-\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal}}}\right)
-\approx
-\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal+1}}
+1-\exp\!\left(-\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal}}\right)
+\geq
+\min\!\left(\frac{1}{2},\frac{\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)}{\symNumReg 2^{\symRegVal+1}}
+\right)
 $.
-The last approximation is valid, if $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll\symNumReg 2^{\symRegVal+1}$, and shows that the argument of the logarithm is large enough to be accurately represented by double-precision floating-point numbers. Similar argumentation holds for all other logarithmic terms and also the divisions that appear in \eqref{equ:df_dphi}.
+For the last inequality we used $1-e^{-\symX}\geq\frac{1}{2}\min(1,\symX)$. The derived lower bound shows that the argument of the logarithm is large enough to be accurately represented by double-precision floating-point numbers, provided that $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetXSuffix$ are not both substantially smaller than 1. Similar argumentation holds for all other logarithmic terms and also the divisions that appear in \eqref{equ:df_dphi}.
 
 \cref{alg:joint_cardinality_estimation} demonstrates the calculation of the estimates given $\boldsymbol\symCountVariate^{>}_{1}$,
 $\boldsymbol\symCountVariate^{<}_{1}$,
