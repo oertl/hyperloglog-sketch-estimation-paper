@@ -94,7 +94,6 @@
 \newcommand{\comm}[2]{{\Comment{\parbox[t]{#1\linewidth}{{#2}}}}}
 
 \title{New cardinality estimation algorithms for HyperLogLog sketches}
-\subtitle{Draft version}
 \author{Otmar Ertl \\ otmar.ertl@gmail.com}
 \begin{document}
 \maketitle
@@ -2010,17 +2009,12 @@ $\boldsymbol\symCountVariate^{=}$. First, a case is distinguished, where
 all registers have a value equal to zero in at least one of both HyperLogLog sketches, that is $\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$. In this case it is certain that the HyperLogLog sketches represent disjoint sets and their corresponding  cardinality estimates can be  used for $\symPoissonRateEstimate_{\symSetASuffix}$ and $\symPoissonRateEstimate_{\symSetBSuffix}$, respectively.
 
 %TODO
-%In all other cases the cardinality of $\symSetA$ and $\symSetB$ 
-
 
 %The initial guess values are important to ensure fast convergence of the optimization algorithm. An obvious choice are the cardinality estimates obtained by using the conventional approach \eqref{equ:conventional_approach}. 
 
 %As demonstrated by we In all other cases, the maximum-likelihood estimates for $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$ will be non-zero. We use the conventional approach to get start values for the estimates of $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$, respectively. However, in order to ensure that the values are positive we restrict them to values greater than or equal to 1.
 
-
-
-We used the popular Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} to solve this optimization problem. We used the implementation provided by the GNU scientific library \cite{Galassi2016}.
-
+For the general case the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} can be applied, which is a very popular algorithm for non-linear optimization problems. In particular, we used the implementation provided by the GNU scientific library \cite{Galassi2016}.
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2103,12 +2097,13 @@ $
 
 
 \subsection{Results}
+In order to investigate the estimation error of the joint cardinality estimation algorithm \cref{alg:joint_cardinality_estimation} we constructed HyperLogLog sketch pairs with parameters $\symPrecision=20$ and $\symRegRange=44$ and with known cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. This is done by adding $|\symSetA|$ and $|\symSetB|$ random values to the first and second HyperLogLog sketch, respectively. Afterwards 
+$|\symSetX|$ random values are added to both sketches. \cref{tbl:joint_estimation_cases} lists all the different cases we have evaluated. For each case \num{3333} different HyperLogLog sketch pairs were constructed and passed to the joint cardinality estimation algorithm. 
+\cref{tbl:joint_estimation_cases} also shows the average number of function \eqref{equ:max_likelihood_phi_func} and gradient \eqref{equ:df_dphi}  evaluations, which the BFGS algorithm needed until convergence occured.
 
+\cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum-likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to square root error scaling law, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
 
-
-TODO see results \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, \cref{tbl:joint_estimation_x},
-\cref{tbl:joint_estimation_abx}
-
+We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \eqref{equ:hll_union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm opens another way. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by an significant amount.
 
 \begin{table}
 \centering
@@ -2317,13 +2312,11 @@ improvementRmseABX=\improvementRmseABX
 
 \section{Conclusion and future work}
 
-TODO
+We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches. All approaches are based on the Poisson approximation. As shown, an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have observed that this approach also works well for Poisson rate estimators that are not perfectly unbiased. Therefore, it would be interesting to investigate which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness if used as cardinality estimator.
 
-%We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches. All approaches are based on the Poisson approximation. As shown, an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have observed that this approach also works well for Poisson rate estimators that are not perfectly unbiased. Therefore, it would be interesting to investigate which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness if used as cardinality estimator.
+For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum-likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without dependence on empirically determined bias correction data.
 
-%For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum-likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without empirical determined data.
-
-%Finally the maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach significantly improves the cardinality estimates for set intersection, differences, and unions when compared to the inclusion-exclusion principle. An extension to more than two HyperLogLog sketches is possible. However, the effort scales like $\symBigO(2^n)$ if 
+Finally the maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle. The presented maximum-likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. Similarly to the inclusion-exclusion principle, the effort would scale exponentially with the number of involved HyperLogLog sketches.
 
 \appendix
 
