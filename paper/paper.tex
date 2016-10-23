@@ -98,9 +98,9 @@
 \author{Otmar Ertl \\ otmar.ertl@gmail.com}
 \begin{document}
 \maketitle
-\let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}.}
+\let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}. The first version of this paper was published on April 17, 2016.}
 \begin{abstract}
-This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle another unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood method is also appropriate to improve cardinality estimates of set intersection sizes compared to the inclusion-exclusion principle. The new methods are demonstrated and verified by extensive simulations.
+This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle a second unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood approach can also be applied to more than a single HyperLogLog sketch. In particular, it is shown that it gives more accurate cardinality estimates for the union, intersection, or relative complements of two sets that are represented by HyperLogLog sketches compared to conventional techniques like the inclusion-exclusion principle. All the new methods are demonstrated and verified by extensive simulations.
 \end{abstract}
 
 \section{Introduction}
@@ -975,7 +975,7 @@ $\symCountVariate_{\symRegRange+1}=0$, we can find an upper bound for the smalle
 In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated, that is $\symCountVariate_{\symRegRange+1}\ll \symNumReg$. In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}. As shown in \cref{app:error_approx}, a small approximation error of $\symHelper$ does not have much impact on the error of the maximum likelihood estimate as long as most registers are not yet saturated.
 \end{itemize}
 
-Putting all these optimizations together finally gives the new cardinality estimation algorithm as presented in \cref{alg:estimate_ml}. The algorithm requires only elementary operations, except for large cardinalities, where it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities and substantially reduces the number of required iteration cycles.
+Putting all these optimizations together finally gives the new cardinality estimation algorithm as presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by the savings of iteration cycles.
 
 \begin{algorithm}
 \caption{Maximum likelihood cardinality estimation.}
@@ -1153,7 +1153,7 @@ While the union of two sets that are represented by HyperLogLog sketches can be 
 \left\vert\symSetS_1 \cup \symSetS_2\right\vert,
 \end{aligned}
 \end{equation}
-and the fact that HyperLogLog sketches can be easily merged using \eqref{equ:hll_union}. The last equation is also known as inclusion-exclusion principle and can be used to calculate the intersection size. Unfortunately, the estimation error does not scale well for inclusion-exclusion principle. For small intersection sizes the estimation error can get very large \cite{Dasgupta2015}. In the worst case, the estimate can be even negative without additional restriction. Therefore, it was proposed to combine HyperLogLog sketches with MinHash sketches \cite{Pascoe2013, Cohen2016}, which improves the estimation error, even though at the expense of significant more space consumption. 
+and the fact that HyperLogLog sketches can be easily merged using \eqref{equ:hll_union}. The last equation is also known as inclusion-exclusion principle and can be used to calculate the intersection size. Unfortunately, the estimation error does not scale well for the inclusion-exclusion principle. For small intersection sizes the relative estimation error can become very large \cite{Dasgupta2015}. In the worst case, the estimate could be negative without artificial restriction to nonnegative values. Therefore, it was proposed to combine HyperLogLog sketches with MinHash sketches \cite{Pascoe2013, Cohen2016}, which improves the estimation error, even though at the expense of significant more space consumption. 
 
 It was recently pointed out without special focus on HyperLogLog sketches, that the application of the maximum likelihood method to the joint likelihood function of two probabilistic data structures, which represent the intersection operands, gives better intersection size estimates \cite{Ting2016}. For HyperLogLog sketches recorded without stochastic averaging (compare \cref{sec:data_element_insertion}) this was also shown in \cite{Cohen2016}, where also an algorithm based on the maximum likelihood principle was outlined. However, in practice, HyperLogLog sketches are recorded using stochastic averaging because of the much cheaper element insertions as described by \cref{alg:insert}. Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to apply this approach also for the estimation of set operation result sizes.
 
@@ -1495,8 +1495,7 @@ Since the values for different registers are independent under the Poisson model
 \symProbabilityMass(\boldsymbol{\symRegVal}_1,\boldsymbol{\symRegVal}_2)
 =
 \prod_{\symIndexI = 1}^{\symNumReg}
-\prod_{\symIndexJ = 1}^{\symNumReg}
-\symProbabilityMass(\symRegVal_{1\symIndexI},\symRegVal_{2\symIndexJ}).
+\symProbabilityMass(\symRegVal_{1\symIndexI},\symRegVal_{2\symIndexI}).
 \end{equation}
 
 In order to get the maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$,
@@ -1512,8 +1511,7 @@ In order to get the maximum likelihood estimates $\symPoissonRateEstimate_\symSe
 )
 =
 \sum_{\symIndexI = 1}^{\symNumReg}
-\sum_{\symIndexJ = 1}^{\symNumReg}
-\log(\symProbabilityMass(\symRegValVariate_{1\symIndexI},\symRegValVariate_{2\symIndexJ}))
+\log(\symProbabilityMass(\symRegValVariate_{1\symIndexI},\symRegValVariate_{2\symIndexI}))
 \end{equation}
 Insertion of \eqref{equ:joint_log_pmf_single_register} results in
 \begin{multline}
@@ -1615,6 +1613,9 @@ These $5\symNumReg$ values are sufficient for estimating $\symPoissonRate_\symSe
 \symCountVariate^{<}_{1,\symRegRange+1}=\symCountVariate^{<}_{2,\symRegRange+1}=0$
 always holds.
 
+Since \eqref{equ:log_likelihood_pair} is the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assuming $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$ each of which correspond to \eqref{equ:log_likelihood_single} as expected. Or, consider two sketches representing identical sets. In this case all registers are equal, which means  that $\symCountVariate^{>}_{1\symRegVal}=\symCountVariate^{>}_{2\symRegVal}=
+\symCountVariate^{<}_{1\symRegVal}=\symCountVariate^{<}_{2\symRegVal}=0$ for all $\symRegVal$, and therefore the maximum likelihood method yields $\symPoissonRateEstimate_\symSetASuffix = \symPoissonRateEstimate_\symSetBSuffix = 0$ and the value for $\symPoissonRateEstimate_\symSetXSuffix$ will be equal to the single HyperLogLog maximum likelihood estimate \eqref{equ:log_likelihood_single}.
+
 The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have a strict global maximum point. For example, if all register values of the first HyperLogLog sketch are larger than the corresponding values in the second HyperLogLog sketch, that is $\symCountVariate_{1\symRegVal}^{<}
 =
 \symCountVariate_{\symRegVal}^{=}
@@ -1622,15 +1623,17 @@ The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have
 \symCountVariate_{2\symRegVal}^{>}
 =
 0$ for all $\symRegVal$, the function can be rewritten as sum of two functions, one dependent on $\symPoissonRate_\symSetASuffix$ and the other dependent on $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix$. 
-The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the maximum likelihood cardinality estimates for the first and second HyperLogLog sketch, respectively. This means that the maximum-likelihood makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach would give $\symPoissonRateEstimate_2$ as estimate. This result is questionable, because there it is not evident in this case, that the sets $\symSetS_1$ and $\symSetS_2$ really have common elements.
+The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the maximum likelihood cardinality estimates for the first and second HyperLogLog sketch, respectively. This means that the maximum-likelihood makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach would give $\symPoissonRateEstimate_2$ as estimate. This result is questionable, because there is no evidence in this case, that the sets $\symSetS_1$ and $\symSetS_2$ really have common elements.
 
-Since \eqref{equ:log_likelihood_pair} is the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assuming $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively. As expected, both functions correspond to \eqref{equ:log_likelihood_single}. Another extreme case is that both sketches represent identical sets. In this case 
-$
-\symPoissonRate_\symSetASuffix
-=
-\symPoissonRate_\symSetBSuffix=0
-$ and all the register values must be pair-wise identical, which finally 
-yields \eqref{equ:log_likelihood_single} for $\symPoissonRate_\symSetXSuffix$.
+%Since \eqref{equ:log_likelihood_pair} is the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assuming $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively. As expected, both functions correspond to \eqref{equ:log_likelihood_single}. Another extreme case is that both sketches represent identical sets. In this case all registers are equal, which means  that $\symCountVariate^{>}_{1\symRegVal}=\symCountVariate^{>}_{2\symRegVal}=
+%\symCountVariate^{<}_{1\symRegVal}=\symCountVariate^{<}_{2\symRegVal}=0$ for all $\symRegVal$, and therefore the maximum likelihood method yields $\symPoissonRateEstimate_\symSetASuffix = \symPoissonRateEstimate_\symSetBSuffix = 0$ and the value for $\symPoissonRateEstimate_\symSetXSuffix$ will be equal to the individual maximum likelihood estimate of both identical sketches.
+
+%$
+%\symPoissonRate_\symSetASuffix
+%=
+%\symPoissonRate_\symSetBSuffix=0
+%$ and all the register values must be pair-wise identical, which finally 
+%yields \eqref{equ:log_likelihood_single} for $\symPoissonRate_\symSetXSuffix$.
 
 The inclusion-exclusion method does not use all the available information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}, because the estimator is a function of the three vectors $(\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1})$, 
 $(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$, and 
@@ -2112,11 +2115,11 @@ TODO see results \cref{tbl:joint_estimation_cases}, \cref{tbl:joint_estimation_a
 \caption{List of true cardinalities of the pair-wise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$ was investigated. The average number of function \eqref{equ:max_likelihood_phi_func} and gradient evaluations \eqref{equ:df_dphi} are also given as needed by our implementation of \cref{alg:joint_cardinality_estimation} that uses the BFGS algorithm.
 }
 \label{tbl:joint_estimation_cases}
-\csvreader[before reading=\tiny, tabular=r|rrr|rr|rr, table head= & 
+\csvreader[before reading=\scriptsize, tabular=r|rrr|rr|rr, table head= & 
 \multicolumn{3}{c|}{true cardinalities} &
 \multicolumn{1}{c}{Jaccard index} &
 \multicolumn{1}{c|}{cardinality ratio} &
-\multicolumn{2}{c}{avg number evaluations}
+\multicolumn{2}{c}{avg num evaluations}
 \\
 \# &  
 \multicolumn{1}{c}{$|\symSetA|$} & 
@@ -2151,7 +2154,7 @@ avgNumGradientEvaluations=\avgNumGradientEvaluations,
 \centering
 \caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_a}
-\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
+\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
 \multicolumn{3}{c|}{conventional approach}
 &
@@ -2192,7 +2195,7 @@ improvementRmseA=\improvementRmseA
 \centering
 \caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_b}
-\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
+\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
 \multicolumn{3}{c|}{conventional approach}
 &
@@ -2233,7 +2236,7 @@ improvementRmseB=\improvementRmseB
 \centering
 \caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_x}
-\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
+\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
 \multicolumn{3}{c|}{conventional approach}
 &
@@ -2274,7 +2277,7 @@ improvementRmseX=\improvementRmseX
 \centering
 \caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_abx}
-\csvreader[before reading=\tiny, tabular=r|rrr|rrr|r, table head=
+\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
 \multicolumn{3}{c|}{conventional approach}
 &
