@@ -54,7 +54,7 @@ task buildJointHyperLogLogDataGenerator(type: Exec) {
     inputs.files "$project.cppDir/joint_hyperloglog_data_generator.cpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
     outputs.files "$project.cppDir/joint_hyperloglog_data_generator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','-Wall','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-lgsl','-lgslcblas','-lm','-fopenmp','-o','joint_hyperloglog_data_generator'
+    commandLine 'g++','-std=c++11','-Wall','joint_hyperloglog_data_generator.cpp','-Ofast','-march=native','-fopenmp','-o','joint_hyperloglog_data_generator'
 }
 
 task generateJointHyperLogLogData(type: Exec) {
@@ -75,7 +75,7 @@ task buildBenchmark(type: Exec) {
     inputs.files "$project.cppDir/benchmark.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/benchmark"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-Wall','-std=c++11','benchmark.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','benchmark'
+    commandLine 'g++','-Wall','-std=c++11','benchmark.cpp','-Ofast','-march=native','-o','benchmark'
 }
 
 task runBenchmark(type: Exec) {
@@ -104,7 +104,7 @@ task buildCardinalityCalculation(type: Exec) {
     inputs.files "$project.cppDir/cardinality_calculator.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp"
     outputs.files "$project.cppDir/cardinality_calculator"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','-Wall','cardinality_calculator.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-fopenmp','-o','cardinality_calculator'
+    commandLine 'g++','-std=c++11','-Wall','cardinality_calculator.cpp','-Ofast','-march=native','-fopenmp','-o','cardinality_calculator'
 }
 
 task doCardinalityCalculation(type: Exec) {
