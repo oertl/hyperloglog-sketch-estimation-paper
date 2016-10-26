@@ -419,11 +419,6 @@ task calculateMaxErrorPropagationFactor(type: Exec) {
     commandLine 'python3', 'recursion-stability.py'
 }
 
-task copyPaperToGhPages(type: Copy) {
-    from 'paper/paper.pdf'
-    into 'gh-pages'
-}
-
 task paper {
     dependsOn 'pdflatex3'
     doLast {
