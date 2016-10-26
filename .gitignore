@@ -1,3 +1,5 @@
+c++/dlib/*
+!c++/dlib/README
 gh-pages
 .gradle
 data/*_*_corrected_raw_estimates.dat

@@ -12,9 +12,12 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
+#include <functional>
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multimin.h>
+
+#include "dlib/optimization.h"
 
 #include "two_hyperloglog_statistic.hpp"
 
@@ -420,106 +423,108 @@ void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& j
     cardinalityX = std::max(0., cardinalityBX + cardinalityAX - cardinalityABX);
 }
 
-void calcExp(double x, double& y, double& z) {
-    static const double ln2 = std::log(2);
-    if (x >= ln2) {
-        y = std::exp(-x);
-        z = 1 - y;
-    }
-    else {
-        z = -std::expm1(-x);
-        y = 1 - z;
-    }
-}
 
-// the minimum of this function gives the max likelihood estimate
-void eval_joint_log_likelihood_function_and_derivatives(
-    const TwoHyperLogLogStatistic& jointStatistic,
-    const double phiA,
-    const double phiB,
-    const double phiX,
-    double& f,
-    double& fa,
-    double& fb,
-    double& fx,
-    bool calcValue,
-    bool calcDerivative) {
 
+class LogLikelihoodFunctionForDlib {
+
+    const TwoHyperLogLogStatistic& jointStatistic;
+    int numEvaluations = 0;
+    double fa;
+    double fb;
+    double fx;
+    bool status = false;
     const int q = jointStatistic.getQ();
 
-    const double expPhiA = std::exp(phiA);
-    const double expPhiB = std::exp(phiB);
-    const double expPhiX = std::exp(phiX);
-
-    f = 0.;
-    fa = 0.;
-    fb = 0.;
-    fx = 0.;
-
-    double linTermA = 0;
-    double linTermB = 0;
-    double linTermX = 0;
-
-    double pow2k = ldexp(1., -q);
-    for (int k = q + 1; k >= 1; --k) {
-
-        int cSmaller1 = jointStatistic.getSmaller1Count(k);
-        int cLarger1 = jointStatistic.getLarger1Count(k);
-        int cSmaller2 = jointStatistic.getSmaller2Count(k);
-        int cLarger2 = jointStatistic.getLarger2Count(k);
-        int cEqual = jointStatistic.getEqualCount(k);
-
-        double xa = 0, ya = 0, za = 0;
-        double xb = 0, yb = 0, zb = 0;
-        double xx = 0, yx = 0, zx = 0;
-
-        if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
-            xa = expPhiA * pow2k;
-            calcExp(xa, ya, za);
+    static void calcExp(double x, double& y, double& z) {
+        static const double ln2 = std::log(2);
+        if (x >= ln2) {
+            y = std::exp(-x);
+            z = 1 - y;
         }
-        if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
-            xb = expPhiB * pow2k;
-            calcExp(xb, yb, zb);
+        else {
+            z = -std::expm1(-x);
+            y = 1 - z;
         }
-        if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
-            xx = expPhiX * pow2k;
-            calcExp(xx, yx, zx);
-        }
+    }
 
-        if (cSmaller1 > 0) {
-            double arg = zx + yx*za;
-            if (calcValue) f  -= cSmaller1 * std::log(arg);
-            if (calcDerivative) {
+    // the minimum of this function gives the max likelihood estimate
+    void eval_joint_log_likelihood_function_and_derivatives(
+        const double phiA,
+        const double phiB,
+        const double phiX,
+        double& f,
+        double& fa,
+        double& fb,
+        double& fx) {
+
+        const double expPhiA = std::exp(phiA);
+        const double expPhiB = std::exp(phiB);
+        const double expPhiX = std::exp(phiX);
+
+        f = 0.;
+        fa = 0.;
+        fb = 0.;
+        fx = 0.;
+
+        double linTermA = 0;
+        double linTermB = 0;
+        double linTermX = 0;
+
+        double pow2k = ldexp(1., -q);
+        for (int k = q + 1; k >= 1; --k) {
+
+            int cSmaller1 = jointStatistic.getSmaller1Count(k);
+            int cLarger1 = jointStatistic.getLarger1Count(k);
+            int cSmaller2 = jointStatistic.getSmaller2Count(k);
+            int cLarger2 = jointStatistic.getLarger2Count(k);
+            int cEqual = jointStatistic.getEqualCount(k);
+
+            double xa = 0, ya = 0, za = 0;
+            double xb = 0, yb = 0, zb = 0;
+            double xx = 0, yx = 0, zx = 0;
+
+            if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
+                xa = expPhiA * pow2k;
+                calcExp(xa, ya, za);
+            }
+            if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
+                xb = expPhiB * pow2k;
+                calcExp(xb, yb, zb);
+            }
+            if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
+                xx = expPhiX * pow2k;
+                calcExp(xx, yx, zx);
+            }
+
+            if (cSmaller1 > 0) {
+                double arg = zx + yx*za;
+                f  -= cSmaller1 * std::log(arg);
                 double tmp = cSmaller1 * ya * yx / arg;
                 fa -= tmp * xa;
                 fx -= tmp * xx;
             }
-        }
 
-        if (cLarger1 > 0) {
-            if (calcValue) f  -= cLarger1 * std::log(za);
-            if (calcDerivative) fa -= cLarger1 * ya * xa / za;
-        }
+            if (cLarger1 > 0) {
+                f  -= cLarger1 * std::log(za);
+                fa -= cLarger1 * ya * xa / za;
+            }
 
-        if (cSmaller2 > 0) {
-            double arg = zx + yx*zb;
-            if (calcValue) f  -= cSmaller2 * std::log(arg);
-            if (calcDerivative) {
+            if (cSmaller2 > 0) {
+                double arg = zx + yx*zb;
+                f  -= cSmaller2 * std::log(arg);
                 double tmp = cSmaller2 * yb * yx / arg;
                 fb -= tmp * xb;
                 fx -= tmp * xx;
             }
-        }
 
-        if (cLarger2 > 0) {
-            if (calcValue) f  -= cLarger2 * std::log(zb);
-            if (calcDerivative) fb -= cLarger2 * yb * xb / zb;
-        }
+            if (cLarger2 > 0) {
+                f  -= cLarger2 * std::log(zb);
+                fb -= cLarger2 * yb * xb / zb;
+            }
 
-        if (cEqual > 0) {
-            double arg = za * zb * yx + zx;
-            if (calcValue) f  -= cEqual * std::log(arg);
-            if (calcDerivative) {
+            if (cEqual > 0) {
+                double arg = za * zb * yx + zx;
+                f  -= cEqual * std::log(arg);
                 double yazb = ya*zb;
                 double ybza = yb*za;
                 double tmp = cEqual * yx / arg;
@@ -527,101 +532,85 @@ void eval_joint_log_likelihood_function_and_derivatives(
                 fb -= tmp * ybza * xb;
                 fx -= tmp * (ya + ybza) * xx;
             }
+            if (k <= q) {
+                linTermA += cSmaller1 + cEqual + cLarger1;
+                linTermB += cSmaller2 + cEqual + cLarger2;
+                linTermX += cSmaller1 + cEqual + cSmaller2;
+                linTermA *= 0.5;
+                linTermB *= 0.5;
+                linTermX *= 0.5;
+                pow2k += pow2k;
+            }
         }
-        if (k <= q) {
-            linTermA += cSmaller1 + cEqual + cLarger1;
-            linTermB += cSmaller2 + cEqual + cLarger2;
-            linTermX += cSmaller1 + cEqual + cSmaller2;
-            linTermA *= 0.5;
-            linTermB *= 0.5;
-            linTermX *= 0.5;
-            pow2k += pow2k;
-        }
+
+        linTermA += jointStatistic.get1Count(0);
+        linTermB += jointStatistic.get2Count(0);
+        linTermX += jointStatistic.getMinCount(0);
+        linTermA *= expPhiA;
+        linTermB *= expPhiB;
+        linTermX *= expPhiX;
+
+        f += linTermA + linTermB + linTermX;
+        fa += linTermA;
+        fb += linTermB;
+        fx += linTermX;
     }
 
-    linTermA += jointStatistic.get1Count(0);
-    linTermB += jointStatistic.get2Count(0);
-    linTermX += jointStatistic.getMinCount(0);
-    linTermA *= expPhiA;
-    linTermB *= expPhiB;
-    linTermX *= expPhiX;
+public:
+    LogLikelihoodFunctionForDlib(const TwoHyperLogLogStatistic& jointStatistic_) : jointStatistic(jointStatistic_) {}
 
-    f += linTermA + linTermB + linTermX;
-    fa += linTermA;
-    fb += linTermB;
-    fx += linTermX;
-}
+    double value(const dlib::matrix<double,3,1>& x) {
+        assert(status == false); // check if value and derivative are alternately called
+        double f;
+        eval_joint_log_likelihood_function_and_derivatives(x(0), x(1), x(2), f, fa, fb, fx);
+        numEvaluations += 1;
+        status = true;
+        return f;
+    }
 
-void log_likelihood_function_value_and_derivatives_for_gsl(const gsl_vector *phi, void *params, double *f, gsl_vector *fGrad)
-{
+    dlib::matrix<double,3,1> derivative(const dlib::matrix<double,3,1>& x) {
+        assert(status == true); // check if value and derivative are alternately called
+        status = false;
+        return {fa, fb, fx};
+    }
 
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
-    int& numFunctionEvaluations = *((int*)(((void**)(params))[1]));
-    int& numGradientEvaluations = *((int*)(((void**)(params))[2]));
+    int getNumEvaluations() const {
+        return numEvaluations;
+    }
 
-    double fa, fb, fx;
+};
 
-    eval_joint_log_likelihood_function_and_derivatives(
-        jointStatistic,
-        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
-        *f, fa, fb, fx, true, true);
+class StopStrategy {
+    const double _min_delta;
+    bool _been_used;
+    dlib::matrix<double,3,1> _previous_values;
+public:
 
-    numFunctionEvaluations += 1;
-    numGradientEvaluations += 1;
+    StopStrategy(double min_delta) : _min_delta(min_delta),  _been_used(false) {}
 
-    gsl_vector_set(fGrad, 0, fa);
-    gsl_vector_set(fGrad, 1, fb);
-    gsl_vector_set(fGrad, 2, fx);
+    bool should_continue_search (const dlib::matrix<double,3,1>& values, const double, const dlib::matrix<double,3,1>&)
+    {
+        bool ret =
+            !_been_used ||
+            std::abs(values(0) - _previous_values(0)) > _min_delta ||
+            std::abs(values(1) - _previous_values(1)) > _min_delta ||
+            std::abs(values(2) - _previous_values(2)) > _min_delta;
+        _been_used = true;
+        _previous_values = values;
+        return ret;
+    }
+};
 
-}
 
-void log_likelihood_function_derivatives_for_gsl(const gsl_vector *phi, void *params, gsl_vector *fGrad)
-{
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
-    int& numGradientEvaluations = *((int*)(((void**)(params))[2]));
 
-    double fa, fb, fx, f;
-
-    eval_joint_log_likelihood_function_and_derivatives(
-        jointStatistic,
-        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
-        f, fa, fb, fx, false, true);
-
-    numGradientEvaluations += 1;
-
-    gsl_vector_set(fGrad, 0, fa);
-    gsl_vector_set(fGrad, 1, fb);
-    gsl_vector_set(fGrad, 2, fx);
-}
-
-double log_likelihood_function_value_for_gsl(const gsl_vector *phi, void *params)
-{
-    const TwoHyperLogLogStatistic& jointStatistic = *((TwoHyperLogLogStatistic*)(((void**)(params))[0]));
-    int& numFunctionEvaluations = *((int*)(((void**)(params))[1]));
-
-    double fa, fb, fx, f;
-
-    eval_joint_log_likelihood_function_and_derivatives(
-        jointStatistic,
-        gsl_vector_get(phi, 0), gsl_vector_get(phi, 1), gsl_vector_get(phi, 2),
-        f, fa, fb, fx, true, false);
-
-    numFunctionEvaluations += 1;
-
-    return f;
-}
-
-void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations, int& numFunctionEvaluations, int& numGradientEvaluations) {
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations, int& numEvaluations) {
 
     const double eps = 1e-2;
-    const double initalStepFactor = 2;
-    const int maxNumIterations = 10000;
 
     const int m = jointStatistic.getNumRegisters();
     const double relativeErrorLimit = eps/(sqrt(m));
 
-    numFunctionEvaluations = 0;
-    numGradientEvaluations = 0;
+    numEvaluations = 0;
 
     const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
 
@@ -646,55 +635,22 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     double phiA = std::log(initCardinalityA/m);
     double phiB = std::log(initCardinalityB/m);
     double phiX = std::log(initCardinalityX/m);
-    gsl_vector *phi = gsl_vector_alloc(3);
-    gsl_vector_set(phi, 0, phiA);
-    gsl_vector_set(phi, 1, phiB);
-    gsl_vector_set(phi, 2, phiX);
 
-    gsl_multimin_function_fdf my_func;
+    LogLikelihoodFunctionForDlib logLikelihoodFunction(jointStatistic);
 
-    my_func.n = 3;
-    my_func.f = log_likelihood_function_value_for_gsl;
-    my_func.df = log_likelihood_function_derivatives_for_gsl;
-    my_func.fdf = log_likelihood_function_value_and_derivatives_for_gsl;
-    void* parameters[3];
-    parameters[0] = &const_cast<TwoHyperLogLogStatistic&>(jointStatistic);
-    parameters[1] = &numFunctionEvaluations;
-    parameters[2] = &numGradientEvaluations;
-    my_func.params = parameters;
+    dlib::matrix<double,3,1> starting_point = {phiA, phiB, phiX};
+    dlib::find_min(
+        dlib::bfgs_search_strategy(),  // Use BFGS search algorithm
+        StopStrategy(relativeErrorLimit),
+        std::bind(&LogLikelihoodFunctionForDlib::value, std::ref(logLikelihoodFunction), std::placeholders::_1),
+        std::bind(&LogLikelihoodFunctionForDlib::derivative, std::ref(logLikelihoodFunction), std::placeholders::_1),
+        starting_point,
+        -std::numeric_limits<double>::infinity());
 
-    gsl_multimin_fdfminimizer *solver = gsl_multimin_fdfminimizer_alloc(gsl_multimin_fdfminimizer_vector_bfgs2, 3); // 3 dimensions
-    gsl_multimin_fdfminimizer_set(solver, &my_func, phi, std::log(initalStepFactor), 0.1);
-
-
-    for(numIterations = 0; numIterations < maxNumIterations; numIterations++)
-    {
-        double phiPrimeA = phiA;
-        double phiPrimeB = phiB;
-        double phiPrimeX = phiX;
-
-        gsl_multimin_fdfminimizer_iterate(solver);
-
-        const gsl_vector* phi = gsl_multimin_fdfminimizer_x(solver);
-        phiA = gsl_vector_get(phi, 0);
-        phiB = gsl_vector_get(phi, 1);
-        phiX = gsl_vector_get(phi, 2);
-
-        if (
-            std::fabs(phiA - phiPrimeA) <= relativeErrorLimit &&
-            std::fabs(phiB - phiPrimeB) <= relativeErrorLimit &&
-            std::fabs(phiX - phiPrimeX) <= relativeErrorLimit) {
-            break;
-        }
-    }
-
-    cardinalityA = std::exp(gsl_vector_get(solver->x, 0)) * m;
-    cardinalityB = std::exp(gsl_vector_get(solver->x, 1)) * m;
-    cardinalityX = std::exp(gsl_vector_get(solver->x, 2)) * m;
-
-    gsl_multimin_fdfminimizer_free(solver);
-    gsl_vector_free(phi);
-
+    cardinalityA = std::exp(starting_point(0)) * m;
+    cardinalityB = std::exp(starting_point(1)) * m;
+    cardinalityX = std::exp(starting_point(2)) * m;
+    numEvaluations = logLikelihoodFunction.getNumEvaluations();
 }
 
 #endif // _CARDINALITY_ESTIMATION_HPP_

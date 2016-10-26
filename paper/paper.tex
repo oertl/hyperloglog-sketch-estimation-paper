@@ -2014,7 +2014,7 @@ all registers have a value equal to zero in at least one of both HyperLogLog ske
 
 %As demonstrated by we In all other cases, the maximum-likelihood estimates for $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$ will be non-zero. We use the conventional approach to get start values for the estimates of $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$, respectively. However, in order to ensure that the values are positive we restrict them to values greater than or equal to 1.
 
-For the general case the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} can be applied, which is a very popular algorithm for non-linear optimization problems. In particular, we used the implementation provided by the GNU scientific library \cite{Galassi2016}.
+For the general case the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} can be applied, which is a very popular algorithm for non-linear optimization problems. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}.
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2103,27 +2103,27 @@ $|\symSetX|$ random values are added to both sketches. \cref{tbl:joint_estimatio
 
 \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum-likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to square root error scaling law, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
 
-We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \eqref{equ:hll_union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm opens another way. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by an significant amount.
+We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \eqref{equ:hll_union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm opens another way. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
 
 \begin{table}
 \centering
-\caption{List of true cardinalities of the pair-wise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetA\cup\symSetX$ and  $\symSetB\cup\symSetX$ was investigated. The average number of function \eqref{equ:max_likelihood_phi_func} and gradient evaluations \eqref{equ:df_dphi} are also given as needed by our implementation of \cref{alg:joint_cardinality_estimation} that uses the BFGS algorithm.
+\caption{List of true cardinalities of the pair-wise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetS_1 = \symSetA\cup\symSetX$ and  $\symSetS_2 = \symSetB\cup\symSetX$ was investigated. The last column shows the average number of needed log-likelihood function 
+ \eqref{equ:max_likelihood_phi_func} and gradient evaluations \eqref{equ:df_dphi} until convergence of the BFGS algorithm.
 }
 \label{tbl:joint_estimation_cases}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rr|rr, table head= & 
 \multicolumn{3}{c|}{true cardinalities} &
 \multicolumn{1}{c}{Jaccard index} &
 \multicolumn{1}{c|}{cardinality ratio} &
-\multicolumn{2}{c}{avg num evaluations}
+\multicolumn{1}{c}{avg number}
 \\
 \# &  
 \multicolumn{1}{c}{$|\symSetA|$} & 
 \multicolumn{1}{c}{$|\symSetB|$} & 
 \multicolumn{1}{c|}{$|\symSetX|$} & 
-\multicolumn{1}{c}{$\frac{|\symSetX|}{|\symSetA\cup\symSetB\cup\symSetX|}$} & 
-\multicolumn{1}{c|}{$\frac{|\symSetA\cup\symSetX|}{|\symSetB\cup\symSetX|}$} &
-\multicolumn{1}{c}{$\symFunc$} &
-\multicolumn{1}{c}{$\nabla\symFunc$}
+\multicolumn{1}{c}{$|\symSetS_1\cap\symSetS_2|/|\symSetS_1\cup\symSetS_2|$} & 
+\multicolumn{1}{c|}{$|\symSetS_1|/|\symSetS_2|$} &
+\multicolumn{1}{c}{iterations}
 \\\hline]
 {joint_cardinality_calculation.csv}{
 trueCardA=\trueCardA,
@@ -2131,8 +2131,7 @@ trueCardB=\trueCardB,
 trueCardX=\trueCardX,
 trueJaccardIdx=\trueJaccardIdx,
 trueRatio=\trueRatio,
-avgNumFunctionEvaluations=\avgNumFunctionEvaluations,
-avgNumGradientEvaluations=\avgNumGradientEvaluations,
+avgNumEvaluations=\avgNumEvaluations
 }{
 \thecsvrow & 
 \num{\trueCardA} & 
@@ -2140,8 +2139,7 @@ avgNumGradientEvaluations=\avgNumGradientEvaluations,
 \num{\trueCardX} & 
 \numformat{\trueJaccardIdx} & 
 \numformattwo{\trueRatio} &
-\numformattwo{\avgNumFunctionEvaluations} &
-\numformattwo{\avgNumGradientEvaluations}
+\numformattwo{\avgNumEvaluations}
 }
 \end{table}
 

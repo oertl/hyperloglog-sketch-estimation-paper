@@ -138,8 +138,7 @@ int main(int argc, char* argv[])
     resultsFile << "improvementStdevABX,";
     resultsFile << "improvementRmseABX,";
 
-    resultsFile << "avgNumFunctionEvaluations,";
-    resultsFile << "avgNumGradientEvaluations,";
+    resultsFile << "avgNumEvaluations,";
     resultsFile << "avgNumIterations,";
     resultsFile << "maxNumIterations" << endl;
 
@@ -180,8 +179,7 @@ int main(int argc, char* argv[])
         std::vector<double> maxLikeJaccardIdx;
         int maxNumIterations = 0;
         long numIterationsTotal = 0;
-        long numFunctionEvaluationsTotal = 0;
-        long numGradientEvaluationsTotal = 0;
+        long numEvaluationsTotal = 0;
         int size = 0;
 
         while (getline(statisticFile, line))
@@ -208,9 +206,8 @@ int main(int argc, char* argv[])
                 double estCardB = 0.;
                 double estCardX = 0.;
                 int numIterations = 0;
-                int numFunctionEvaluations = 0;
-                int numGradientEvaluations = 0;
-                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations, numFunctionEvaluations, numGradientEvaluations);
+                int numEvaluations = 0;
+                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations, numEvaluations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 maxLikeEstimatedCardX.push_back(estCardX/trueCardX-1.);
@@ -220,8 +217,7 @@ int main(int argc, char* argv[])
                 maxLikeEstimatedCardABX.push_back((estCardA+estCardB+estCardX)/(trueCardA+trueCardB+trueCardX)-1.);
                 numIterationsTotal += numIterations;
                 maxNumIterations = std::max(maxNumIterations, numIterations);
-                numFunctionEvaluationsTotal += numFunctionEvaluations;
-                numGradientEvaluationsTotal += numGradientEvaluations;
+                numEvaluationsTotal += numEvaluations;
             }
 
             size += 1;
@@ -280,8 +276,7 @@ int main(int argc, char* argv[])
         resultsFile << inExclStdevABX/maxLikeStdevABX  << ",";
         resultsFile << inExclRmseABX/maxLikeRmseABX  << ",";
 
-        resultsFile << (numFunctionEvaluationsTotal/(double)size) << ",";
-        resultsFile << (numGradientEvaluationsTotal/(double)size) << ",";
+        resultsFile << (numEvaluationsTotal/(double)size) << ",";
         resultsFile << (numIterationsTotal/(double)size) << ",";
         resultsFile << maxNumIterations << endl;
 
