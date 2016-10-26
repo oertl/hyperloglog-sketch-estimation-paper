@@ -14,9 +14,6 @@
 #include <cstdlib>
 #include <functional>
 
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_multimin.h>
-
 #include "dlib/optimization.h"
 
 #include "two_hyperloglog_statistic.hpp"
