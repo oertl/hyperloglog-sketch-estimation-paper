@@ -121,7 +121,7 @@ public:
         double a = z + c[0];
         {
             double b = z + ldexp(c[q+1], -q);
-            if (b <= 1.5*a) { // TODO constant 1.5
+            if (b <= 1.5*a) {
                 x = mPrime/(0.5*b+a);
             }
             else {
@@ -430,7 +430,11 @@ class LogLikelihoodFunctionForDlib {
     double fb;
     double fx;
     bool status = false;
-    const int q = jointStatistic.getQ();
+    const int q;
+
+    double linTermA, linTermB, linTermX;
+
+    std::vector<double> pow2k;
 
     static void calcExp(double x, double& y, double& z) {
         static const double ln2 = std::log(2);
@@ -463,11 +467,6 @@ class LogLikelihoodFunctionForDlib {
         fb = 0.;
         fx = 0.;
 
-        double linTermA = 0;
-        double linTermB = 0;
-        double linTermX = 0;
-
-        double pow2k = ldexp(1., -q);
         for (int k = q + 1; k >= 1; --k) {
 
             int cSmaller1 = jointStatistic.getSmaller1Count(k);
@@ -481,80 +480,98 @@ class LogLikelihoodFunctionForDlib {
             double xx = 0, yx = 0, zx = 0;
 
             if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
-                xa = expPhiA * pow2k;
+                xa = expPhiA * pow2k[k];
                 calcExp(xa, ya, za);
             }
             if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
-                xb = expPhiB * pow2k;
+                xb = expPhiB * pow2k[k];
                 calcExp(xb, yb, zb);
             }
             if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
-                xx = expPhiX * pow2k;
+                xx = expPhiX * pow2k[k];
                 calcExp(xx, yx, zx);
             }
 
             if (cSmaller1 > 0) {
                 double arg = zx + yx*za;
-                f  -= cSmaller1 * std::log(arg);
+                f  += cSmaller1 * std::log(arg);
                 double tmp = cSmaller1 * ya * yx / arg;
-                fa -= tmp * xa;
-                fx -= tmp * xx;
+                fa += tmp * xa;
+                fx += tmp * xx;
             }
 
             if (cLarger1 > 0) {
-                f  -= cLarger1 * std::log(za);
-                fa -= cLarger1 * ya * xa / za;
+                f  += cLarger1 * std::log(za);
+                fa += cLarger1 * ya * xa / za;
             }
 
             if (cSmaller2 > 0) {
                 double arg = zx + yx*zb;
-                f  -= cSmaller2 * std::log(arg);
+                f  += cSmaller2 * std::log(arg);
                 double tmp = cSmaller2 * yb * yx / arg;
-                fb -= tmp * xb;
-                fx -= tmp * xx;
+                fb += tmp * xb;
+                fx += tmp * xx;
             }
 
             if (cLarger2 > 0) {
-                f  -= cLarger2 * std::log(zb);
-                fb -= cLarger2 * yb * xb / zb;
+                f  += cLarger2 * std::log(zb);
+                fb += cLarger2 * yb * xb / zb;
             }
 
             if (cEqual > 0) {
                 double arg = za * zb * yx + zx;
-                f  -= cEqual * std::log(arg);
+                f  += cEqual * std::log(arg);
                 double yazb = ya*zb;
                 double ybza = yb*za;
                 double tmp = cEqual * yx / arg;
-                fa -= tmp * yazb * xa;
-                fb -= tmp * ybza * xb;
-                fx -= tmp * (ya + ybza) * xx;
-            }
-            if (k <= q) {
-                linTermA += cSmaller1 + cEqual + cLarger1;
-                linTermB += cSmaller2 + cEqual + cLarger2;
-                linTermX += cSmaller1 + cEqual + cSmaller2;
-                linTermA *= 0.5;
-                linTermB *= 0.5;
-                linTermX *= 0.5;
-                pow2k += pow2k;
+                fa += tmp * yazb * xa;
+                fb += tmp * ybza * xb;
+                fx += tmp * (ya + ybza) * xx;
             }
         }
 
-        linTermA += jointStatistic.get1Count(0);
-        linTermB += jointStatistic.get2Count(0);
-        linTermX += jointStatistic.getMinCount(0);
-        linTermA *= expPhiA;
-        linTermB *= expPhiB;
-        linTermX *= expPhiX;
+        double linTermExpPhiA = linTermA * expPhiA;
+        double linTermExpPhiB = linTermB * expPhiB;
+        double linTermExpPhiX = linTermX * expPhiX;
 
-        f += linTermA + linTermB + linTermX;
-        fa += linTermA;
-        fb += linTermB;
-        fx += linTermX;
+        f  -= linTermExpPhiA + linTermExpPhiB + linTermExpPhiX;
+        fa -= linTermExpPhiA;
+        fb -= linTermExpPhiB;
+        fx -= linTermExpPhiX;
     }
 
 public:
-    LogLikelihoodFunctionForDlib(const TwoHyperLogLogStatistic& jointStatistic_) : jointStatistic(jointStatistic_) {}
+    LogLikelihoodFunctionForDlib(const TwoHyperLogLogStatistic& jointStatistic_) :
+        jointStatistic(jointStatistic_),
+        q(jointStatistic_.getQ()),
+        pow2k(q+2) {
+
+        pow2k[q] = ldexp(1., -q);
+        pow2k[q+1] = pow2k[q];
+        for (int k = q; k >= 1; --k) {
+            pow2k[k-1] = pow2k[k] + pow2k[k];
+        }
+
+        linTermA = 0;
+        linTermB = 0;
+        linTermX = 0;
+        for (int k = q; k >= 1; --k) {
+            int cSmaller1 = jointStatistic.getSmaller1Count(k);
+            int cLarger1 = jointStatistic.getLarger1Count(k);
+            int cSmaller2 = jointStatistic.getSmaller2Count(k);
+            int cLarger2 = jointStatistic.getLarger2Count(k);
+            int cEqual = jointStatistic.getEqualCount(k);
+            linTermA += cSmaller1 + cEqual + cLarger1;
+            linTermB += cSmaller2 + cEqual + cLarger2;
+            linTermX += cSmaller1 + cEqual + cSmaller2;
+            linTermA *= 0.5;
+            linTermB *= 0.5;
+            linTermX *= 0.5;
+        }
+        linTermA += jointStatistic.get1Count(0);
+        linTermB += jointStatistic.get2Count(0);
+        linTermX += jointStatistic.getMinCount(0);
+    }
 
     double value(const dlib::matrix<double,3,1>& x) {
         assert(status == false); // check if value and derivative are alternately called
@@ -636,13 +653,13 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     LogLikelihoodFunctionForDlib logLikelihoodFunction(jointStatistic);
 
     dlib::matrix<double,3,1> starting_point = {phiA, phiB, phiX};
-    dlib::find_min(
+    dlib::find_max(
         dlib::bfgs_search_strategy(),  // Use BFGS search algorithm
         StopStrategy(relativeErrorLimit),
         std::bind(&LogLikelihoodFunctionForDlib::value, std::ref(logLikelihoodFunction), std::placeholders::_1),
         std::bind(&LogLikelihoodFunctionForDlib::derivative, std::ref(logLikelihoodFunction), std::placeholders::_1),
         starting_point,
-        -std::numeric_limits<double>::infinity());
+        std::numeric_limits<double>::infinity());
 
     cardinalityA = std::exp(starting_point(0)) * m;
     cardinalityB = std::exp(starting_point(1)) * m;
