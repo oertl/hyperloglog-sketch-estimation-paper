@@ -2307,15 +2307,90 @@ improvementRmseABX=\improvementRmseABX
 }
 \end{table}
 
+\section{Future work}
+As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have shown that this approach works well for the corrected raw estimator as well as the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting to investigate, which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 
-\section{Conclusion and future work}
+Using the maximum-likelihood method we have been able to improve the cardinality estimates of intersections and relative complements of two HyperLogLog sketches. Unfortunately, finding the maximum using the BFGS algorithm requires many iterations which makes the joint cardinality estimation much more expensive than for a single HyperLogLog sketch. Since we have found the corrected raw estimator which is almost as accurate as the maximum-likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic.
 
-We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches. All approaches are based on the Poisson approximation. As shown, an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have observed that this approach also works well for Poisson rate estimators that are not perfectly unbiased. Therefore, it would be interesting to investigate which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness if used as cardinality estimator.
+The presented maximum-likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. As for the inclusion-exclusion principle, the effort would scale exponentially with the number of involved HyperLogLog sketches.
 
-For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum-likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without dependence on empirically determined bias correction data.
+The maximum-likelihood method can also be used to estimate similarity measures such as the Jaccard index of two sets that are represented as HyperLogLog sketches. This directly leads to the question whether the HyperLogLog algorithm could be used for locality-sensitive hashing \cite{Leskovec2014, Wang2014}. Various locality-sensitive hashing algorithms have been proposed in the past. Among the most popular ones are the SimHash \cite{Charikar2002} and the min-wise hashing \cite{Broder1997, Li2011} algorithms whose hash collision probabilities are a function of the cosine and Jaccard similarities, respectively.
 
-Finally the maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle. The presented maximum-likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. Similarly to the inclusion-exclusion principle, the effort would scale exponentially with the number of involved HyperLogLog sketches.
+The HyperLogLog algorithm itself can be regarded as hashing algorithm as it maps sets to register values. For sufficiently large cardinalities we can use the Poisson approximation and assume that the number of zero-valued HyperLogLog register can be ignored. Furthermore, if the HyperLogLog parameter $\symRegRange$ is chosen large enough, the number of saturated registers can be ignored as well. As a consequence, we can assume that the distribution of register values follows \eqref{equ:assumed_register_val_distribution} and the probability that a register has the same value for two different sets is (compare \eqref{equ:register_value_joint_pmf})
+\begin{equation}
+\symProbability(\symRegValVariate_1=\symRegValVariate_2)
+=
+\sum_{\symRegVal = -\infty}^{\infty}
+e^{-\frac{\symPoissonRate_\symSetASuffix + \symPoissonRate_\symSetBSuffix + \symPoissonRate_\symSetXSuffix}
+{\symNumReg 2^\symRegVal}
+}
+\left(
+1
+-
+e^{-\frac{\symPoissonRate_\symSetASuffix +  \symPoissonRate_\symSetXSuffix}
+{\symNumReg 2^\symRegVal}
+}
+-
+e^{-\frac{\symPoissonRate_\symSetBSuffix + \symPoissonRate_\symSetXSuffix}
+{\symNumReg 2^\symRegVal}
+}
++
+e^{-\frac{\symPoissonRate_\symSetASuffix + \symPoissonRate_\symSetBSuffix + \symPoissonRate_\symSetXSuffix}
+{\symNumReg 2^\symRegVal}
+}
+\right).
+\end{equation}
+Using the approximation 
+$\sum_{\symRegVal=-\infty}^\infty
+e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
+\approx
+2\symAlpha_\infty \left(\log(\symY)-\log(\symX)\right)$ we get
+\begin{equation}
+\symProbability(\symRegValVariate_1=\symRegValVariate_2)
+\approx
+1
++
+2\symAlpha_\infty
+\left(
+\log\left(
+1
+-
+\frac{1}{2}
+\frac{\symPoissonRate_\symSetASuffix}
+{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
+\symPoissonRate_\symSetXSuffix}
+\right)
++
+\log\left(
+1
+-
+\frac{1}{2}
+\frac{\symPoissonRate_\symSetBSuffix}
+{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
+\symPoissonRate_\symSetXSuffix}
+\right)
+\right).
+\end{equation}
+Further reduction by using the first order approximation $\log(1-\symX)\approx -\symX$ finally shows that the probability of a register having the same value for both sets is roughly linear to the Jaccard index $\frac{\symPoissonRate_\symSetXSuffix}
+{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
+\symPoissonRate_\symSetXSuffix}$
+\begin{equation}
+\symProbability(\symRegValVariate_1=\symRegValVariate_2)
+\approx
+\symAlpha_\infty
+\frac{\symPoissonRate_\symSetXSuffix}
+{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
+\symPoissonRate_\symSetXSuffix}
++
+(1-\symAlpha_\infty).
+\end{equation}
+This finding makes the HyperLogLog algorithm an interesting candidate for locality-sensitive hashing. What is also promising is the much simpler preprocessing because it only involves a single hash function (compare \cref{alg:insert}). In contrast, min-wise hashing is very costly, because many hash functions evaluations are necessary for all the needed permutations \cite{Li2011}.
 
+\section{Conclusion}
+
+We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches based on the Poisson approximation. For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum-likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without dependence on empirically determined bias correction data.
+
+The maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle.
 \appendix
 
 \section{Numerical stability of recursion formula for $\symHelper(\symX)$}
