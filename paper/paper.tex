@@ -2307,6 +2307,47 @@ improvementRmseABX=\improvementRmseABX
 }
 \end{table}
 
+%\begin{table}
+%\centering
+%\caption{TODO}
+%\label{tbl:joint_estimation_jaccard}
+%\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
+% & 
+%\multicolumn{3}{c|}{conventional approach}
+%&
+%\multicolumn{3}{c|}{maximum likelihood method}
+%&
+%\multicolumn{1}{c}{improvement}
+%\\
+%\# & 
+%\multicolumn{1}{c}{mean} & 
+%\multicolumn{1}{c}{stdev} & 
+%\multicolumn{1}{c|}{rmse} & 
+%\multicolumn{1}{c}{mean} & 
+%\multicolumn{1}{c}{stdev} & 
+%\multicolumn{1}{c|}{rmse} &
+%\multicolumn{1}{c}{rmse ratio}
+%\\\hline]
+%{joint_cardinality_calculation.csv}{
+%inclExclMeanJaccardIdx=\inclExclMeanJaccardIdx,
+%inclExclStdDevJaccardIdx=\inclExclStdDevJaccardIdx,
+%inclExclRMSEJaccardIdx=\inclExclRMSEJaccardIdx,
+%maxLikeMeanJaccardIdx=\maxLikeMeanJaccardIdx,
+%maxLikeStdDevJaccardIdx=\maxLikeStdDevJaccardIdx,
+%maxLikeRMSEJaccardIdx=\maxLikeRMSEJaccardIdx,
+%improvementRmseJaccard=\improvementRmseJaccard
+%}{
+%\thecsvrow & 
+%\numformat{\inclExclMeanJaccardIdx} & 
+%\numformat{\inclExclStdDevJaccardIdx} & 
+%\numformat{\inclExclRMSEJaccardIdx} & 
+%\numformat{\maxLikeMeanJaccardIdx} & 
+%\numformat{\maxLikeStdDevJaccardIdx} & 
+%\numformat{\maxLikeRMSEJaccardIdx} &
+%\numformattwo{\improvementRmseJaccard}
+%}
+%\end{table}
+
 \section{Future work}
 As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have shown that this approach works well for the corrected raw estimator as well as the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting to investigate, which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 

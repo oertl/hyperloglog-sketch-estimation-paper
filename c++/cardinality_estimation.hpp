@@ -617,7 +617,7 @@ public:
 
 
 
-void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numIterations, int& numEvaluations) {
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numEvaluations) {
 
     const double eps = 1e-2;
 
@@ -636,7 +636,6 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         cardinalityX = 0;
         cardinalityA = cardinalityAX;
         cardinalityB = cardinalityBX;
-        numIterations = 0;
         return;
     }
     double cardinalityABX = estimator(jointStatistic.getMaxCounts());

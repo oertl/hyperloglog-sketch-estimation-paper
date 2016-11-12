@@ -137,10 +137,10 @@ int main(int argc, char* argv[])
     resultsFile << "improvementRmseBX,";
     resultsFile << "improvementStdevABX,";
     resultsFile << "improvementRmseABX,";
+    resultsFile << "improvementStdevJaccard,";
+    resultsFile << "improvementRmseJaccard,";
 
-    resultsFile << "avgNumEvaluations,";
-    resultsFile << "avgNumIterations,";
-    resultsFile << "maxNumIterations" << endl;
+    resultsFile << "avgNumEvaluations" << endl;
 
     int evaluationCounter = 0;
 
@@ -177,8 +177,6 @@ int main(int argc, char* argv[])
         std::vector<double> maxLikeEstimatedCardBX;
         std::vector<double> maxLikeEstimatedCardABX;
         std::vector<double> maxLikeJaccardIdx;
-        int maxNumIterations = 0;
-        long numIterationsTotal = 0;
         long numEvaluationsTotal = 0;
         int size = 0;
 
@@ -205,18 +203,15 @@ int main(int argc, char* argv[])
                 double estCardA = 0.;
                 double estCardB = 0.;
                 double estCardX = 0.;
-                int numIterations = 0;
                 int numEvaluations = 0;
-                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numIterations, numEvaluations);
+                maxLikelihoodTwoHyperLogLogEstimation(jointStatistic, estCardA, estCardB, estCardX, numEvaluations);
                 maxLikeEstimatedCardA.push_back(estCardA/trueCardA-1.);
                 maxLikeEstimatedCardB.push_back(estCardB/trueCardB-1.);
                 maxLikeEstimatedCardX.push_back(estCardX/trueCardX-1.);
-                maxLikeJaccardIdx.push_back((estCardX/(estCardA+estCardB+estCardX))/jaccardIndex-1.);
                 maxLikeEstimatedCardAX.push_back((estCardA+estCardX)/(trueCardA+trueCardX)-1.);
                 maxLikeEstimatedCardBX.push_back((estCardB+estCardX)/(trueCardB+trueCardX)-1.);
                 maxLikeEstimatedCardABX.push_back((estCardA+estCardB+estCardX)/(trueCardA+trueCardB+trueCardX)-1.);
-                numIterationsTotal += numIterations;
-                maxNumIterations = std::max(maxNumIterations, numIterations);
+                maxLikeJaccardIdx.push_back((estCardX/(estCardA+estCardB+estCardX))/jaccardIndex-1.);
                 numEvaluationsTotal += numEvaluations;
             }
 
@@ -275,10 +270,10 @@ int main(int argc, char* argv[])
         resultsFile << inExclRmseBX/maxLikeRmseBX  << ",";
         resultsFile << inExclStdevABX/maxLikeStdevABX  << ",";
         resultsFile << inExclRmseABX/maxLikeRmseABX  << ",";
+        resultsFile << inExclStdevJaccard/maxLikeStdevJaccard << ",";
+        resultsFile << inExclRmseJaccard/maxLikeRmseJaccard << ",";
 
-        resultsFile << (numEvaluationsTotal/(double)size) << ",";
-        resultsFile << (numIterationsTotal/(double)size) << ",";
-        resultsFile << maxNumIterations << endl;
+        resultsFile << (numEvaluationsTotal/(double)size) << endl;
 
     }
     cout << "number of evaluations = " << evaluationCounter << endl;
