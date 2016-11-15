@@ -258,7 +258,7 @@ task buildJointCardinalityCalculation(type: Exec) {
     inputs.files "$project.cppDir/joint_cardinality_calculation.cpp", "$project.cppDir/cardinality_estimation.hpp", "$project.cppDir/hyperloglog.hpp", "$project.cppDir/two_hyperloglog_statistic.hpp"
     outputs.files "$project.cppDir/joint_cardinality_calculation"
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'g++','-std=c++11','-Wall','joint_cardinality_calculation.cpp','-lgsl','-lgslcblas','-lm','-Ofast','-march=native','-o','joint_cardinality_calculation'
+    commandLine 'g++','-std=c++11','-Wall','joint_cardinality_calculation.cpp','-Ofast','-march=native','-o','joint_cardinality_calculation'
 }
 
 task doJointCardinalityCalculation(type: Exec) {

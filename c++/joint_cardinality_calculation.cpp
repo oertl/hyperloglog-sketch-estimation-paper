@@ -15,9 +15,15 @@
 #include <cassert>
 #include <cstdlib>
 #include <sstream>
-#include <gsl/gsl_statistics.h> // TODO
+
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/min.hpp>
+#include <boost/accumulators/statistics/max.hpp>
+#include <boost/accumulators/statistics/sum_kahan.hpp>
 
 using namespace std;
+using namespace boost::accumulators;
 
 const int minP = 4;
 const int maxP = 22;
@@ -53,13 +59,6 @@ template <typename T> void printToFile(const string& fileName, const T* data, si
 
 void printHeaders(ofstream& os, string prefix, string postfix) {
     os << prefix << "Min" << postfix << ",";
-    os << prefix << "M3s" << postfix << ",";
-    os << prefix << "M2s" << postfix << ",";
-    os << prefix << "M1s" << postfix << ",";
-    os << prefix << "Med" << postfix << ",";
-    os << prefix << "P1s" << postfix << ",";
-    os << prefix << "P2s" << postfix << ",";
-    os << prefix << "P3s" << postfix << ",";
     os << prefix << "Max" << postfix << ",";
     os << prefix << "Mean" << postfix << ",";
     os << prefix << "StdDev" << postfix << ",";
@@ -67,19 +66,28 @@ void printHeaders(ofstream& os, string prefix, string postfix) {
 }
 
 void calculateAndPrintStatistics(ofstream& os, std::vector<double> data, double& stdev, double& rmse) {
-    std::sort(data.begin(), data.end());
-    os << gsl_stats_min(&data[0], 1, data.size()) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm3s) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm2s) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pm1s) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), 0.5) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp1s) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp2s) << ",";
-    os << gsl_stats_quantile_from_sorted_data(&data[0], 1, data.size(), pp3s) << ",";
-    os << gsl_stats_max(&data[0], 1, data.size()) << ",";
-    const double mean = gsl_stats_mean(&data[0], 1, data.size());
-    stdev = gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), mean);
-    rmse = gsl_stats_sd_with_fixed_mean(&data[0], 1, data.size(), 0);
+
+    accumulator_set<double, stats<tag::min, tag::max, tag::sum_kahan> > acc;
+    accumulator_set<double, stats<tag::sum_kahan> > acc2;
+
+    acc = std::for_each(data.begin(), data.end(), acc);
+
+    for (auto d : data) {
+        acc(d);
+        acc2(d*d);
+    }
+
+    os << extract_result<tag::min>(acc) << ",";
+    os << extract_result<tag::max>(acc) << ",";
+    const double mom0 = data.size();
+    const double mom1 = extract_result<tag::sum_kahan>(acc);
+    const double mean = mom1/mom0;
+    const double mom2 = extract_result<tag::sum_kahan>(acc2);
+    double t = mom0*mom2 - mom1 * mom1;
+    cout << mom0*mom2 << " " << mom1*mom1 << endl;
+    assert(t >= 0);
+    stdev = std::sqrt(mom0*mom2 - mom1 * mom1) / mom0;
+    rmse = std::sqrt(mom2/mom0);
     os << mean << ",";
     os << stdev << ",";
     os << rmse << ",";
