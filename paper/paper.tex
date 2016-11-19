@@ -119,11 +119,24 @@ The HyperLogLog algorithm uses a sketching data structure that consists of $\sym
 \label{sec:data_element_insertion}
 In order to insert a data element into a HyperLogLog data structure a hash value is calculated. The leading $\symPrecision$ bits of the hash value are used to select one of the $2^\symPrecision$ registers. Among the next $\symRegRange$ bits, the position of the first 1-bit is determined which is a value in the range $[1,\symRegRange+1]$. The value $\symRegRange+1$ is used, if all $\symRegRange$ bits are zeros. If the position of the first 1-bit exceeds the current value of the selected register, the register value is replaced. \cref{alg:insert} shows the update procedure for inserting a data element into the HyperLogLog sketch.
 
+\begin{algorithm}
+\caption{Insertion of a data element $\symDataItem$ into a HyperLogLog data structure that consists of $\symNumReg=2^\symPrecision$ registers. All registers $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$ have zero initial value and remain in the range $[0, \symRegRange+1]$.}
+\label{alg:insert}
+\begin{algorithmic}
+\Procedure {InsertElement}{\symDataItem, $\boldsymbol{\symRegValVariate}$}
+\State $\langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision,\symBitRepB_1,\ldots,\symBitRepB_\symRegRange\rangle_2 \gets$ $(\symPrecision + \symRegRange)$-bit hash value of $\symDataItem$
+\State $\symIndexI \gets 1+ \langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision\rangle_2$
+\comm{0.2}{$\symIndexI\in[1,2^\symPrecision]$}
+\State $\symRegVal \gets \min(\{\symS\mid \symS \in [1, \symRegRange]  \wedge  \symBitRepB_\symS = 1\}\cup {\{\symRegRange+1\}} )$
+\comm{0.2}{$\symRegVal\in[1,\symRegRange+1]$}
+\State $\symRegValVariate_\symIndexI \gets\max(\symRegValVariate_\symIndexI, \symRegVal)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 The desribed element insertion algorithm makes use of what is known as stochastic averaging \cite{Flajolet1985}. Instead of updating each of all $\symNumReg$ registers using $\symNumReg$ independent hash values, which would be an $\symBigO(\symNumReg)$ operation, only one register is selected and updated, which requires only a single hash function and reduces the complexity to $\symBigO(1)$.
 
 A HyperLogLog sketch can be characterized by a parameter pair $(\symPrecision, \symRegRange)$. The first parameter $\symPrecision$ is the precision and controls the relative error while the second defines the possible value range of a register. A register can take all values starting from 0 to $\symRegRange+1$, inclusively. The sum $\symPrecision+\symRegRange$ corresponds to the number of consumed hash value bits and defines the maximum cardinality that can be tracked. Obviously, if the cardinality reaches values in the order of $2^{\symPrecision+\symRegRange}$, hash collisions will become more apparent and the estimation accuracy will be drastically reduced.
-
-At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with parameters $(\symPrecision, \symRegRange)$ can be compressed into a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied. This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
 
 \cref{alg:insert} has some properties which are especially useful in distributed environments. First, the insertion order of elements has no influence on the final HyperLogLog sketch. Furthermore, any two HyperLogLog sketches with same parameters $(\symPrecision, \symRegRange)$ representing  sets $\symSetA$ and $\symSetB$ can be easily merged. The resulting register values are simply given by the register-wise maximum values
 \begin{equation}
@@ -140,22 +153,39 @@ At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with parameters
 \end{equation}
 The final HyperLogLog sketch represents the union of $\symSetA$ and $\symSetB$.
 
-A $(\symPrecision, 0)$-HyperLogLog sketch corresponds to a bit array as used by linear counting \cite{Whang1990}. Each register value can be stored by a single bit in this case. Hence, linear counting can be regarded as a special case of the HyperLogLog algorithm for which $\symRegRange = 0$.
+At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with parameters $(\symPrecision, \symRegRange)$ can be compressed into a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied (see \cref{alg:compress}). This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
 
 \begin{algorithm}
-\caption{Insertion of a data element $\symDataItem$ into a HyperLogLog data structure that consists of $\symNumReg=2^\symPrecision$ registers. All registers $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$ have zero initial value and remain in the range $[0, \symRegRange+1]$.}
-\label{alg:insert}
+\caption{Compression of a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}$ into a $(\symPrecision', \symRegRange')$-HyperLogLog sketch with $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$.}
+\label{alg:compress}
 \begin{algorithmic}
-\Procedure {InsertElement}{\symDataItem, $\boldsymbol{\symRegValVariate}$}
-\State $\langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision,\symBitRepB_1,\ldots,\symBitRepB_\symRegRange\rangle_2 \gets$ $(\symPrecision + \symRegRange)$-bit hash value of $\symDataItem$
-\State $\symIndexI \gets 1+ \langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision\rangle_2$
-\comm{0.2}{$\symIndexI\in[1,2^\symPrecision]$}
-\State $\symRegVal = \min(\{\symS\mid \symS \in [1, \symRegRange]  \wedge  \symBitRepB_\symS = 1\}\cup {\{\symRegRange+1\}} )$
-\comm{0.2}{$\symRegVal\in[1,\symRegRange+1]$}
-\State $\symRegValVariate_\symIndexI \gets\max(\symRegValVariate_\symIndexI, \symRegVal)$
-\EndProcedure
+\Function {Compress}{\symDataItem, $\boldsymbol{\symRegValVariate}$}
+\State allocate registers for new HyperLogLog sketch $\boldsymbol{\symRegValVariate}' = (\symRegValVariate_1,\ldots,\symRegValVariate_{2^{\symPrecision'}})$
+\For{$\symIndexI\gets 1, 2^{\symPrecision'}$}
+\State $\symB \gets (\symIndexI-1)\cdot 2^{\symPrecision-\symPrecision'}$
+\State $\symIndexJ\gets 1$
+\While{$\symIndexJ \leq 2^{\symPrecision-\symPrecision'}
+\wedge
+\symRegValVariate_{\symB+\symIndexJ}=0
+$}
+\State $\symIndexJ\gets\symIndexJ+1$
+\EndWhile
+\If{$\symIndexJ = 1$}
+\State $\symRegValVariate'_\symIndexI \gets \min(\symRegValVariate_{\symB+\symIndexJ} + \symPrecision-\symPrecision',\symRegRange'+1)$
+\ElsIf{$\symIndexJ\leq2^{\symPrecision-\symPrecision'}$}
+\State $\langle \symBitRepA_1, \ldots, \symBitRepA_{\symPrecision-\symPrecision'}\rangle_2 \gets \symIndexJ-1$
+\State $\symRegValVariate'_\symIndexI \gets 
+\min(\{\symS\mid \symS \in [1, \symPrecision-\symPrecision']  \wedge  \symBitRepA_\symS = 1\} \cup \{\symRegRange'+1\})$
+\Else
+\State $\symRegValVariate'_\symIndexI \gets 0$
+\EndIf
+\EndFor
+\State \Return $\boldsymbol{\symRegValVariate}'$
+\EndFunction
 \end{algorithmic}
 \end{algorithm}
+
+A $(\symPrecision, 0)$-HyperLogLog sketch corresponds to a bit array as used by linear counting \cite{Whang1990}. Each register value can be stored by a single bit in this case. Hence, linear counting can be regarded as a special case of the HyperLogLog algorithm for which $\symRegRange = 0$.
 
 \subsection{Joint probability distribution of register values}
 
@@ -309,6 +339,7 @@ For large cardinalities in the order of $2^{\symPrecision+\symRegRange}$, for wh
 =
 -2^{32}\log\!\left(1-\symCardinalityRawEstimate/2^{32}\right).
 \end{equation}
+
 The original estimation algorithm as presented in \cite{Flajolet2007} including corrections for small and large cardinalities is summarized by \cref{alg:estimate_original}. 
 \begin{algorithm}
 \caption{Original cardinality estimation algorithm for HyperLogLog sketches that use 32-bit hash values ($\symPrecision+\symRegRange = 32$) for insertion of data items \cite{Flajolet2007}.}
