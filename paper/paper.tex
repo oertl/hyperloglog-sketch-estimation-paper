@@ -33,8 +33,6 @@
 \symDefine{\symBitRepA}{a}
 \symDefine{\symBitRepB}{b}
 \symDefine{\symIndexI}{i}
-\symDefine{\symIndexK}{k}
-\symDefine{\symIndexL}{l}
 \symDefine{\symIndexJ}{j}
 \symDefine{\symCount}{c}
 \symDefine{\symCountVariate}{C}
@@ -86,6 +84,7 @@
 \symDefine{\symSmallCorrectionFunc}{\sigma}
 \symDefine{\symLargeCorrectionFunc}{\tau}
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
+\symDefine{\symBiasCorrectionFunc}{w_{\text{corr}}}
 
 \newcommand{\numformat}[1]{{\num[scientific-notation = true,round-mode = places,round-precision = 3, output-exponent-marker = \ensuremath{\mathrm{e}}]{#1}}}
 
@@ -652,8 +651,6 @@ In order to verify the new estimation algorithm, we generated \num{10000} HyperL
 
 \cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}) or the original method (\cref{fig:original_estimate}).
 
-The corrected raw estimator beats the precision of methods that use bias correction \cite{Heule2013,Rhodes2015,Sanfilippo2014}. \cref{fig:stdev_comparison} shows the standard deviation of the raw estimator after bias correction. At the transition region to small cardinalities, for which all previous methods switch over to the linear counting estimator at some point, the corrected raw estimator has smaller variance. Obviously, the previous approaches cannot do better than given by the minimum of both curves for linear counting and raw estimator. In practice, the standard deviation is even larger, because the choice between both estimators must be made based on an estimate and not on the true cardinality, for which the intersection point of both curves represents the ideal transition point.
-
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{raw_corrected_estimate_12_20}
@@ -661,10 +658,14 @@ The corrected raw estimator beats the precision of methods that use bias correct
 \label{fig:raw_corrected_estimation_error_12_20}
 \end{figure}
 
+The corrected raw estimator beats the precision of methods that apply bias correction on the raw estimator \cite{Heule2013,Rhodes2015,Sanfilippo2014}.
+Based on the simulated data we have empirically determined the bias correction function $\symBiasCorrectionFunc$ for the raw estimator that satisfies $\symCardinality = \symExpectation(\symBiasCorrectionFunc(\symCardinalityRawEstimate)\vert\symCardinality)$ for all cardinalities. By definition, 
+the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinalityRawEstimate)$ is unbiased and a function of the raw estimator. Its standard deviation can be compared with that of the corrected raw estimator in \cref{fig:stdev_comparison}. For cardinalities smaller than \num{10000} the empirical bias correction approach is not very precise. This is the reason why all previous approaches had to switch over to the linear counting estimator at some point. The standard deviation of the linear counting estimator is also shown in \cref{fig:stdev_comparison}. Obviously, the previous approaches cannot do better than given by the minimum of both curves for linear counting and raw estimator. In practice, the standard deviation is even larger, because the choice between both estimators must be made based on an estimate and not on the true cardinality, for which the intersection point of both curves represents the ideal transition point. In contrast, the corrected raw estimator performs well over the entire cardinality range.
+
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{stdev_comparison}
-\caption{Standard deviations of different cardinality estimators for a HyperLogLog sketch with paramters $\symPrecision = 12$ and $\symRegRange=20$ as functions of the true cardinality.}
+\caption{Standard deviations of the relative error of different cardinality estimators for a HyperLogLog sketch with paramters $\symPrecision = 12$ and $\symRegRange=20$ over the true cardinality.}
 \label{fig:stdev_comparison}
 \end{figure}
 
@@ -1102,7 +1103,7 @@ Putting all these optimizations together finally gives the new cardinality estim
 \label{sec:maximum_likelihood_estimation_error}
 In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the corrected raw estimation algorithm. \cref{fig:max_likelihood_estimation_error_12_20}, \cref{fig:max_likelihood_estimation_error_8_24},  \cref{fig:max_likelihood_estimation_error_16_16}, \cref{fig:max_likelihood_estimation_error_22_10}, \cref{fig:max_likelihood_estimation_error_12_52}, and \cref{fig:max_likelihood_estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
 
-What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
+What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. The standard deviation of the relative error is also slightly better for the maximum likelihood estimator than for the corrected raw estimator as shown in \cref{fig:stdev_comparison}. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
 
 \begin{figure}
 \centering
@@ -2456,7 +2457,7 @@ Further reduction by using the first order approximation $\log(1-\symX)\approx -
 +
 (1-\symAlpha_\infty).
 \end{equation}
-This finding makes the HyperLogLog algorithm an interesting candidate for locality-sensitive hashing. What is also promising is the much simpler preprocessing because it only involves a single hash function (compare \cref{alg:insert}). In contrast, min-wise hashing is very costly, because many hash functions evaluations are necessary for all the needed permutations \cite{Li2011}.
+This finding makes the HyperLogLog algorithm an interesting candidate for locality-sensitive hashing. What also looks promising is the much simpler preprocessing because it only involves a single hash function (compare \cref{alg:insert}). In contrast, min-wise hashing is very costly, because many hash functions evaluations are necessary for all the needed permutations \cite{Li2011}.
 
 \section{Conclusion}
 

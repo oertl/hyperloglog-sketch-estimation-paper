@@ -24,7 +24,7 @@ def readData(filename):
 config = [
 ["12_20_max_likelihood_estimates.dat", "blue", False, "maximum likelihood estimator"],
 #["12_20_flajolet_mid_range_estimates.dat", "gray", False, "raw estimator"],
-["12_20_flajolet_mid_range_estimates.dat", "red", True, "raw estimator (bias corrected)"],
+["12_20_flajolet_mid_range_estimates.dat", "red", True, "subsequently bias corrected raw estimator"],
 ["12_20_flajolet_small_range_estimates.dat", "black", False, "linear counting estimator"],
 ["12_20_corrected_raw_estimates.dat", "green", False, "corrected raw estimator"]
 ]
