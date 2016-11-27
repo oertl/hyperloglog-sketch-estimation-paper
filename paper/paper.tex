@@ -23,6 +23,9 @@
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
 % SYMBOLS
+\renewcommand\Re{\operatorname{Re}}
+\renewcommand\Im{\operatorname{Im}}
+
 \newcommand*{\symDefine}[2]{\newcommand{{#1}}{{#2}}}
 \symDefine{\symPrecision}{p}
 \symDefine{\symRegRange}{q}
@@ -33,6 +36,7 @@
 \symDefine{\symBitRepA}{a}
 \symDefine{\symBitRepB}{b}
 \symDefine{\symIndexI}{i}
+\symDefine{\symImaginary}{\rm{i}}
 \symDefine{\symIndexJ}{j}
 \symDefine{\symIndexL}{l}
 \symDefine{\symCount}{c}
@@ -430,21 +434,8 @@ where the function
 e^{-2^{\symRegVal+\symX}}
 \end{equation}
 is a smooth periodic function with period 1. 
-%Its Fourier series is
-%\begin{equation}
-%\symPowerSeriesFunc(\symX) = 1 + \sum_{\symIndexL=1}^{\infty}
-%\symA_\symIndexL \cos(2\pi\symIndexL\symX) + \symB_\symIndexL \sin(2\pi\symIndexL\symX)
-%\end{equation}
-%with coefficients
-%\begin{equation}
-%\begin{aligned}
-%\symA_\symIndexL &= 2\log(2)\int_{-\infty}^\infty 2^\symX e^{-2^\symX}\cos(2\pi\symIndexL\symX)d\symX, \\
-%\symB_\symIndexL &= 2\log(2)\int_{-\infty}^\infty 2^\symX e^{-2^\symX}\sin(2\pi\symIndexL\symX)d\symX.
-%\end{aligned}
-%\end{equation}
-%Numerical evaluations give for the $\symA_1\approx \num{6.353e-6}$ and $\symB_1\approx \num{-7.572e-6}$.
 Numerical evaluations indicate that this function can be bounded by $1 - \symEpsPowerSeriesFunc 
-\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=\num{9.885e-6}$ (see \cref{fig:power_series_func}).
+\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=\num{9.885e-6}$ (see \cref{fig:power_series_func}). This value can also be found using Fourier analysis as shown in in \cref{app:analysis_xi}.
 
 \begin{figure}
 \centering
@@ -749,7 +740,7 @@ We know from \cref{sec:depoissonization} that any unbiased estimator for the Poi
 We remark that we are not the first applying the maximum likelihood method to HyperLogLog sketches \cite{Clifford2012}, where the case without stochastic averaging (compare \cref{sec:data_element_insertion}) was considered. The register values are statistically independent by nature in this case which 
 allows factorization of the joint probability mass function and allows a straightforward application of the maximum likelihood method. 
 
-The more relevant case with stochastic averaging, which is considered in this paper, is more complicated. However, with the help of the Poisson approximation, we are able to still apply the maximum likelihood method and to derive a new robust and efficient cardinality estimation algorithm. Furthermore, we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
+The more relevant case with stochastic averaging, which is considered in this paper, is more complicated. However, with the help of the Poisson approximation, it is still feasible to apply the maximum likelihood method and we are able to derive a new robust and efficient cardinality estimation algorithm. Furthermore, we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
 
 \subsection{Log-likelihood function}
 
@@ -2440,7 +2431,7 @@ e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
 +
 2\symAlpha_\infty
 \left(
-\log\left(
+\log\!\left(
 1
 -
 \frac{1}{2}
@@ -2449,7 +2440,7 @@ e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
 \symPoissonRate_\symSetXSuffix}
 \right)
 +
-\log\left(
+\log\!\left(
 1
 -
 \frac{1}{2}
@@ -2480,6 +2471,138 @@ We have presented new algorithms for the estimation of cardinalities from HyperL
 
 The maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle.
 \appendix
+
+\section{Analysis of $\symPowerSeriesFunc(\symX)$}
+\label{app:analysis_xi}
+The Fourier series of the function $\symPowerSeriesFunc(\symX)$, which is defined by
+\begin{equation}
+\symPowerSeriesFunc(\symX):= \log(2) \sum_{\symRegVal = -\infty}^\infty
+2^{\symRegVal+\symX}
+e^{-2^{\symRegVal+\symX}}
+\end{equation}
+and which has period equal to 1, is
+\begin{equation}
+\symPowerSeriesFunc(\symX) = 1 + \Re\!\left(\sum_{\symIndexL=1}^{\infty}
+\symA_\symIndexL \exp(2\pi\symIndexL\symX\symImaginary)\right)
+\end{equation}
+with coefficients
+\begin{equation}
+\symA_\symIndexL = 2\int_0^1 \symPowerSeriesFunc(\symX) \exp(-2\pi\symIndexL\symX\symImaginary)d\symX
+=
+2\log(2) \int_{-\infty}^{\infty} 2^\symX
+e^{-2^\symX}\exp(-2\pi\symIndexL\symX\symImaginary)d\symX.
+\end{equation}
+The variable transformation $\symY = 2^\symX$ yields
+\begin{equation}
+\symA_\symIndexL
+=
+2\int_{0}^{\infty} e^{-\symY}
+\symY^{-\frac{2\pi\symIndexL\symImaginary}{\log(2)}}d\symY
+= 
+2\Gamma\!\left(1-\frac{2\pi\symIndexL\symImaginary}{\log(2)}\right)
+\end{equation}
+where $\Gamma$ denotes the gamma function. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
+\sqrt{\frac{\pi\symX}{\sinh(\pi\symX)}}
+$
+we are able to write for the absolute values of the coefficients
+\begin{equation}
+|\symA_\symIndexL| = 
+2\sqrt{\frac{\symB\symIndexL}{\sinh(\symB\symIndexL)}}
+\quad
+\text{with}
+\
+\symB:=\frac{2\pi^2}{\log 2}.
+\end{equation}
+In particular, the amplitude of the first harmonic is 
+$|\symA_1|
+\approx
+\num{9.884e-6}$. Obviously, the maximum deviation of $\symPowerSeriesFunc(\symX)-1$ from the first harmonic must be smaller than $\sum_{\symIndexL=2}^{\infty} 
+|\symA_\symIndexL|$. The ratio of subsequent coefficients is given by
+\begin{equation}
+\frac{|\symA_{\symIndexL+1}|}{|\symA_{\symIndexL}|}
+=
+\sqrt{\frac{\symIndexL+1}{\symIndexL}}
+\sqrt{\frac{
+\sinh(\symB \symIndexL)
+}{
+\sinh(\symB (\symIndexL+1))
+}}
+=
+\sqrt{\frac{\symIndexL+1}{\symIndexL}}
+\sqrt{\frac{
+1
+}{
+\cosh(\symB)
++
+\frac{
+\sinh(\symB)
+}
+{
+\tanh(\symB \symIndexL)
+}
+}}.
+\end{equation}
+For $\symIndexL\geq 2$ we have $\sqrt{\frac{\symIndexL+1}{\symIndexL}}\leq \sqrt{\frac{3}{2}}$. Together with $\tanh(x)\leq 1$ we obtain
+\begin{equation}
+\frac{|\symA_{\symIndexL+1}|}{
+|\symA_{\symIndexL}|
+}
+\leq
+\sqrt{\frac{3}{2}}
+\sqrt{\frac{
+1
+}{
+\cosh(\symB)
++
+\sinh(\symB)
+}}
+\\
+=
+\sqrt{\frac{
+3
+}{
+2 e^\symB
+}}.
+\end{equation}
+Consequently, $|\symA_{\symIndexL}| \leq 
+|\symA_{2}|
+\left(\sqrt{\frac{
+3
+}{
+2 e^\symB
+}}\right)^{\symIndexL-2}$ for $\symIndexL\geq 2$ and 
+\begin{equation}
+\sum_{\symIndexL=2}^{\infty} 
+|\symA_\symIndexL|
+\leq
+|\symA_2|
+\sum_{\symIndexL=0}^{\infty} 
+\left(
+\sqrt{\frac{
+3
+}{
+2e^\symB
+}}
+\right)^\symIndexL
+=
+2\sqrt{
+\frac{2\symB}{\sinh(2\symB)}}
+\frac{1}{1-
+\sqrt{\frac{
+3
+}{
+2 e^\symB
+}}
+}
+\approx
+\num{9.154e-12}.
+\end{equation}
+For the maximum deviation from 1 we finally have
+\begin{equation}
+\max(|\symPowerSeriesFunc(\symX)-1|) \leq \sum_{\symIndexL=1}^{\infty} 
+|\symA_\symIndexL|
+\leq \num{9.885e6}.
+\end{equation}
 
 \section{Numerical stability of recursion formula for $\symHelper(\symX)$}
 \label{app:helper_stable}
@@ -2736,6 +2859,7 @@ Furthermore, using \eqref{equ:weak_lower_bound} we finally get
 \right)
 \end{equation}
 Hence, as long as most registers are not in the saturated state ($\symCountVariate_{\symRegRange+1}\ll\symNumReg$), the relative error $\symError_\symX$ of the calculated estimate using the approximation $\symHelperApprox(\symX)$ for $\symHelper(\symX)$ has the same order of magnitude as $\symError_\symHelper$.
+
 
 \bibliographystyle{unsrt}
 \bibliography{bibliography.bib}
