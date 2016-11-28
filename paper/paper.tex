@@ -435,7 +435,7 @@ e^{-2^{\symRegVal+\symX}}
 \end{equation}
 is a smooth periodic function with period 1. 
 Numerical evaluations indicate that this function can be bounded by $1 - \symEpsPowerSeriesFunc 
-\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=\num{9.885e-6}$ (see \cref{fig:power_series_func}). This value can also be found using Fourier analysis as shown in in \cref{app:analysis_xi}.
+\leq \symPowerSeriesFunc(\symX) \leq 1 + \symEpsPowerSeriesFunc$ with $\symEpsPowerSeriesFunc:=\num{9.885e-6}$ (see \cref{fig:power_series_func}). This value can also be found using Fourier analysis as shown in \cref{app:analysis_xi}.
 
 \begin{figure}
 \centering
@@ -2483,23 +2483,42 @@ e^{-2^{\symRegVal+\symX}}
 and which has period equal to 1, is
 \begin{equation}
 \symPowerSeriesFunc(\symX) = 1 + \Re\!\left(\sum_{\symIndexL=1}^{\infty}
-\symA_\symIndexL \exp(2\pi\symIndexL\symX\symImaginary)\right)
+\symA_\symIndexL e^{2\pi\symImaginary\symIndexL\symX}\right)
 \end{equation}
 with coefficients
-\begin{equation}
-\symA_\symIndexL = 2\int_0^1 \symPowerSeriesFunc(\symX) \exp(-2\pi\symIndexL\symX\symImaginary)d\symX
+\begin{multline}
+\symA_\symIndexL = 2\int_0^1 \symPowerSeriesFunc(\symX) e^{-2\pi\symImaginary\symIndexL\symX}d\symX
+=
+2\log(2)
+\int_0^1
+\sum_{\symRegVal = -\infty}^\infty
+2^{\symRegVal+\symX}
+e^{-2^{\symRegVal+\symX}}
+e^{-2\pi\symImaginary\symIndexL\symX}
+d\symX
+=
+\\
+=
+2\log(2)
+\sum_{\symRegVal = -\infty}^\infty
+\int_{\symRegVal}^{\symRegVal+1}
+2^{\symX}
+e^{-2^{\symX}}
+e^{-2\pi\symImaginary\symIndexL\symX}
+d\symX
 =
 2\log(2) \int_{-\infty}^{\infty} 2^\symX
-e^{-2^\symX}\exp(-2\pi\symIndexL\symX\symImaginary)d\symX.
-\end{equation}
+e^{-2^\symX}
+e^{-2\pi\symImaginary\symIndexL\symX}d\symX.
+\end{multline}
 The variable transformation $\symY = 2^\symX$ yields
 \begin{equation}
 \symA_\symIndexL
 =
 2\int_{0}^{\infty} e^{-\symY}
-\symY^{-\frac{2\pi\symIndexL\symImaginary}{\log(2)}}d\symY
+\symY^{-\frac{2\pi\symImaginary\symIndexL}{\log(2)}}d\symY
 = 
-2\Gamma\!\left(1-\frac{2\pi\symIndexL\symImaginary}{\log(2)}\right)
+2\Gamma\!\left(1-\frac{2\pi\symImaginary\symIndexL}{\log(2)}\right)
 \end{equation}
 where $\Gamma$ denotes the gamma function. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
 \sqrt{\frac{\pi\symX}{\sinh(\pi\symX)}}
@@ -2601,7 +2620,7 @@ For the maximum deviation from 1 we finally have
 \begin{equation}
 \max(|\symPowerSeriesFunc(\symX)-1|) \leq \sum_{\symIndexL=1}^{\infty} 
 |\symA_\symIndexL|
-\leq \num{9.885e6}.
+\leq \num{9.885e-6}.
 \end{equation}
 
 \section{Numerical stability of recursion formula for $\symHelper(\symX)$}
