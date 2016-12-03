@@ -33,6 +33,7 @@
 \symDefine{\symRegValVariate}{K}
 \symDefine{\symNumReg}{m}
 \symDefine{\symDataItem}{D}
+\symDefine{\symDistanceMeasure}{D}
 \symDefine{\symBitRepA}{a}
 \symDefine{\symBitRepB}{b}
 \symDefine{\symIndexI}{i}
@@ -1012,7 +1013,7 @@ $\symCountVariate_{\symRegRange+1}=0$, we can find an upper bound for the smalle
 In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated, that is $\symCountVariate_{\symRegRange+1}\ll \symNumReg$. In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}. As shown in \cref{app:error_approx}, a small approximation error of $\symHelper$ does not have much impact on the error of the maximum likelihood estimate as long as most registers are not yet saturated.
 \end{itemize}
 
-Putting all these optimizations together finally gives the new cardinality estimation algorithm as presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by the savings of iteration cycles.
+Putting all these optimizations together finally gives the new cardinality estimation algorithm as presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by savings in the number of iteration cycles.
 
 \begin{algorithm}
 \caption{Maximum likelihood cardinality estimation.}
@@ -1154,7 +1155,7 @@ What is different for the maximum likelihood estimation approach is a somewhat s
 \end{figure}
 
 \subsection{Performance}
-We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time for the maximum likelihood algorithm shows a different behavior than for the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}). As can be seen, the average execution time is larger for most cardinalities, but nevertheless, it never exceeds \SI{700}{\nano\second} which is still fast enough for many applications.
+We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time for the maximum likelihood algorithm shows a different behavior than for the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}).As can be seen, the average execution time is larger for most cardinalities, but nevertheless, it never exceeds \SI{700}{\nano\second} which is still fast enough for many applications. The steps in the chart can be explained by different numbers of iteration cycles until the secant method is stopped. For example, at a cardinality value around \num{5000} the average number of required cycles until the stop criterion is met increases abruptly from two to three. More than three iteration cycles have never been necessary for any cardinality estimate in this performance test.
 
 \begin{figure}
 \centering
@@ -2145,8 +2146,7 @@ We also investigated, if the new approach could give better estimates for the un
 
 \begin{table}
 \centering
-\caption{List of true cardinalities of the pairwise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetS_1 = \symSetA\cup\symSetX$ and  $\symSetS_2 = \symSetB\cup\symSetX$ was investigated. The last column shows the average number of log-likelihood function 
- \eqref{equ:max_likelihood_phi_func} and gradient \eqref{equ:df_dphi} evaluations until the stop criterion of the BFGS algorithm was satisfied.
+\caption{List of true cardinalities of the pairwise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetS_1 = \symSetA\cup\symSetX$ and  $\symSetS_2 = \symSetB\cup\symSetX$ was investigated. The last column shows the average number of iteration cycles until the stop criterion of the BFGS algorithm was satisfied.
 }
 \label{tbl:joint_estimation_cases}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rr|rr, table head= & 
@@ -2387,7 +2387,7 @@ improvementRmseABX=\improvementRmseABX
 %\end{table}
 
 \section{Future work}
-As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have shown that this approach works well for the corrected raw estimator as well as the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting to investigate, which conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
+As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased for the estimation of the cardinality. We have shown that this approach works well for the corrected raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 
 Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the corrected raw estimator which is almost as accurate as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
 
@@ -2395,7 +2395,7 @@ The presented maximum likelihood method could also be used to estimate the cardi
 
 The maximum likelihood method can also be used to estimate similarity measures such as the Jaccard index of two sets that are represented as HyperLogLog sketches. This directly leads to the question whether the HyperLogLog algorithm could be used for locality-sensitive hashing \cite{Leskovec2014, Wang2014}. Various locality-sensitive hashing algorithms have been proposed in the past. Among the most popular ones are the SimHash \cite{Charikar2002} and the min-wise hashing \cite{Broder1997, Li2011} algorithms whose hash collision probabilities are a function of the cosine and Jaccard similarities, respectively.
 
-The HyperLogLog algorithm itself can be regarded as hashing algorithm as it maps sets to register values. For sufficiently large cardinalities we can use the Poisson approximation and assume that the number of zero-valued HyperLogLog register can be ignored. Furthermore, if the HyperLogLog parameter $\symRegRange$ is chosen large enough, the number of saturated registers can be ignored as well. As a consequence, we can assume that the distribution of register values follows \eqref{equ:assumed_register_val_distribution} and the probability that a register has the same value for two different sets is (compare \eqref{equ:register_value_joint_pmf})
+The HyperLogLog algorithm itself can be regarded as hashing algorithm as it maps sets to register values. For sufficiently large cardinalities we can use the Poisson approximation and assume that the number of zero-valued HyperLogLog registers can be ignored. Furthermore, if the HyperLogLog parameter $\symRegRange$ is chosen large enough, the number of saturated registers can be ignored as well. As a consequence, we can assume that the distribution of register values follows \eqref{equ:assumed_register_val_distribution} and the probability that a register has the same value for two different sets is (compare \eqref{equ:register_value_joint_pmf})
 \begin{equation}
 \symProbability(\symRegValVariate_1=\symRegValVariate_2)
 =
@@ -2424,45 +2424,83 @@ $\sum_{\symRegVal=-\infty}^\infty
 e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
 \approx
 2\symAlpha_\infty \left(\log(\symY)-\log(\symX)\right)$ we get
+
+
 \begin{equation}
 \symProbability(\symRegValVariate_1=\symRegValVariate_2)
 \approx
 1
 +
 2\symAlpha_\infty
-\left(
 \log\!\left(
 1
 -
 \frac{1}{2}
-\frac{\symPoissonRate_\symSetASuffix}
-{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
-\symPoissonRate_\symSetXSuffix}
-\right)
+\symDistanceMeasure
 +
-\log\!\left(
-1
--
-\frac{1}{2}
-\frac{\symPoissonRate_\symSetBSuffix}
-{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
-\symPoissonRate_\symSetXSuffix}
+\frac{1}{4}
+\symDistanceMeasure^2
+\frac{
+\symPoissonRate_\symSetASuffix
+\symPoissonRate_\symSetBSuffix
+}{\left(
+\symPoissonRate_\symSetASuffix+
+\symPoissonRate_\symSetBSuffix
+\right)^2}
 \right)
-\right).
 \end{equation}
-Further reduction by using the first order approximation $\log(1-\symX)\approx -\symX$ finally shows that the probability of a register having the same value for both sets is roughly linear to the Jaccard index $\frac{\symPoissonRate_\symSetXSuffix}
+where $\symDistanceMeasure = \frac{\symPoissonRate_\symSetASuffix
++\symPoissonRate_\symSetBSuffix}
 {\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
 \symPoissonRate_\symSetXSuffix}$
+ is the Jaccard distance. Since $
+\frac{
+\symPoissonRate_\symSetASuffix
+\symPoissonRate_\symSetBSuffix
+}{\left(
+\symPoissonRate_\symSetASuffix+
+\symPoissonRate_\symSetBSuffix
+\right)^2}
+$ is always in the range $[0,\frac{1}{4}]$, the probability for equal register values can be bounded by
+\begin{equation}
+1
++
+2\symAlpha_\infty
+\log\!\left(
+1
+-
+\frac{1}{2}
+\symDistanceMeasure
+\right)
+\lesssim
+\symProbability(\symRegValVariate_1=\symRegValVariate_2)
+\lesssim
+1
++
+2\symAlpha_\infty
+\log\!\left(
+1
+-
+\frac{1}{2}
+\symDistanceMeasure
++
+\frac{1}{16}
+\symDistanceMeasure^2
+\right).
+\end{equation}
+As shown in \cref{fig:equal_register_probability} the bounds are very close, especially for small Jaccard distances where the probability can be well approximated by
 \begin{equation}
 \symProbability(\symRegValVariate_1=\symRegValVariate_2)
 \approx
-\symAlpha_\infty
-\frac{\symPoissonRate_\symSetXSuffix}
-{\symPoissonRate_\symSetASuffix+\symPoissonRate_\symSetBSuffix+
-\symPoissonRate_\symSetXSuffix}
-+
-(1-\symAlpha_\infty).
+1-
+\symAlpha_\infty\symDistanceMeasure.
 \end{equation}
+\begin{figure}
+\centering
+\includesvg[width=0.6\textwidth]{equal-register-probability}
+\caption{The approximate probability range of equal register values as a function of the Jaccard distance.}
+\label{fig:equal_register_probability}
+\end{figure}
 This finding makes the HyperLogLog algorithm an interesting candidate for locality-sensitive hashing. What also looks promising is the much simpler preprocessing because it only involves a single hash function (compare \cref{alg:insert}). In contrast, min-wise hashing is very costly, because many hash function evaluations are necessary for all the needed permutations \cite{Li2011}.
 
 \section{Conclusion}

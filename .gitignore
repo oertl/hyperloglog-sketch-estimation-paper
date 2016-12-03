@@ -34,6 +34,8 @@ c++/cardinality_calculator.out
 c++/joint_cardinality_calculation.out
 paper/helper.pdf
 paper/helper.pdf_tex
+paper/equal-register-probability.pdf
+paper/equal-register-probability.pdf_tex
 paper/stdev_comparison.pdf
 paper/stdev_comparison.pdf_tex
 paper/max_likelihood_avg_exec_time.pdf

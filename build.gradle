@@ -149,6 +149,15 @@ task powerSeriesFunctionFig(type: Exec) {
     commandLine 'python3', 'power-series-function.py'
 }
 
+task equalRegisterProbabilityFig(type: Exec) {
+    workingDir project.pythonDir
+    inputs.files "$project.pythonDir/equal-register-probability.py"
+    outputs.files "$project.paperDir/equal-register-probability.svg"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', 'equal-register-probability.py'
+}
+
+
 task createBenchmarkCharts(type: Exec) {
     workingDir project.pythonDir
     inputs.files "$project.pythonDir/benchmark-charts.py",
@@ -244,7 +253,7 @@ task createComparisonCharts(type: Exec) {
 }
 
 task figures {
-    dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts','powerSeriesFunctionFig','createComparisonCharts'
+    dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts','powerSeriesFunctionFig','createComparisonCharts','equalRegisterProbabilityFig'
     doLast {
     }
 }
@@ -300,6 +309,7 @@ task pdflatex2(type: Exec) {
         "$project.paperDir/paper.tex",
         "$project.paperDir/joint_cardinality_calculation.csv",
         "$project.paperDir/helper.svg",
+        "$project.paperDir/equal-register-probability.svg",
         "$project.paperDir/max_likelihood_avg_exec_time.svg",
         "$project.paperDir/corrected_raw_avg_exec_time.svg",
         "$project.paperDir/original_estimate.svg",
@@ -319,6 +329,8 @@ task pdflatex2(type: Exec) {
     outputs.files "$project.paperDir/paper.aux",
         "$project.paperDir/helper.pdf",
         "$project.paperDir/helper.pdf_tex",
+        "$project.paperDir/equal-register-probability.pdf",
+        "$project.paperDir/equal-register-probability.pdf_tex",
         "$project.paperDir/max_likelihood_avg_exec_time.pdf",
         "$project.paperDir/max_likelihood_avg_exec_time.pdf_tex",
         "$project.paperDir/corrected_raw_avg_exec_time.pdf",
@@ -365,6 +377,8 @@ task pdflatex3(type: Exec) {
         "$project.paperDir/intersection.csv",
         "$project.paperDir/helper.pdf",
         "$project.paperDir/helper.pdf_tex",
+        "$project.paperDir/equal-register-probability.pdf",
+        "$project.paperDir/equal-register-probability.pdf_tex",
         "$project.paperDir/max_likelihood_avg_exec_time.pdf",
         "$project.paperDir/max_likelihood_avg_exec_time.pdf_tex",
         "$project.paperDir/corrected_raw_avg_exec_time.pdf",
