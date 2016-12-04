@@ -36,8 +36,9 @@
 \symDefine{\symDistanceMeasure}{D}
 \symDefine{\symBitRepA}{a}
 \symDefine{\symBitRepB}{b}
+\symDefine{\symNumBitsMinwiseHashing}{b}
 \symDefine{\symIndexI}{i}
-\symDefine{\symImaginary}{\rm{i}}
+\symDefine{\symImaginary}{\mathrm{i}}
 \symDefine{\symIndexJ}{j}
 \symDefine{\symIndexL}{l}
 \symDefine{\symCount}{c}
@@ -603,6 +604,7 @@ Using the identity $\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\sy
 which is almost identical to the linear counting estimator used for the small range correction \eqref{equ:linear_counting_estimator}. Here we used again the fact that the function $\symPowerSeriesFunc$ can be well approximated by 1 (see \cref{sec:derivation_raw_estimator}).
 \subsection{Corrected raw estimation algorithm}
 The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
+The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm.
 
 \begin{algorithm}
 \caption{Cardinality estimation algorithm based on the corrected raw estimator.}
@@ -1165,6 +1167,7 @@ We also measured the performance of \cref{alg:estimate_ml} using the same test s
 \end{figure}
 
 \section{Cardinality estimation of set intersections and differences}
+\label{sec:cardinality_estimation_set_intersections}
 
 While the union of two sets that are represented by HyperLogLog sketches can be straightforwardly computed \eqref{equ:hll_union}, the computation of cardinalities of other set operations like intersections and differences is more challenging. The conventional approach uses the relationships
 \begin{equation}
@@ -2393,7 +2396,14 @@ Using the maximum likelihood method we have been able to improve the cardinality
 
 The presented maximum likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. As for the inclusion-exclusion principle, the effort would scale exponentially with the number of involved HyperLogLog sketches.
 
-The maximum likelihood method can also be used to estimate similarity measures such as the Jaccard index of two sets that are represented as HyperLogLog sketches. This directly leads to the question whether the HyperLogLog algorithm could be used for locality-sensitive hashing \cite{Leskovec2014, Wang2014}. Various locality-sensitive hashing algorithms have been proposed in the past. Among the most popular ones are the SimHash \cite{Charikar2002} and the min-wise hashing \cite{Broder1997, Li2011} algorithms whose hash collision probabilities are a function of the cosine and Jaccard similarities, respectively.
+The maximum likelihood method can also be used to estimate distance measures such as the Jaccard distance of two sets that are represented as HyperLogLog sketches. This directly leads to the question whether the HyperLogLog algorithm could be used for locality-sensitive hashing \cite{Leskovec2014, Wang2014}. Various locality-sensitive hashing algorithms have been proposed in the past. Among the most popular ones are the SimHash \cite{Charikar2002} and the minwise hashing \cite{Broder1997} algorithms whose hash collision probabilities are a function of the angular and Jaccard distances, respectively. A generalization of the latter method is $\symNumBitsMinwiseHashing$-bit minwise hashing that improves memory efficiency by only storing the lowest $\symNumBitsMinwiseHashing$ bits of the minimum hash value \cite{Li2011}. The probability that two different sets are mapped to equal hash values $\symRegValVariate_1$ and $\symRegValVariate_2$ is roughly 
+\begin{equation}
+\label{equ:minwise_hahsing_probability}
+\symProbability(\symRegValVariate_1=\symRegValVariate_2)
+\approx
+1-
+(1-\textstyle\frac{1}{2 ^\symNumBitsMinwiseHashing})\symDistanceMeasure.
+\end{equation}
 
 The HyperLogLog algorithm itself can be regarded as hashing algorithm as it maps sets to register values. For sufficiently large cardinalities we can use the Poisson approximation and assume that the number of zero-valued HyperLogLog registers can be ignored. Furthermore, if the HyperLogLog parameter $\symRegRange$ is chosen large enough, the number of saturated registers can be ignored as well. As a consequence, we can assume that the distribution of register values follows \eqref{equ:assumed_register_val_distribution} and the probability that a register has the same value for two different sets is (compare \eqref{equ:register_value_joint_pmf})
 \begin{equation}
@@ -2423,8 +2433,7 @@ Using the approximation
 $\sum_{\symRegVal=-\infty}^\infty
 e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
 \approx
-2\symAlpha_\infty \left(\log(\symY)-\log(\symX)\right)$ we get
-
+2\symAlpha_\infty \left(\log(\symY)-\log(\symX)\right)$ (compare \eqref{equ:approx_formula} in \cref{app:analysis_xi}) we get
 
 \begin{equation}
 \symProbability(\symRegValVariate_1=\symRegValVariate_2)
@@ -2435,12 +2444,12 @@ e^{-\frac{\symX}{2^\symRegVal}} - e^{-\frac{\symY}{2^\symRegVal}}
 \log\!\left(
 1
 -
-\frac{1}{2}
+\textstyle\frac{1}{2}
 \symDistanceMeasure
 +
-\frac{1}{4}
+\textstyle\frac{1}{4}
 \symDistanceMeasure^2
-\frac{
+\textstyle\frac{
 \symPoissonRate_\symSetASuffix
 \symPoissonRate_\symSetBSuffix
 }{\left(
@@ -2469,7 +2478,7 @@ $ is always in the range $[0,\frac{1}{4}]$, the probability for equal register v
 \log\!\left(
 1
 -
-\frac{1}{2}
+\textstyle\frac{1}{2}
 \symDistanceMeasure
 \right)
 \lesssim
@@ -2481,10 +2490,10 @@ $ is always in the range $[0,\frac{1}{4}]$, the probability for equal register v
 \log\!\left(
 1
 -
-\frac{1}{2}
+\textstyle\frac{1}{2}
 \symDistanceMeasure
 +
-\frac{1}{16}
+\textstyle\frac{1}{16}
 \symDistanceMeasure^2
 \right).
 \end{equation}
@@ -2501,7 +2510,14 @@ As shown in \cref{fig:equal_register_probability} the bounds are very close, esp
 \caption{The approximate probability range of equal register values as a function of the Jaccard distance.}
 \label{fig:equal_register_probability}
 \end{figure}
-This finding makes the HyperLogLog algorithm an interesting candidate for locality-sensitive hashing. What also looks promising is the much simpler preprocessing because it only involves a single hash function (compare \cref{alg:insert}). In contrast, min-wise hashing is very costly, because many hash function evaluations are necessary for all the needed permutations \cite{Li2011}.
+This dependency on the Jaccard distance is very similar to that of minwise hashing \eqref{equ:minwise_hahsing_probability}, which makes the
+HyperLogLog algorithm an interesting candidate for locality-sensitive hashing with respect to the Jaccard similarity. The memory-efficiency of different hashing approaches can be measured by a storage factor that is the variance of the distance estimator multiplied by the number of bits used for storing the hash signature \cite{Li2011}. For a hash algorithm that maps two different sets to the same $\symNumBitsMinwiseHashing$-bit hash value with probability $1-\symA\symDistanceMeasure$ with some constant $\symA\in(0,1]$, the storage factor is given by $\symNumBitsMinwiseHashing\symDistanceMeasure\left(\frac{1}{\symA}-\symDistanceMeasure\right)$. 
+Particularly, for the case $D=0.3$, this gives \num{6.72} for conventional minwise hashing with 32-bit hash values ($\symNumBitsMinwiseHashing=32$, $\symA\approx 1$), \num{0.51} for 1-bit minwise hashing ($\symNumBitsMinwiseHashing=1$, $\symA=\frac{1}{2}$), and  \num{1.63} for the HyperLogLog algorithm with 5-bit registers ($\symNumBitsMinwiseHashing=5$, $\symA=
+\symAlpha_\infty$). This means that the HyperLogLog algorithm is not as memory-efficient as 1-bit minwise hashing, but significantly better than 32-bit minwise hashing. 
+
+It is worth mentioning that estimating the Jaccard distance by just counting equal registers does not use all the information contained by the HyperLogLog sketch. The method described in \cref{sec:cardinality_estimation_set_intersections} would allow a more accurate estimation of the Jaccard distance by using the estimates for intersection and union sizes. This could be used for additional more precise filtering when searching for similar items.
+
+Preprocessing is very costly for minwise hashing, because many hash function evaluations are necessary for all the needed permutations \cite{Li2011}. In contrast, the HyperLogLog algorithm requires only a single hash function evaluation which reduces preprocessing costs. In addition, HyperLogLog sketches can be easily merged, which is not possible for $\symNumBitsMinwiseHashing$-bit minwise hash signatures.
 
 \section{Conclusion}
 
@@ -2514,13 +2530,14 @@ The maximum likelihood method was also applied to the estimation of set operatio
 \label{app:analysis_xi}
 The Fourier series of the function $\symPowerSeriesFunc(\symX)$, which is defined by
 \begin{equation}
+\label{equ:def_xi}
 \symPowerSeriesFunc(\symX):= \log(2) \sum_{\symRegVal = -\infty}^\infty
 2^{\symRegVal+\symX}
 e^{-2^{\symRegVal+\symX}}
 \end{equation}
 and which has period equal to 1, is
 \begin{equation}
-\symPowerSeriesFunc(\symX) = 1 + \Re\!\left(\sum_{\symIndexL=1}^{\infty}
+\symPowerSeriesFunc(\symX) = \frac{\symA_0}{2} + \Re\!\left(\sum_{\symIndexL=1}^{\infty}
 \symA_\symIndexL e^{2\pi\symImaginary\symIndexL\symX}\right)
 \end{equation}
 with coefficients
@@ -2558,7 +2575,9 @@ The variable transformation $\symY = 2^\symX$ yields
 = 
 2\Gamma\!\left(1-\frac{2\pi\symImaginary\symIndexL}{\log(2)}\right)
 \end{equation}
-where $\Gamma$ denotes the gamma function. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
+where $\Gamma$ denotes the gamma function. Obviously, the constant term in the Fourier series is equal to $1$, because $\symA_0=2$. 
+
+In order to investigate the maximum deviation of $\symPowerSeriesFunc(\symX)$ from this value we consider all further coefficients $\symA_\symIndexL$ with $\symIndexL\geq 1$. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
 \sqrt{\frac{\pi\symX}{\sinh(\pi\symX)}}
 $
 we are able to write for the absolute values of the coefficients
@@ -2656,9 +2675,28 @@ Consequently, $|\symA_{\symIndexL}| \leq
 \end{equation}
 For the maximum deviation from 1 we finally have
 \begin{equation}
-\max(|\symPowerSeriesFunc(\symX)-1|) \leq \sum_{\symIndexL=1}^{\infty} 
+\num{9.884e-6}
+\leq
+|\symA_1|
+-
+\sum_{\symIndexL=2}^{\infty} 
 |\symA_\symIndexL|
-\leq \num{9.885e-6}.
+\leq
+\max(|\symPowerSeriesFunc(\symX)-1|) 
+\leq 
+|\symA_1|
++
+\sum_{\symIndexL=2}^{\infty} 
+|\symA_\symIndexL|
+\leq 
+\num{9.885e-6}.
+\end{equation}
+
+An interesting approximation formula can be derived from $\symPowerSeriesFunc(\symX) \approx 1$ by integrating on both sides: 
+\begin{equation}
+\label{equ:approx_formula}
+\sum_{\symRegVal = -\infty}^\infty
+e^{-2^{\symRegVal+\symY}} - e^{-2^{\symRegVal+\symX}} \approx \symX - \symY.
 \end{equation}
 
 \section{Numerical stability of recursion formula for $\symHelper(\symX)$}
