@@ -2,47 +2,375 @@
 % Encoding: UTF8
 
 
-@InProceedings{Woodruff2004,
-  Title                    = {Optimal Space Lower Bounds for All Frequency Moments},
-  Author                   = {Woodruff, David},
-  Booktitle                = {Proceedings of the Fifteenth Annual ACM-SIAM Symposium on Discrete Algorithms},
-  Year                     = {2004},
-  Address                  = {Philadelphia, PA, USA},
-  Pages                    = {167--175},
-  Publisher                = {Society for Industrial and Applied Mathematics},
-  Series                   = {SODA '04},
-  Acmid                    = {982817},
-  ISBN                     = {0-89871-558-X},
-  Location                 = {New Orleans, Louisiana},
+@Article{Alon1999,
+  Title                    = {The Space Complexity of Approximating the Frequency Moments},
+  Author                   = {Noga Alon and Yossi Matias and Mario Szegedy},
+  Journal                  = {Journal of Computer and System Sciences},
+  Year                     = {1999},
+  Number                   = {1},
+  Pages                    = {137 - 147},
+  Volume                   = {58},
+  Abstract                 = {The frequency moments of a sequence containingmielements of typei, 1⩽i⩽n, are the numbersFk=∑ni=1 mki. We consider the space complexity of randomized algorithms that approximate the numbersFk, when the elements of the sequence are given one by one and cannot be stored. Surprisingly, it turns out that the numbersF0,F1, andF2can be approximated in logarithmic space, whereas the approximation ofFkfork⩾6 requiresnΩ(1)space. Applications to data bases are mentioned as well. },
+  Doi                      = {http://dx.doi.org/10.1006/jcss.1997.1545},
+  ISSN                     = {0022-0000},
+  Url                      = {http://www.sciencedirect.com/science/article/pii/S0022000097915452}
+}
+
+@InProceedings{Bar-Yossef2002,
+  Title                    = {Counting distinct elements in a data stream},
+  Author                   = {Bar-Yossef, Ziv and Jayram, TS and Kumar, Ravi and Sivakumar, D and Trevisan, Luca},
+  Booktitle                = {International Workshop on Randomization and Approximation Techniques in Computer Science},
+  Year                     = {2002},
+  Organization             = {Springer},
+  Pages                    = {1--10}
+}
+
+@InProceedings{Broder1997,
+  Title                    = {On the resemblance and containment of documents},
+  Author                   = {Andrei Z. Broder},
+  Booktitle                = {Proceedings of the Compression and Complexity of Sequences},
+  Year                     = {1997},
+  Address                  = {Positano, Italy},
+  Month                    = {June},
+  Pages                    = {21-29},
+  Abstract                 = {Given two documents A and B we define two mathematical notions: their resemblance r(A, B) and their containment c(A, B) that seem to capture well the informal notions of “roughly the same” and “roughly contained.” The basic idea is to reduce these issues to set intersection problems that can be easily evaluated by a process of random sampling that can be done independently for each document. Furthermore, the resemblance can be evaluated using a fixed size sample for each document. This paper discusses the mathematical properties of these measures and the efficient implementation of the sampling process using Rabin (1981) fingerprints},
+  Doi                      = {10.1109/SEQUEN.1997.666900},
+  Keywords                 = {information retrieval;random processes;set theory;Rabin fingerprints;World Wide Web;containment;documents;fixed size sample;informal notions;information retrieval;intersection problems;mathematical notions;mathematical properties;random sampling;resemblance;roughly contained;roughly the same;Algorithm design and analysis;Clustering algorithms;Costs;Digital systems;Explosions;Fingerprint recognition;Particle measurements;Sampling methods;Testing;Web sites}
+}
+
+@Book{Casella2002,
+  Title                    = {Statistical inference},
+  Author                   = {Casella, George and Berger, Roger L.},
+  Publisher                = {Duxbury},
+  Year                     = {2002},
+  Address                  = {Pacific Grove, CA, USA},
+  Edition                  = {2nd}
+}
+
+@InProceedings{Charikar2002,
+  Title                    = {Similarity Estimation Techniques from Rounding Algorithms},
+  Author                   = {Charikar, Moses S.},
+  Booktitle                = {Proceedings of the 34th Annual ACM Symposium on Theory of Computing},
+  Year                     = {2002},
+  Address                  = {Montreal, Canada},
+  Month                    = {May},
+  Pages                    = {380--388},
+  Acmid                    = {509965},
+  Doi                      = {10.1145/509907.509965},
+  ISBN                     = {1-58113-495-9},
+  Location                 = {Montreal, Quebec, Canada},
   Numpages                 = {9},
-  Url                      = {http://dl.acm.org/citation.cfm?id=982792.982817}
+  Url                      = {http://doi.acm.org/10.1145/509907.509965}
 }
 
-@Article{Whang1990,
-  Title                    = {A Linear-time Probabilistic Counting Algorithm for Database Applications},
-  Author                   = {Whang, Kyu-Young and Vander-Zanden, Brad T. and Taylor, Howard M.},
-  Journal                  = {ACM Transactions on Database Systems},
-  Year                     = {1990},
-  Number                   = {2},
-  Pages                    = {208--229},
-  Volume                   = {15},
-  Acmid                    = {78925},
-  Address                  = {New York, NY, USA},
-  Doi                      = {10.1145/78922.78925},
-  File                     = {Whang1990.pdf:papers\\Whang1990.pdf:PDF},
-  ISSN                     = {0362-5915},
-  Issue_date               = {June 1990},
-  Numpages                 = {22},
+@InProceedings{Chen2009,
+  Title                    = {Distinct Counting with a Self-Learning Bitmap},
+  Author                   = {Aiyou Chen and Jin Cao},
+  Booktitle                = {Data Engineering, 2009. ICDE '09. IEEE 25th International Conference on},
+  Year                     = {2009},
+  Month                    = {March},
+  Pages                    = {1171-1174},
+  Abstract                 = {Estimating the number of distinct values is a fundamental problem in database that has attracted extensive research over the past two decades, due to its wide applications (especially in the Internet). Many algorithms have been proposed via sampling or sketching for obtaining statistical estimates that only require limited computing and memory resources. However, their performance in terms of relative estimation accuracy usually depends on the unknown cardinalities. In this paper, we address the following question: can a distinct counting algorithm have uniformly reliable performance, i.e. constant relative estimation errors for unknown cardinalities in a wide range, say from tens to millions? We propose a self-learning bitmap algorithm (S-bitmap) to answer this question. The S-bitmap is a bitmap obtained via a novel adaptive sampling process, where the bits corresponding to the sampled items are set to 1, and the sampling rates are learned from the number of distinct items already passed and reduced sequentially as more bits are set to 1. A unique property of S-bitmap is that its relative estimation error is truly stabilized, i.e. invariant to unknown cardinalities in a prescribed range. We demonstrate through both theoretical and empirical studies that with a given memory requirement, S-bitmap is not only uniformly reliable but more accurate than state-of-the-art algorithms such as the multiresolution bitmap and Hyper LogLog algorithms under common practice settings.},
+  Doi                      = {10.1109/ICDE.2009.193},
+  File                     = {Chen2009.pdf:papers\\Chen2009.pdf:PDF},
+  ISSN                     = {1084-4627},
+  Keywords                 = {database theory;set theory;statistical analysis;Hyper LogLog algorithms;Internet;adaptive sampling process;multiresolution bitmap;relative estimation;self-learning bitmap;Data engineering;Databases;Estimation error;Internet;Monitoring;Query processing;Reliability theory;Sampling methods;Statistical distributions;Telecommunication traffic;bitmap;distinct counting;sampling;streaming data;uniform reliability},
   Owner                    = {otmar.ertl},
-  Publisher                = {ACM},
-  Timestamp                = {2015.12.22},
-  Url                      = {http://doi.acm.org/10.1145/78922.78925}
+  Timestamp                = {2015.11.17}
 }
 
-@Article{Wang2014,
-  Title                    = {Hashing for similarity search: A survey},
-  Author                   = {Wang, Jingdong and Shen, Heng Tao and Song, Jingkuan and Ji, Jianqiu},
-  Journal                  = {arXiv preprint arXiv:1408.2927},
+@Patent{Chen2015,
+  Title                    = {Adaptive distinct counting for network-traffic monitoring and other applications},
+  Nationality              = {US},
+  Number                   = {8,931,088},
+  Year                     = {2015},
+  Yearfiled                = {2010},
+  Author                   = {Chen, Aiyou and Cao, Jin and Menten, Lawrence E},
+  Month                    = jan # {~6},
+  Note                     = {US Patent 8,931,088},
+  Publisher                = {Google Patents}
+}
+
+@Article{Chen2011,
+  Title                    = {Distinct counting with a self-learning bitmap},
+  Author                   = {Chen, Aiyou and Cao, Jin and Shepp, Larry and Nguyen, Tuan},
+  Journal                  = {Journal of the American Statistical Association},
+  Year                     = {2011},
+  Number                   = {495},
+  Pages                    = {879--890},
+  Volume                   = {106}
+}
+
+@InProceedings{Chevillard2010,
+  Title                    = {Sollya: An Environment for the Development of Numerical Codes},
+  Author                   = {S.~Chevillard and M.~Jolde\c{s} and C.~Lauter},
+  Booktitle                = {Mathematical Software - ICMS 2010},
+  Year                     = {2010},
+  Address                  = {Heidelberg, Germany},
+  Editor                   = {K.~Fukuda and J.~van~der~Hoeven and M.~Joswig and N.~Takayama},
+  Month                    = {September},
+  Pages                    = {28--31},
+  Publisher                = {Springer},
+  Series                   = {Lecture Notes in Computer Science},
+  Volume                   = {6327},
+  Abstract                 = {Sollya has become a mature tool for the development of
+ numerical software. With about $175$ built-in algorithms and a broad
+ extensibility, it offers a complete tool-chain for fixed- and
+ floating-point software and hardware design. Its features
+ include on-the-fly faithful rounding, specialized approximation algorithms 
+ and extensive support for floating-point code generation.},
+  Keywords                 = {numerical software, faithful rounding, computer algebra, development tool, function approximation}
+}
+
+@Article{Clifford2012,
+  Title                    = {A Statistical Analysis of Probabilistic Counting Algorithms},
+  Author                   = {Clifford, Peter And Cosma, Ioana A.},
+  Journal                  = {Scandinavian Journal of Statistics},
+  Year                     = {2012},
+  Number                   = {1},
+  Pages                    = {1--14},
+  Volume                   = {39},
+  Abstract                 = {Abstract.  This article considers the problem of cardinality estimation in data stream applications. We present a statistical analysis of probabilistic counting algorithms, focusing on two techniques that use pseudo-random variates to form low-dimensional data sketches. We apply conventional statistical methods to compare probabilistic algorithms based on storing either selected order statistics, or random projections. We derive estimators of the cardinality in both cases, and show that the maximal-term estimator is recursively computable and has exponentially decreasing error bounds. Furthermore, we show that the estimators have comparable asymptotic efficiency, and explain this result by demonstrating an unexpected connection between the two approaches.},
+  Doi                      = {10.1111/j.1467-9469.2010.00727.x},
+  ISSN                     = {1467-9469},
+  Keywords                 = {asymptotic relative efficiency, cardinality, data sketching, data stream, hash function, maximum likelihood estimation, space complexity, stable distribution, tail bounds},
+  Publisher                = {Blackwell Publishing Ltd},
+  Url                      = {http://dx.doi.org/10.1111/j.1467-9469.2010.00727.x}
+}
+
+@InProceedings{Cohen2014,
+  Title                    = {All-distances Sketches, Revisited: {HIP} Estimators for Massive Graphs Analysis},
+  Author                   = {Cohen, Edith},
+  Booktitle                = {Proceedings of the 33rd ACM SIGMOD-SIGACT-SIGART Symposium on Principles of Database Systems},
+  Year                     = {2014},
+  Address                  = {New York, NY, USA},
+  Pages                    = {88--99},
+  Acmid                    = {2594546},
+  Doi                      = {10.1145/2594538.2594546},
+  ISBN                     = {978-1-4503-2375-8},
+  Keywords                 = {all-distances sketch, approximate distinct counters, closeness centrality, estimation, min-hash sketch},
+  Location                 = {Snowbird, Utah, USA},
+  Numpages                 = {12},
+  Url                      = {http://doi-1acm-1org-1acmdigitallibraryportal.han.ubl.jku.at/10.1145/2594538.2594546}
+}
+
+@Article{Cohen2016,
+  Title                    = {A Minimal Variance Estimator for the Cardinality of Big Data Set Intersection},
+  Author                   = {Cohen, Reuven and Katzir, Liran and Yehezkel, Aviv},
+  Journal                  = {arXiv preprint arXiv:1606.00996},
+  Year                     = {2016}
+}
+
+@Article{Dasgupta2015,
+  Title                    = {A Framework for Estimating Stream Expression Cardinalities},
+  Author                   = {Dasgupta, Anirban and Lang, Kevin and Rhodes, Lee and Thaler, Justin},
+  Journal                  = {arXiv preprint arXiv:1510.01455},
+  Year                     = {2015}
+}
+
+@InProceedings{Durand2003,
+  Title                    = {Loglog Counting of Large Cardinalities},
+  Author                   = {Durand, Marianne
+and Flajolet, Philippe},
+  Booktitle                = {Proceedings of the 11th Annual European Symposium on Algorithms},
+  Year                     = {2003},
+  Address                  = {Budapest, Hungary},
+  Month                    = {September},
+  Pages                    = {605--617},
+  Chapter                  = {Loglog Counting of Large Cardinalities},
+  Doi                      = {10.1007/978-3-540-39658-1_55},
+  ISBN                     = {978-3-540-39658-1},
+  Url                      = {http://dx.doi.org/10.1007/978-3-540-39658-1_55}
+}
+
+@InProceedings{Flajolet2007,
+  Title                    = {Hyperloglog: The analysis of a near-optimal cardinality estimation algorithm},
+  Author                   = {Philippe Flajolet and Éric Fusy and Olivier Gandouet and Frédéric Meunier},
+  Booktitle                = {Proceedings of the 13th Conference on Analysis of Algorithms},
+  Year                     = {2007},
+  Address                  = {Juan des Pins, France},
+  Month                    = {June},
+  Pages                    = {127--146}
+}
+
+@Article{Flajolet1985,
+  Title                    = {Probabilistic counting algorithms for data base applications},
+  Author                   = {Philippe Flajolet and G. Nigel Martin},
+  Journal                  = {Journal of Computer and System Sciences},
+  Year                     = {1985},
+  Number                   = {2},
+  Pages                    = {182 - 209},
+  Volume                   = {31},
+  Abstract                 = {This paper introduces a class of probabilistic counting algorithms with which one can estimate the number of distinct elements in a large collection of data (typically a large file stored on disk) in a single pass using only a small additional storage (typically less than a hundred binary words) and only a few operations per element scanned. The algorithms are based on statistical observations made on bits of hashed values of records. They are by construction totally insensitive to the replicative structure of elements in the file; they can be used in the context of distributed systems without any degradation of performances and prove especially useful in the context of data bases query optimisation.},
+  Doi                      = {http://dx.doi.org/10.1016/0022-0000(85)90041-8},
+  ISSN                     = {0022-0000},
+  Url                      = {http://www.sciencedirect.com/science/article/pii/0022000085900418}
+}
+
+@Misc{Galassi2016,
+  Title                    = {{GNU} Scientific Library Reference Manual},
+  Author                   = {Mark Galassi and Jim Davies and James Theiler and Brian Gough and Gerard Jungman and Patrick Alken and Michael Booth and Fabrice Rossi and Rhys Ulerich},
+  HowPublished             = {{\url{http://www.gnu.org/software/gsl}}},
+  Year                     = {2016}
+}
+
+@InProceedings{Heule2013,
+  Title                    = {HyperLogLog in practice: Algorithmic engineering of a state of the art cardinality estimation algorithm},
+  Author                   = {Heule, Stefan and Nunkesser, Marc and Hall, Alexander},
+  Booktitle                = {Proceedings of the 16th International Conference on Extending Database Technology},
+  Year                     = {2013},
+  Address                  = {Genoa, Italy},
+  Month                    = {March},
+  Pages                    = {683--692}
+}
+
+@InProceedings{Indyk2003,
+  Title                    = {Tight lower bounds for the distinct elements problem},
+  Author                   = {Indyk, Piotr and Woodruff, David},
+  Booktitle                = {Proceedings of the 44th Annual IEEE Symposium on Foundations of Computer Science},
+  Year                     = {2003},
+  Address                  = {Cambridge, MA, USA},
+  Month                    = {October},
+  Pages                    = {283-288},
+  Abstract                 = {We prove strong lower bounds for the space complexity of (ε, δ)-approximating the number of distinct elements F0 in a data stream. Let m be the size of the universe from which the stream elements are drawn. We show that any one-pass streaming algorithm for (ε, δ)-approximating F0 must use Ω(1/ε2) space when ε = Ω(m-1(9 + k)/), for any k > 0, improving upon the known lower bound of Ω(1/ε) for this range of ε. This lower bound is tight up to a factor of log log m for small ε and log 1/ε for large ε. Our lower bound is derived from a reduction from the one-way communication complexity of approximating a Boolean function in Euclidean space. The reduction makes use of a low-distortion embedding from an l2 to l1 norm.},
+  Doi                      = {10.1109/SFCS.2003.1238202},
+  ISSN                     = {0272-5428},
+  Keywords                 = {Boolean functions;communication complexity;Boolean function;Euclidean space;data stream element;distinct element problem;one-pass streaming algorithm;one-way communication complexity;space complexity;tight lower bound;Algorithm design and analysis;Approximation algorithms;Boolean functions;Complexity theory;Computer crime;Databases;IP networks}
+}
+
+@Article{Jacquet1998,
+  Title                    = {Analytical depoissonization and its applications},
+  Author                   = {Philippe Jacquet and Wojciech Szpankowski},
+  Journal                  = {Theoretical Computer Science},
+  Year                     = {1998},
+  Number                   = {1},
+  Pages                    = {1--62},
+  Volume                   = {201},
+  Abstract                 = {In combinatorics and analysis of algorithms a Poisson version of a problem (henceforth called Poisson model or poissonization) is often easier to solve than the original one, which we name here the Bernoulli model. Poissonization is a technique that replaces the original input (e.g., think of balls thrown into urns) by a Poisson process (e.g., think of balls arriving according to a Poisson process into urns). More precisely, analytical Poisson transform maps a sequence (e.g., characterizing the Bernoulli model) into a generating function of a complex variable. However, after poissonization one must depoissonize in order to translate the results of the Poisson model into the original (i.e., Bernoulli) model. We present in this paper several analytical depoissonization results that fall into the following general scheme: If the Poisson transform has an appropriate growth in the complex plane, then an asymptotic expansion of the sequence can be expressed in terms of the Poisson transform and its derivatives evaluated on the real line. Not surprisingly, actual formulations of depoissonization results depend on the nature of the growth of the Poisson transform, and thus we have polynomial and exponential depoissonization theorems. Normalization (e.g., as in the central limit theorem) introduces another twist that led us to formulate the so-called diagonal depoissonization theorems. Finally, we illustrate our results on numerous examples from combinatorics and the analysis of algorithms and data structures (e.g., combinatorial assemblies, digital trees, multiaccess protocols, probabilistic counting, selecting a leader, data compression, etc.).},
+  Doi                      = {http://dx.doi.org/10.1016/S0304-3975(97)00167-9},
+  ISSN                     = {0304-3975},
+  Keywords                 = {Poissonization},
+  Url                      = {http://www.sciencedirect.com/science/article/pii/S0304397597001679}
+}
+
+@InProceedings{Kane2010,
+  Title                    = {An Optimal Algorithm for the Distinct Elements Problem},
+  Author                   = {Kane, Daniel M. and Nelson, Jelani and Woodruff, David P.},
+  Booktitle                = {Proceedings of the 29th ACM SIGMOD-SIGACT-SIGART Symposium on Principles of Database Systems},
+  Year                     = {2010},
+  Address                  = {Indianapolis, IN, USA},
+  Month                    = {June},
+  Pages                    = {41--52},
+  Acmid                    = {1807094},
+  Doi                      = {10.1145/1807085.1807094},
+  ISBN                     = {978-1-4503-0033-9},
+  Keywords                 = {data mining, distinct elements, query optimization, streaming},
+  Location                 = {Indianapolis, Indiana, USA},
+  Numpages                 = {12},
+  Url                      = {http://doi.acm.org/10.1145/1807085.1807094}
+}
+
+@Article{King2009,
+  Title                    = {Dlib-ml: A machine learning toolkit},
+  Author                   = {Davis E. King},
+  Journal                  = {Journal of Machine Learning Research},
+  Year                     = {2009},
+  Number                   = {Jul},
+  Pages                    = {1755--1758},
+  Volume                   = {10}
+}
+
+@Book{Leskovec2014,
+  Title                    = {Mining of massive datasets},
+  Author                   = {Leskovec, Jure and Rajaraman, Anand and Ullman, Jeffrey David},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2014}
+}
+
+@Article{Li2011,
+  Title                    = {Theory and Applications of B-bit Minwise Hashing},
+  Author                   = {Li, Ping and K\"{o}nig, Arnd Christian},
+  Journal                  = {Communications of the ACM},
+  Year                     = {2011},
+  Number                   = {8},
+  Pages                    = {101--109},
+  Volume                   = {54},
+  Acmid                    = {1978566},
+  Address                  = {New York, NY, USA},
+  Doi                      = {10.1145/1978542.1978566},
+  ISSN                     = {0001-0782},
+  Issue_date               = {August 2011},
+  Numpages                 = {9},
+  Publisher                = {ACM},
+  Url                      = {http://doi.acm.org/10.1145/1978542.1978566}
+}
+
+@InCollection{Li2012,
+  Title                    = {One Permutation Hashing},
+  Author                   = {Li, Ping and Art Owen and Cun-hui Zhang},
+  Booktitle                = {Advances in Neural Information Processing Systems 25},
+  Publisher                = {Curran Associates, Inc.},
+  Year                     = {2012},
+  Editor                   = {F. Pereira and C. J. C. Burges and L. Bottou and K. Q. Weinberger},
+  Pages                    = {3113--3121},
+  Url                      = {http://papers.nips.cc/paper/4778-one-permutation-hashing.pdf}
+}
+
+@InProceedings{Metwally2008,
+  Title                    = {Why Go Logarithmic if We Can Go Linear?: Towards Effective Distinct Counting of Search Traffic},
+  Author                   = {Metwally, Ahmed and Agrawal, Divyakant and Abbadi, Amr El},
+  Booktitle                = {Proceedings of the 11th International Conference on Extending Database Technology: Advances in Database Technology},
+  Year                     = {2008},
+  Address                  = {Nantes, France},
+  Month                    = {March},
+  Pages                    = {618--629},
+  Acmid                    = {1353418},
+  Doi                      = {10.1145/1353343.1353418},
+  ISBN                     = {978-1-59593-926-5},
+  Location                 = {Nantes, France},
+  Numpages                 = {12},
+  Url                      = {http://doi.acm.org/10.1145/1353343.1353418}
+}
+
+@InProceedings{Pagh2014,
+  Title                    = {Is min-wise hashing optimal for summarizing set intersection?},
+  Author                   = {Pagh, Rasmus and St{\"o}ckel, Morten and Woodruff, David P},
+  Booktitle                = {Proceedings of the 33rd ACM SIGMOD-SIGACT-SIGART symposium on Principles of database systems},
+  Year                     = {2014},
+  Organization             = {ACM},
+  Pages                    = {109--120}
+}
+
+@Misc{Pascoe2013,
+  Title                    = {HyperLogLog and {M}in{H}ash - {A} Union for Intersections},
+  Author                   = {Andrew Pascoe},
+  HowPublished             = {{\url{http://tech.adroll.com/media/hllminhash.pdf}}},
+  Year                     = {2013},
+  Url                      = {http://tech.adroll.com/media/hllminhash.pdf}
+}
+
+@Book{Press2007,
+  Title                    = {Numerical recipes 3rd edition: The art of scientific computing},
+  Author                   = {Press, William H.},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2007}
+}
+
+@Patent{Rhodes2015,
+  Title                    = {System and method for enhanced accuracy cardinality estimation},
+  Nationality              = {US},
+  Number                   = {20,150,269,178},
+  Year                     = {2015},
+  Yearfiled                = {2014},
+  Author                   = {Rhodes, Lee},
+  Month                    = sep # {~24},
+  Note                     = {US Patent 20,150,269,178}
+}
+
+@Misc{Sanfilippo2014,
+  Title                    = {Redis new data structure: The {HyperLogLog}},
+  Author                   = {Salvatore Sanfilippo},
+  HowPublished             = {{\url{http://antirez.com/news/75}}},
   Year                     = {2014}
 }
 
@@ -73,359 +401,47 @@
   Pages                    = {1195--1204}
 }
 
-@Misc{Sanfilippo2014,
-  Title                    = {Redis new data structure: The {HyperLogLog}},
-  Author                   = {Salvatore Sanfilippo},
-  HowPublished             = {{\url{http://antirez.com/news/75}}},
+@Article{Wang2014,
+  Title                    = {Hashing for similarity search: A survey},
+  Author                   = {Wang, Jingdong and Shen, Heng Tao and Song, Jingkuan and Ji, Jianqiu},
+  Journal                  = {arXiv preprint arXiv:1408.2927},
   Year                     = {2014}
 }
 
-@Patent{Rhodes2015,
-  Title                    = {System and method for enhanced accuracy cardinality estimation},
-  Nationality              = {US},
-  Number                   = {20,150,269,178},
-  Year                     = {2015},
-  Yearfiled                = {2014},
-  Author                   = {Rhodes, Lee},
-  Month                    = sep # {~24},
-  Note                     = {US Patent 20,150,269,178}
-}
-
-@Book{Press2007,
-  Title                    = {Numerical recipes 3rd edition: The art of scientific computing},
-  Author                   = {Press, William H.},
-  Publisher                = {Cambridge University Press},
-  Year                     = {2007}
-}
-
-@Misc{Pascoe2013,
-  Title                    = {HyperLogLog and {M}in{H}ash - {A} Union for Intersections},
-  Author                   = {Andrew Pascoe},
-  HowPublished             = {{\url{http://tech.adroll.com/media/hllminhash.pdf}}},
-  Year                     = {2013},
-  Url                      = {http://tech.adroll.com/media/hllminhash.pdf}
-}
-
-@InProceedings{Pagh2014,
-  Title                    = {Is min-wise hashing optimal for summarizing set intersection?},
-  Author                   = {Pagh, Rasmus and St{\"o}ckel, Morten and Woodruff, David P},
-  Booktitle                = {Proceedings of the 33rd ACM SIGMOD-SIGACT-SIGART symposium on Principles of database systems},
-  Year                     = {2014},
-  Organization             = {ACM},
-  Pages                    = {109--120}
-}
-
-@InProceedings{Metwally2008,
-  Title                    = {Why Go Logarithmic if We Can Go Linear?: Towards Effective Distinct Counting of Search Traffic},
-  Author                   = {Metwally, Ahmed and Agrawal, Divyakant and Abbadi, Amr El},
-  Booktitle                = {Proceedings of the 11th International Conference on Extending Database Technology: Advances in Database Technology},
-  Year                     = {2008},
-  Address                  = {Nantes, France},
-  Month                    = {March},
-  Pages                    = {618--629},
-  Acmid                    = {1353418},
-  Doi                      = {10.1145/1353343.1353418},
-  ISBN                     = {978-1-59593-926-5},
-  Location                 = {Nantes, France},
-  Numpages                 = {12},
-  Url                      = {http://doi.acm.org/10.1145/1353343.1353418}
-}
-
-@InCollection{Li2012,
-  Title                    = {One Permutation Hashing},
-  Author                   = {Li, Ping and Art Owen and Cun-hui Zhang},
-  Booktitle                = {Advances in Neural Information Processing Systems 25},
-  Publisher                = {Curran Associates, Inc.},
-  Year                     = {2012},
-  Editor                   = {F. Pereira and C. J. C. Burges and L. Bottou and K. Q. Weinberger},
-  Pages                    = {3113--3121},
-  Url                      = {http://papers.nips.cc/paper/4778-one-permutation-hashing.pdf}
-}
-
-@Article{Li2011,
-  Title                    = {Theory and Applications of B-bit Minwise Hashing},
-  Author                   = {Li, Ping and K\"{o}nig, Arnd Christian},
-  Journal                  = {Communications of the ACM},
-  Year                     = {2011},
-  Number                   = {8},
-  Pages                    = {101--109},
-  Volume                   = {54},
-  Acmid                    = {1978566},
-  Address                  = {New York, NY, USA},
-  Doi                      = {10.1145/1978542.1978566},
-  ISSN                     = {0001-0782},
-  Issue_date               = {August 2011},
-  Numpages                 = {9},
-  Publisher                = {ACM},
-  Url                      = {http://doi.acm.org/10.1145/1978542.1978566}
-}
-
-@Book{Leskovec2014,
-  Title                    = {Mining of massive datasets},
-  Author                   = {Leskovec, Jure and Rajaraman, Anand and Ullman, Jeffrey David},
-  Publisher                = {Cambridge University Press},
-  Year                     = {2014}
-}
-
-@Article{King2009,
-  Title                    = {Dlib-ml: A machine learning toolkit},
-  Author                   = {Davis E. King},
-  Journal                  = {Journal of Machine Learning Research},
-  Year                     = {2009},
-  Number                   = {Jul},
-  Pages                    = {1755--1758},
-  Volume                   = {10}
-}
-
-@InProceedings{Kane2010,
-  Title                    = {An Optimal Algorithm for the Distinct Elements Problem},
-  Author                   = {Kane, Daniel M. and Nelson, Jelani and Woodruff, David P.},
-  Booktitle                = {Proceedings of the 29th ACM SIGMOD-SIGACT-SIGART Symposium on Principles of Database Systems},
-  Year                     = {2010},
-  Address                  = {Indianapolis, IN, USA},
-  Month                    = {June},
-  Pages                    = {41--52},
-  Acmid                    = {1807094},
-  Doi                      = {10.1145/1807085.1807094},
-  ISBN                     = {978-1-4503-0033-9},
-  Keywords                 = {data mining, distinct elements, query optimization, streaming},
-  Location                 = {Indianapolis, Indiana, USA},
-  Numpages                 = {12},
-  Url                      = {http://doi.acm.org/10.1145/1807085.1807094}
-}
-
-@Article{Jacquet1998,
-  Title                    = {Analytical depoissonization and its applications},
-  Author                   = {Philippe Jacquet and Wojciech Szpankowski},
-  Journal                  = {Theoretical Computer Science},
-  Year                     = {1998},
-  Number                   = {1},
-  Pages                    = {1--62},
-  Volume                   = {201},
-  Abstract                 = {In combinatorics and analysis of algorithms a Poisson version of a problem (henceforth called Poisson model or poissonization) is often easier to solve than the original one, which we name here the Bernoulli model. Poissonization is a technique that replaces the original input (e.g., think of balls thrown into urns) by a Poisson process (e.g., think of balls arriving according to a Poisson process into urns). More precisely, analytical Poisson transform maps a sequence (e.g., characterizing the Bernoulli model) into a generating function of a complex variable. However, after poissonization one must depoissonize in order to translate the results of the Poisson model into the original (i.e., Bernoulli) model. We present in this paper several analytical depoissonization results that fall into the following general scheme: If the Poisson transform has an appropriate growth in the complex plane, then an asymptotic expansion of the sequence can be expressed in terms of the Poisson transform and its derivatives evaluated on the real line. Not surprisingly, actual formulations of depoissonization results depend on the nature of the growth of the Poisson transform, and thus we have polynomial and exponential depoissonization theorems. Normalization (e.g., as in the central limit theorem) introduces another twist that led us to formulate the so-called diagonal depoissonization theorems. Finally, we illustrate our results on numerous examples from combinatorics and the analysis of algorithms and data structures (e.g., combinatorial assemblies, digital trees, multiaccess protocols, probabilistic counting, selecting a leader, data compression, etc.).},
-  Doi                      = {http://dx.doi.org/10.1016/S0304-3975(97)00167-9},
-  ISSN                     = {0304-3975},
-  Keywords                 = {Poissonization},
-  Url                      = {http://www.sciencedirect.com/science/article/pii/S0304397597001679}
-}
-
-@InProceedings{Indyk2003,
-  Title                    = {Tight lower bounds for the distinct elements problem},
-  Author                   = {Indyk, Piotr and Woodruff, David},
-  Booktitle                = {Proceedings of the 44th Annual IEEE Symposium on Foundations of Computer Science},
-  Year                     = {2003},
-  Address                  = {Cambridge, MA, USA},
-  Month                    = {October},
-  Pages                    = {283-288},
-  Abstract                 = {We prove strong lower bounds for the space complexity of (ε, δ)-approximating the number of distinct elements F0 in a data stream. Let m be the size of the universe from which the stream elements are drawn. We show that any one-pass streaming algorithm for (ε, δ)-approximating F0 must use Ω(1/ε2) space when ε = Ω(m-1(9 + k)/), for any k > 0, improving upon the known lower bound of Ω(1/ε) for this range of ε. This lower bound is tight up to a factor of log log m for small ε and log 1/ε for large ε. Our lower bound is derived from a reduction from the one-way communication complexity of approximating a Boolean function in Euclidean space. The reduction makes use of a low-distortion embedding from an l2 to l1 norm.},
-  Doi                      = {10.1109/SFCS.2003.1238202},
-  ISSN                     = {0272-5428},
-  Keywords                 = {Boolean functions;communication complexity;Boolean function;Euclidean space;data stream element;distinct element problem;one-pass streaming algorithm;one-way communication complexity;space complexity;tight lower bound;Algorithm design and analysis;Approximation algorithms;Boolean functions;Complexity theory;Computer crime;Databases;IP networks}
-}
-
-@InProceedings{Heule2013,
-  Title                    = {HyperLogLog in practice: Algorithmic engineering of a state of the art cardinality estimation algorithm},
-  Author                   = {Heule, Stefan and Nunkesser, Marc and Hall, Alexander},
-  Booktitle                = {Proceedings of the 16th International Conference on Extending Database Technology},
-  Year                     = {2013},
-  Address                  = {Genoa, Italy},
-  Month                    = {March},
-  Pages                    = {683--692}
-}
-
-@Misc{Galassi2016,
-  Title                    = {{GNU} Scientific Library Reference Manual},
-  Author                   = {Mark Galassi and Jim Davies and James Theiler and Brian Gough and Gerard Jungman and Patrick Alken and Michael Booth and Fabrice Rossi and Rhys Ulerich},
-  HowPublished             = {{\url{http://www.gnu.org/software/gsl}}},
-  Year                     = {2016}
-}
-
-@Article{Flajolet1985,
-  Title                    = {Probabilistic counting algorithms for data base applications},
-  Author                   = {Philippe Flajolet and G. Nigel Martin},
-  Journal                  = {Journal of Computer and System Sciences},
-  Year                     = {1985},
+@Article{Whang1990,
+  Title                    = {A Linear-time Probabilistic Counting Algorithm for Database Applications},
+  Author                   = {Whang, Kyu-Young and Vander-Zanden, Brad T. and Taylor, Howard M.},
+  Journal                  = {ACM Transactions on Database Systems},
+  Year                     = {1990},
   Number                   = {2},
-  Pages                    = {182 - 209},
-  Volume                   = {31},
-  Abstract                 = {This paper introduces a class of probabilistic counting algorithms with which one can estimate the number of distinct elements in a large collection of data (typically a large file stored on disk) in a single pass using only a small additional storage (typically less than a hundred binary words) and only a few operations per element scanned. The algorithms are based on statistical observations made on bits of hashed values of records. They are by construction totally insensitive to the replicative structure of elements in the file; they can be used in the context of distributed systems without any degradation of performances and prove especially useful in the context of data bases query optimisation.},
-  Doi                      = {http://dx.doi.org/10.1016/0022-0000(85)90041-8},
-  ISSN                     = {0022-0000},
-  Url                      = {http://www.sciencedirect.com/science/article/pii/0022000085900418}
-}
-
-@InProceedings{Flajolet2007,
-  Title                    = {Hyperloglog: The analysis of a near-optimal cardinality estimation algorithm},
-  Author                   = {Philippe Flajolet and Éric Fusy and Olivier Gandouet and Frédéric Meunier},
-  Booktitle                = {Proceedings of the 13th Conference on Analysis of Algorithms},
-  Year                     = {2007},
-  Address                  = {Juan des Pins, France},
-  Month                    = {June},
-  Pages                    = {127--146}
-}
-
-@InProceedings{Durand2003,
-  Title                    = {Loglog Counting of Large Cardinalities},
-  Author                   = {Durand, Marianne
-and Flajolet, Philippe},
-  Booktitle                = {Proceedings of the 11th Annual European Symposium on Algorithms},
-  Year                     = {2003},
-  Address                  = {Budapest, Hungary},
-  Month                    = {September},
-  Pages                    = {605--617},
-  Chapter                  = {Loglog Counting of Large Cardinalities},
-  Doi                      = {10.1007/978-3-540-39658-1_55},
-  ISBN                     = {978-3-540-39658-1},
-  Url                      = {http://dx.doi.org/10.1007/978-3-540-39658-1_55}
-}
-
-@Article{Dasgupta2015,
-  Title                    = {A Framework for Estimating Stream Expression Cardinalities},
-  Author                   = {Dasgupta, Anirban and Lang, Kevin and Rhodes, Lee and Thaler, Justin},
-  Journal                  = {arXiv preprint arXiv:1510.01455},
-  Year                     = {2015}
-}
-
-@Article{Cohen2016,
-  Title                    = {A Minimal Variance Estimator for the Cardinality of Big Data Set Intersection},
-  Author                   = {Cohen, Reuven and Katzir, Liran and Yehezkel, Aviv},
-  Journal                  = {arXiv preprint arXiv:1606.00996},
-  Year                     = {2016}
-}
-
-@Article{Clifford2012,
-  Title                    = {A Statistical Analysis of Probabilistic Counting Algorithms},
-  Author                   = {Clifford, Peter And Cosma, Ioana A.},
-  Journal                  = {Scandinavian Journal of Statistics},
-  Year                     = {2012},
-  Number                   = {1},
-  Pages                    = {1--14},
-  Volume                   = {39},
-  Abstract                 = {Abstract.  This article considers the problem of cardinality estimation in data stream applications. We present a statistical analysis of probabilistic counting algorithms, focusing on two techniques that use pseudo-random variates to form low-dimensional data sketches. We apply conventional statistical methods to compare probabilistic algorithms based on storing either selected order statistics, or random projections. We derive estimators of the cardinality in both cases, and show that the maximal-term estimator is recursively computable and has exponentially decreasing error bounds. Furthermore, we show that the estimators have comparable asymptotic efficiency, and explain this result by demonstrating an unexpected connection between the two approaches.},
-  Doi                      = {10.1111/j.1467-9469.2010.00727.x},
-  ISSN                     = {1467-9469},
-  Keywords                 = {asymptotic relative efficiency, cardinality, data sketching, data stream, hash function, maximum likelihood estimation, space complexity, stable distribution, tail bounds},
-  Publisher                = {Blackwell Publishing Ltd},
-  Url                      = {http://dx.doi.org/10.1111/j.1467-9469.2010.00727.x}
-}
-
-@InProceedings{Chevillard2010,
-  Title                    = {Sollya: An Environment for the Development of Numerical Codes},
-  Author                   = {S.~Chevillard and M.~Jolde\c{s} and C.~Lauter},
-  Booktitle                = {Mathematical Software - ICMS 2010},
-  Year                     = {2010},
-  Address                  = {Heidelberg, Germany},
-  Editor                   = {K.~Fukuda and J.~van~der~Hoeven and M.~Joswig and N.~Takayama},
-  Month                    = {September},
-  Pages                    = {28--31},
-  Publisher                = {Springer},
-  Series                   = {Lecture Notes in Computer Science},
-  Volume                   = {6327},
-  Abstract                 = {Sollya has become a mature tool for the development of
- numerical software. With about $175$ built-in algorithms and a broad
- extensibility, it offers a complete tool-chain for fixed- and
- floating-point software and hardware design. Its features
- include on-the-fly faithful rounding, specialized approximation algorithms 
- and extensive support for floating-point code generation.},
-  Keywords                 = {numerical software, faithful rounding, computer algebra, development tool, function approximation}
-}
-
-@Article{Chen2011,
-  Title                    = {Distinct counting with a self-learning bitmap},
-  Author                   = {Chen, Aiyou and Cao, Jin and Shepp, Larry and Nguyen, Tuan},
-  Journal                  = {Journal of the American Statistical Association},
-  Year                     = {2011},
-  Number                   = {495},
-  Pages                    = {879--890},
-  Volume                   = {106}
-}
-
-@Patent{Chen2015,
-  Title                    = {Adaptive distinct counting for network-traffic monitoring and other applications},
-  Nationality              = {US},
-  Number                   = {8,931,088},
-  Year                     = {2015},
-  Yearfiled                = {2010},
-  Author                   = {Chen, Aiyou and Cao, Jin and Menten, Lawrence E},
-  Month                    = jan # {~6},
-  Note                     = {US Patent 8,931,088},
-  Publisher                = {Google Patents}
-}
-
-@InProceedings{Chen2009,
-  Title                    = {Distinct Counting with a Self-Learning Bitmap},
-  Author                   = {Aiyou Chen and Jin Cao},
-  Booktitle                = {Data Engineering, 2009. ICDE '09. IEEE 25th International Conference on},
-  Year                     = {2009},
-  Month                    = {March},
-  Pages                    = {1171-1174},
-  Abstract                 = {Estimating the number of distinct values is a fundamental problem in database that has attracted extensive research over the past two decades, due to its wide applications (especially in the Internet). Many algorithms have been proposed via sampling or sketching for obtaining statistical estimates that only require limited computing and memory resources. However, their performance in terms of relative estimation accuracy usually depends on the unknown cardinalities. In this paper, we address the following question: can a distinct counting algorithm have uniformly reliable performance, i.e. constant relative estimation errors for unknown cardinalities in a wide range, say from tens to millions? We propose a self-learning bitmap algorithm (S-bitmap) to answer this question. The S-bitmap is a bitmap obtained via a novel adaptive sampling process, where the bits corresponding to the sampled items are set to 1, and the sampling rates are learned from the number of distinct items already passed and reduced sequentially as more bits are set to 1. A unique property of S-bitmap is that its relative estimation error is truly stabilized, i.e. invariant to unknown cardinalities in a prescribed range. We demonstrate through both theoretical and empirical studies that with a given memory requirement, S-bitmap is not only uniformly reliable but more accurate than state-of-the-art algorithms such as the multiresolution bitmap and Hyper LogLog algorithms under common practice settings.},
-  Doi                      = {10.1109/ICDE.2009.193},
-  File                     = {Chen2009.pdf:papers\\Chen2009.pdf:PDF},
-  ISSN                     = {1084-4627},
-  Keywords                 = {database theory;set theory;statistical analysis;Hyper LogLog algorithms;Internet;adaptive sampling process;multiresolution bitmap;relative estimation;self-learning bitmap;Data engineering;Databases;Estimation error;Internet;Monitoring;Query processing;Reliability theory;Sampling methods;Statistical distributions;Telecommunication traffic;bitmap;distinct counting;sampling;streaming data;uniform reliability},
+  Pages                    = {208--229},
+  Volume                   = {15},
+  Acmid                    = {78925},
+  Address                  = {New York, NY, USA},
+  Doi                      = {10.1145/78922.78925},
+  File                     = {Whang1990.pdf:papers\\Whang1990.pdf:PDF},
+  ISSN                     = {0362-5915},
+  Issue_date               = {June 1990},
+  Numpages                 = {22},
   Owner                    = {otmar.ertl},
-  Timestamp                = {2015.11.17}
+  Publisher                = {ACM},
+  Timestamp                = {2015.12.22},
+  Url                      = {http://doi.acm.org/10.1145/78922.78925}
 }
 
-@InProceedings{Charikar2002,
-  Title                    = {Similarity Estimation Techniques from Rounding Algorithms},
-  Author                   = {Charikar, Moses S.},
-  Booktitle                = {Proceedings of the 34th Annual ACM Symposium on Theory of Computing},
-  Year                     = {2002},
-  Address                  = {Montreal, Canada},
-  Month                    = {May},
-  Pages                    = {380--388},
-  Acmid                    = {509965},
-  Doi                      = {10.1145/509907.509965},
-  ISBN                     = {1-58113-495-9},
-  Location                 = {Montreal, Quebec, Canada},
+@InProceedings{Woodruff2004,
+  Title                    = {Optimal Space Lower Bounds for All Frequency Moments},
+  Author                   = {Woodruff, David},
+  Booktitle                = {Proceedings of the Fifteenth Annual ACM-SIAM Symposium on Discrete Algorithms},
+  Year                     = {2004},
+  Address                  = {Philadelphia, PA, USA},
+  Pages                    = {167--175},
+  Publisher                = {Society for Industrial and Applied Mathematics},
+  Series                   = {SODA '04},
+  Acmid                    = {982817},
+  ISBN                     = {0-89871-558-X},
+  Location                 = {New Orleans, Louisiana},
   Numpages                 = {9},
-  Url                      = {http://doi.acm.org/10.1145/509907.509965}
-}
-
-@Book{Casella2002,
-  Title                    = {Statistical inference},
-  Author                   = {Casella, George and Berger, Roger L.},
-  Publisher                = {Duxbury},
-  Year                     = {2002},
-  Address                  = {Pacific Grove, CA, USA},
-  Edition                  = {2nd}
-}
-
-@InProceedings{Broder1997,
-  Title                    = {On the resemblance and containment of documents},
-  Author                   = {Andrei Z. Broder},
-  Booktitle                = {Proceedings of the Compression and Complexity of Sequences},
-  Year                     = {1997},
-  Address                  = {Positano, Italy},
-  Month                    = {June},
-  Pages                    = {21-29},
-  Abstract                 = {Given two documents A and B we define two mathematical notions: their resemblance r(A, B) and their containment c(A, B) that seem to capture well the informal notions of “roughly the same” and “roughly contained.” The basic idea is to reduce these issues to set intersection problems that can be easily evaluated by a process of random sampling that can be done independently for each document. Furthermore, the resemblance can be evaluated using a fixed size sample for each document. This paper discusses the mathematical properties of these measures and the efficient implementation of the sampling process using Rabin (1981) fingerprints},
-  Doi                      = {10.1109/SEQUEN.1997.666900},
-  Keywords                 = {information retrieval;random processes;set theory;Rabin fingerprints;World Wide Web;containment;documents;fixed size sample;informal notions;information retrieval;intersection problems;mathematical notions;mathematical properties;random sampling;resemblance;roughly contained;roughly the same;Algorithm design and analysis;Clustering algorithms;Costs;Digital systems;Explosions;Fingerprint recognition;Particle measurements;Sampling methods;Testing;Web sites}
-}
-
-@InProceedings{Bar-Yossef2002,
-  Title                    = {Counting distinct elements in a data stream},
-  Author                   = {Bar-Yossef, Ziv and Jayram, TS and Kumar, Ravi and Sivakumar, D and Trevisan, Luca},
-  Booktitle                = {International Workshop on Randomization and Approximation Techniques in Computer Science},
-  Year                     = {2002},
-  Organization             = {Springer},
-  Pages                    = {1--10}
-}
-
-@Article{Alon1999,
-  Title                    = {The Space Complexity of Approximating the Frequency Moments},
-  Author                   = {Noga Alon and Yossi Matias and Mario Szegedy},
-  Journal                  = {Journal of Computer and System Sciences},
-  Year                     = {1999},
-  Number                   = {1},
-  Pages                    = {137 - 147},
-  Volume                   = {58},
-  Abstract                 = {The frequency moments of a sequence containingmielements of typei, 1⩽i⩽n, are the numbersFk=∑ni=1 mki. We consider the space complexity of randomized algorithms that approximate the numbersFk, when the elements of the sequence are given one by one and cannot be stored. Surprisingly, it turns out that the numbersF0,F1, andF2can be approximated in logarithmic space, whereas the approximation ofFkfork⩾6 requiresnΩ(1)space. Applications to data bases are mentioned as well. },
-  Doi                      = {http://dx.doi.org/10.1006/jcss.1997.1545},
-  ISSN                     = {0022-0000},
-  Url                      = {http://www.sciencedirect.com/science/article/pii/S0022000097915452}
+  Url                      = {http://dl.acm.org/citation.cfm?id=982792.982817}
 }
 
