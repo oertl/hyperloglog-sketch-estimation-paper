@@ -212,7 +212,7 @@ where $\symCardinality$ is the cardinality. The $\symCardinality$ distinct eleme
 0 & \symCardinality=0 \wedge 1\leq\symRegVal\leq\symRegRange+1\\
 0 & \symCardinality\geq1 \wedge \symRegVal = 0\\
 \left(1-\frac{1}{2^\symRegVal}\right)^\symCardinality - \left(1-\frac{1}{2^{\symRegVal-1}}\right)^\symCardinality & \symCardinality \geq 1 \wedge 1\leq\symRegVal\leq\symRegRange\\
-1 - \left(1-\frac{1}{2^{\symRegRange}}\right)^\symCardinality & \symCardinality\geq 1 \wedge \symRegVal = \symRegRange +1
+1 - \left(1-\frac{1}{2^{\symRegRange}}\right)^\symCardinality & \symCardinality\geq 1 \wedge \symRegVal = \symRegRange +1.
 \end{cases}
 \end{equation}
 
@@ -263,8 +263,8 @@ The final factorization shows that under the Poisson model the register values $
 \begin{cases}
 0 & \symRegVal < 0 \\
 e^{-\frac{\symPoissonRate}{\symNumReg 2^\symRegVal}} & 0\leq \symRegVal \leq \symRegRange \\
-1 & \symRegVal > \symRegRange
-\end{cases}.
+1 & \symRegVal > \symRegRange.
+\end{cases}
 \end{equation}
 
 \subsection{Depoissonization}
@@ -447,7 +447,7 @@ Numerical evaluations indicate that this function can be bounded by $1 - \symEps
 \end{figure}
 
 
-Let $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ be a sample taken from \eqref{equ:assumed_register_val_distribution}. For large sample sizes $\symNumReg\rightarrow \infty$ we have asymptotically
+Let $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ be a sample distributed according to \eqref{equ:assumed_register_val_distribution}. For large sample sizes $\symNumReg\rightarrow \infty$ we have asymptotically
 \begin{equation}
 \symExpectation\!\left(
 \frac{1}{2^{-\symRegValVariate_1}+\ldots+2^{-\symRegValVariate_\symNumReg}}
@@ -663,9 +663,9 @@ The new estimation algorithm is very elegant, because it does neither contain ma
 
 \subsection{Estimation error}
 \label{sec:corrected_raw_estimation_error}
-In order to verify the new estimation algorithm, we generated \num{10000} HyperLogLog sketches and inserted up to 50 billion unique elements. Assuming a uniform hash function, element hash values can be mocked by random numbers. For the following results we used the Mersenne Twister random number generator with a state size  of \num{19937} bits from the C++ standard library.
+In order to verify the new estimation algorithm, we generated \num{10000} HyperLogLog sketches and inserted up to 50 billion unique elements. Assuming a uniform hash function, element hash values can be mocked by random numbers. For the following results we used the Mersenne Twister random number generator with a state size of \num{19937} bits from the C++ standard library.
 
-\cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}) or the original method (\cref{fig:original_estimate}).
+\cref{fig:raw_corrected_estimation_error_12_20} shows the distribution of the relative error of the estimated cardinality using \cref{alg:corrected_raw_estimation} compared to the true cardinality for $\symPrecision=12$ and $\symRegRange=20$. As the mean shows, the error is unbiased over the entire cardinality range. The new approach is able to accurately estimate cardinalities up to 4 billions ($\approx 2^{\symPrecision+\symRegRange}$) which is about an order of magnitude larger than the operating range upper bound of the raw estimator (\cref{fig:raw_estimate}).
 
 \begin{figure}
 \centering
@@ -681,7 +681,7 @@ the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinali
 \begin{figure}
 \centering
 \includesvg[width=1\textwidth]{stdev_comparison}
-\caption{Standard deviations of the relative error of different cardinality estimators for a HyperLogLog sketch with paramters $\symPrecision = 12$ and $\symRegRange=20$ over the true cardinality.}
+\caption{Standard deviations of the relative error of different cardinality estimators over the true cardinality for a HyperLogLog sketch with paramters $\symPrecision = 12$ and $\symRegRange=20$ .}
 \label{fig:stdev_comparison}
 \end{figure}
 
@@ -777,7 +777,7 @@ As a consequence, the maximum likelihood estimate for the Poisson parameter is g
 \begin{equation}
 \symPoissonRateEstimate = \symNumReg\symXEstimate,
 \end{equation}
-if $\symXEstimate$ is the root of the function
+if $\symXEstimate$ denotes the root of the function
 \begin{equation}
 \label{equ:funcdef}
 \symFunc(\symX)
@@ -810,7 +810,7 @@ $\symHelper(\symX)$ is strictly increasing and concave as can be seen in \cref{f
 \caption{The function $\symHelper(\symX)$.}
 \label{fig:helper_function}
 \end{figure}
-Since the function $\symFunc(x)$ is also strictly increasing, it is obvious that there exists a unique root $\symXEstimate$ for which $\symFunc(\symXEstimate)=0$. The function is non-positive at 0 since $\symFunc(0)=\symCountVariate_0-\symNumReg\leq 0$ and, in case $\symCountVariate_{\symRegRange+1}<\symNumReg$ which implies $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}>0$, the function is at least linearly increasing. $\symCountVariate_{\symRegRange+1}=\symNumReg$ corresponds to the case with all registers equal to the maximum value $\symRegRange+1$, for which the maximum likelihood estimate would be infinite.
+Since the function $\symFunc(x)$ is also strictly increasing, it is obvious that there exists a unique root $\symXEstimate$ for which $\symFunc(\symXEstimate)=0$. The function is non-positive at 0 since $\symFunc(0)=\symCountVariate_0-\symNumReg\leq 0$ and, in case $\symCountVariate_{\symRegRange+1}<\symNumReg$ which implies $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}>0$, the function is at least linearly increasing. $\symCountVariate_{\symRegRange+1}=\symNumReg$ corresponds to the case with all registers equal to the maximum value $\symRegRange+1$, for which the maximum likelihood estimate would be positive infinite.
 
 It is easy to see that the estimate $\symPoissonRateEstimate$ remains equal or becomes larger, when inserting an element into the HyperLogLog sketch following \cref{alg:insert}. An update potentially changes the multiplicity vector $(\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ to $(\symCountVariate_0,\ldots,\symCountVariate_\symIndexI-1,\ldots,\symCountVariate_\symIndexJ+1,\ldots,\symCountVariate_{\symRegRange+1})$ where $\symIndexI < \symIndexJ$. Writing \eqref{equ:func} as 
 \begin{multline}
@@ -938,7 +938,7 @@ as upper bound which can be weakened using $\log(1+\symX)\leq \symX$ for $\symX\
 {\sum_{\symRegVal=0}^{\symRegRange}
 \frac{\symCountVariate_\symRegVal}{2^\symRegVal}}.
 \end{equation}
-If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_0=\symCountVariate_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor from the raw estimator \eqref{equ:raw_estimator}. Hence, the maximum likelihood method leads directly to the harmonic mean that is used by the raw estimator.
+If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_0=\symCountVariate_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor from the raw estimator \eqref{equ:raw_estimator}. Hence, consequent application of the maximum likelihood method leads directly to the harmonic mean that is used by the raw estimator.
 
 \subsection{Computation of the maximum likelihood estimate}
 \label{sec:comp_ml_estimate}
@@ -947,7 +947,7 @@ Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and t
 \symX_{\symIndexI} = 
 \symX_{\symIndexI-1} -
 \left(\symX_{\symIndexI-1}-\symX_{\symIndexI-2}\right)
-\frac{\symFunc(\symX_{\symIndexI-1})}{\symFunc(\symX_{\symIndexI-1}) - \symFunc(\symX_{\symIndexI-2})}
+\frac{\symFunc(\symX_{\symIndexI-1})}{\symFunc(\symX_{\symIndexI-1}) - \symFunc(\symX_{\symIndexI-2})}.
 \end{equation}
 If we set $\symX_0$ equal to 0, for which  $\symFunc(\symX_0)=-\left(\symNumReg-\symCountVariate_0\right)$, and $\symX_1$ equal to one of the derived lower bounds \eqref{equ:strong_lower_bound} or \eqref{equ:weak_lower_bound}, the sequence $(\symX_0, \symX_1, \symX_2, \ldots)$ is montone increasing. Using the definitions
 \begin{equation}
@@ -966,8 +966,9 @@ the iteration scheme can also be written as
 \begin{gather}
 \label{equ:secant_delta}
 \Delta\symX_{\symIndexI} = \Delta\symX_{\symIndexI-1}
-\frac{\left(\symNumReg-\symCountVariate_0\right)-\symFuncPrime(\symX_{\symIndexI-1})}{\symFuncPrime(\symX_{\symIndexI-1}) - \symFuncPrime(\symX_{\symIndexI-2})}\\
-\symX_{\symIndexI} = \symX_{\symIndexI-1} + \Delta\symX_{\symIndexI}
+\frac{\left(\symNumReg-\symCountVariate_0\right)-\symFuncPrime(\symX_{\symIndexI-1})}{\symFuncPrime(\symX_{\symIndexI-1}) - \symFuncPrime(\symX_{\symIndexI-2})},
+\\
+\symX_{\symIndexI} = \symX_{\symIndexI-1} + \Delta\symX_{\symIndexI}.
 \end{gather}
 The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results that will be presented in \cref{sec:maximum_likelihood_estimation_error} we have used $\symStopEpsilon = 10^{-2}$.
 
@@ -1001,7 +1002,7 @@ which can be optimized for numerical evaluation using Estrin's scheme and $\symX
 \symHelper(\symX)
 =
 \symX' - \symX''/3 + \left(\symX'' \symX''\right)\left(1/45-\symX''/472.5\right)
-+ \symBigO(\symX^{8})
++ \symBigO(\symX^{8}).
 \end{equation}
 The smallest argument for which $\symHelper$ needs to be evaluated is $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}$. If 
 $\symCountVariate_{\symRegRange+1}=0$, we can find an upper bound for the smallest argument using \eqref{equ:strong_upper_bound}
@@ -1022,7 +1023,7 @@ $\symCountVariate_{\symRegRange+1}=0$, we can find an upper bound for the smalle
 In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated, that is $\symCountVariate_{\symRegRange+1}\ll \symNumReg$. In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}. As shown in \cref{app:error_approx}, a small approximation error of $\symHelper$ does not have much impact on the error of the maximum likelihood estimate as long as most registers are not yet saturated.
 \end{itemize}
 
-Putting all these optimizations together finally gives the new cardinality estimation algorithm as presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by savings in the number of iteration cycles.
+Putting all these optimizations together finally gives the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by savings in the number of iteration cycles.
 
 \begin{algorithm}
 \caption{Maximum likelihood cardinality estimation.}
@@ -1289,7 +1290,7 @@ e^{
 \\
 1
 &
-\symRegRange < \symRegVal_1 \wedge \symRegRange < \symRegVal_2
+\symRegRange < \symRegVal_1 \wedge \symRegRange < \symRegVal_2.
 \end{cases}
 \end{equation}
 
@@ -1488,7 +1489,7 @@ e^{-\frac{\symPoissonRate_\symSetASuffix + \symPoissonRate_\symSetBSuffix + \sym
 {\symNumReg 2^\symRegRange}
 }
 &
-\symRegVal_1 = \symRegVal_2 = \symRegRange + 1
+\symRegVal_1 = \symRegVal_2 = \symRegRange + 1.
 \end{cases}
 \end{multline}
 
