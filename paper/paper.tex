@@ -594,7 +594,7 @@ and
 2^{-\symRegVal}.
 \end{equation}
 
-Using the identity $\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\symX) = \symAlpha_\infty\symPowerSeriesFunc(\log_2(\log(1/\symX)))/\log(1/\symX)$, we get for the linear counting case with $\symRegRange=0$
+We can cross-check the new estimator for the linear counting case with $\symRegRange=0$. Using the identity $\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\symX) = \symAlpha_\infty\symPowerSeriesFunc(\log_2(\log(1/\symX)))/\log(1/\symX)$, we get
 \begin{equation}
 \symPoissonRateEstimate 
 = 
@@ -605,10 +605,8 @@ Using the identity $\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\sy
 }
 =
 \frac{\symNumReg\log\!\left(\symNumReg/\symCountVariate_0\right)}{\symPowerSeriesFunc\!\left(\log_2\!\left(\log\!\left(\symNumReg/\symCountVariate_0\right)\right)\right)}
-\approx
-\symNumReg\log\!\left(\symNumReg/\symCountVariate_0\right),
 \end{equation}
-which is almost identical to the linear counting estimator used for the small range correction \eqref{equ:linear_counting_estimator}. Here we used again the fact that the function $\symPowerSeriesFunc$ can be well approximated by 1 (see \cref{sec:derivation_raw_estimator}).
+which is as expected almost identical to the linear counting estimator \eqref{equ:linear_counting_estimator}, because $\symPowerSeriesFunc(\symX)\approx 1$ (see \cref{sec:derivation_raw_estimator}).
 \subsection{Corrected raw estimation algorithm}
 The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
 The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm.
