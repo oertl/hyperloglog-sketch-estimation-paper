@@ -189,12 +189,10 @@ task createBenchmarkCharts(type: Exec) {
         "$project.dataDir/benchmark_results_12_20.dat",
         "$project.dataDir/benchmark_results_12_52.dat"
     outputs.files "$project.paperDir/avg_exec_time.svg",
-        "$project.paperDir/max_likelihood_avg_exec_time.png",
         "$project.paperDir/max_likelihood_avg_outer_loop_iterations.svg",
         "$project.paperDir/max_likelihood_avg_inner_loop_1_iterations.svg",
         "$project.paperDir/max_likelihood_avg_inner_loop_2_iterations.svg",
         "$project.paperDir/max_likelihood_avg_number_log_evaluations.svg",
-        "$project.paperDir/corrected_raw_avg_exec_time.png",
         "$project.paperDir/corrected_raw_avg_exec_time.svg"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'benchmark-charts.py'
@@ -237,24 +235,7 @@ task createDistributionCharts(type: Exec) {
         "$project.paperDir/raw_corrected_estimate_16_16.svg",
         "$project.paperDir/raw_corrected_estimate_12_52.svg",
         "$project.paperDir/raw_corrected_estimate_12_0.svg",
-        "$project.paperDir/raw_corrected_estimate_22_10.svg",
-        "$project.paperDir/original_estimate.png",
-        "$project.paperDir/raw_estimate.png",
-        "$project.paperDir/small_range_estimate.png",
-        "$project.paperDir/max_likelihood_estimate_12_20.png",
-        "$project.paperDir/max_likelihood_estimate_12_14.png",
-        "$project.paperDir/max_likelihood_estimate_8_24.png",
-        "$project.paperDir/max_likelihood_estimate_16_16.png",
-        "$project.paperDir/max_likelihood_estimate_12_52.png",
-        "$project.paperDir/max_likelihood_estimate_12_0.png",
-        "$project.paperDir/max_likelihood_estimate_22_10.png",
-        "$project.paperDir/raw_corrected_estimate_12_20.png",
-        "$project.paperDir/raw_corrected_estimate_12_14.png",
-        "$project.paperDir/raw_corrected_estimate_8_24.png",
-        "$project.paperDir/raw_corrected_estimate_16_16.png",
-        "$project.paperDir/raw_corrected_estimate_12_52.png",
-        "$project.paperDir/raw_corrected_estimate_12_0.png",
-        "$project.paperDir/raw_corrected_estimate_22_10.png"
+        "$project.paperDir/raw_corrected_estimate_22_10.svg"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'distribution_charts.py'
     dependsOn 'generateSimulatedCardinalities','doCardinalityCalculation'
@@ -269,22 +250,45 @@ task createComparisonCharts(type: Exec) {
         "$project.dataDir/12_20_corrected_raw_estimates.dat",
         "$project.dataDir/cardinalities.dat"
     outputs.files "$project.paperDir/mean_comparison.svg",
-        "$project.paperDir/stdev_comparison.svg",
-        "$project.paperDir/mean_comparison.png",
-        "$project.paperDir/stdev_comparison.png"
+        "$project.paperDir/stdev_comparison.svg"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'python3', 'comparison.py'
     dependsOn 'generateSimulatedCardinalities','doCardinalityCalculation'
 }
 
-task figures {
+task svgFigures {
     dependsOn 'helperFunctionFig', 'createDistributionCharts', 'createBenchmarkCharts','powerSeriesFunctionFig','createComparisonCharts','equalRegisterProbabilityFig'
     doLast {
     }
 }
 
+task pdfFigures {
+
+    def svgFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".svg"}
+    def pdfFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf"}
+
+    inputs.files svgFigureFiles
+    outputs.files pdfFigureFiles
+
+    dependsOn 'svgFigures'
+
+    doLast {
+        figureNames.each { figureName ->
+            exec {
+                commandLine 'inkscape', "${project.paperDir}/${figureName}.svg", "--export-pdf=${project.paperDir}/${figureName}.pdf"
+            }
+        }
+    }
+}
+
+task figures {
+    dependsOn 'svgFigures', 'pdfFigures'
+    doLast {
+    }
+}
+
 //#################################
-// joint  cardinality calculation
+// joint cardinality calculation
 //#################################
 
 task buildJointCardinalityCalculation(type: Exec) {
@@ -314,7 +318,7 @@ task pdflatex1(type: Exec) {
     outputs.files "$project.paperDir/paper.aux"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'pdflatex','--shell-escape','paper'
+    commandLine 'pdflatex','paper'
 }
 
 task bibtex(type: Exec) {
@@ -323,39 +327,30 @@ task bibtex(type: Exec) {
     outputs.files "$project.paperDir/paper.bbl", "$project.paperDir/paper.blg"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'bibtex', 'paper'
+    commandLine 'bibtex','paper'
     dependsOn 'pdflatex1'
 }
 
 task pdflatex2(type: Exec) {
     workingDir project.paperDir
 
-    def svgFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".svg"}
     def pdfFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf"}
-    def pdfTexFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf_tex"}
 
     inputs.files "$project.paperDir/paper.bbl",
         "$project.paperDir/paper.blg",
         "$project.paperDir/paper.tex",
         "$project.paperDir/joint_cardinality_calculation.csv",
-        svgFigureFiles
-    outputs.files "$project.paperDir/paper.aux",
-        pdfFigureFiles,
-        pdfTexFigureFiles
+        pdfFigureFiles
+    outputs.files "$project.paperDir/paper.aux"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'pdflatex','--shell-escape','paper'
+    commandLine 'pdflatex','paper'
     dependsOn 'bibtex'
-    doLast {
-      println svgFigureFiles
-    }
 }
 
 task pdflatex3(type: Exec) {
 
     def pdfFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf"}
-    def pdfTexFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf_tex"}
-
 
     workingDir project.paperDir
     inputs.files "$project.paperDir/paper.bbl",
@@ -363,7 +358,6 @@ task pdflatex3(type: Exec) {
         "$project.paperDir/paper.tex",
         "$project.paperDir/intersection.csv",
         pdfFigureFiles,
-        pdfTexFigureFiles,
         "$project.paperDir/max_errror_propagation_factor1.txt",
         "$project.paperDir/max_errror_propagation_factor2.txt",
         "$project.paperDir/max_errror_propagation_factor3.txt",
@@ -371,7 +365,7 @@ task pdflatex3(type: Exec) {
     outputs.files "$project.paperDir/paper.aux", "$project.paperDir/paper.pdf"
     outputs.upToDateWhen { false }
     standardOutput = new ByteArrayOutputStream()
-    commandLine 'pdflatex','--shell-escape','paper'
+    commandLine 'pdflatex','paper'
     dependsOn 'pdflatex2', 'calculateMaxErrorPropagationFactor'
 }
 

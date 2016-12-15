@@ -7,7 +7,6 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{svg}
 \usepackage{algpseudocode,algorithm,algorithmicx}
 \usepackage{float}
 \usepackage{url}
@@ -376,21 +375,21 @@ The relative estimation error for the original method is shown in \cref{fig:orig
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_estimate}
+\includegraphics[width=1\textwidth]{raw_estimate}
 \caption{The distribution of the relative estimation error over the cardinality for the raw estimator after evaluation of \num{10000} randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:raw_estimate}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{small_range_estimate}
+\includegraphics[width=1\textwidth]{small_range_estimate}
 \caption{The distribution of the relative estimation error for the linear counting estimator after evaluation of \num{10000} randomly generated bitmaps of size $2^{12}$ which correspond to HyperLogLog sketches with parameters $\symPrecision = 12$ and $\symRegRange=0$.}
 \label{fig:small_range_estimate}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{original_estimate}
+\includegraphics[width=1\textwidth]{original_estimate}
 \caption{The distribution of the relative estimation error over the cardinality for the original estimation algorithm after evaluation of \num{10000} randomly generated HyperLogLog data structures with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:original_estimate}
 \end{figure}
@@ -441,7 +440,7 @@ Numerical evaluations indicate that this function can be bounded by $1 - \symEps
 
 \begin{figure}
 \centering
-\includesvg[width=0.6\textwidth]{power-series-function-minus-1}
+\includegraphics[width=0.6\textwidth]{power-series-function-minus-1}
 \caption{The deviation of $\symPowerSeriesFunc(\symX)$ from 1.}
 \label{fig:power_series_func}
 \end{figure}
@@ -667,7 +666,7 @@ In order to verify the new estimation algorithm, we generated \num{10000} HyperL
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_12_20}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_12_20}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:raw_corrected_estimation_error_12_20}
 \end{figure}
@@ -678,7 +677,7 @@ the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinali
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{stdev_comparison}
+\includegraphics[width=1\textwidth]{stdev_comparison}
 \caption{Standard deviations of the relative error of different cardinality estimators over the true cardinality for a HyperLogLog sketch with paramters $\symPrecision = 12$ and $\symRegRange=20$ .}
 \label{fig:stdev_comparison}
 \end{figure}
@@ -687,21 +686,21 @@ The new estimation algorithm also works well for other HyperLogLog configuration
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_8_24}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_8_24}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
 \label{fig:raw_corrected_estimation_error_8_24}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_16_16}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_16_16}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
 \label{fig:raw_corrected_estimation_error_16_16}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_22_10}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_22_10}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
 \label{fig:raw_corrected_estimation_error_22_10}
 \end{figure}
@@ -711,7 +710,7 @@ replacing the 32-bit hash function by a 64-bit hash function. \cref{fig:raw_corr
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_12_52}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_12_52}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
 \label{fig:raw_corrected_estimation_error_12_52}
 \end{figure}
@@ -720,7 +719,7 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{raw_corrected_estimate_12_14}
+\includegraphics[width=1\textwidth]{raw_corrected_estimate_12_14}
 \caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
 \label{fig:raw_corrected_estimation_error_12_14}
 \end{figure}
@@ -737,7 +736,7 @@ The numbers do not yet include the required processing time to extract the multi
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{corrected_raw_avg_exec_time}
+\includegraphics[width=1\textwidth]{corrected_raw_avg_exec_time}
 \caption{Average computation time as a function of the true cardinality with an Intel Core i5-2500K clocking at \SI{3.3}{\giga\hertz} when estimating the cardinality from HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively. Both cases, $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ precalculated and calculated on-demand have been considered.}
 \label{fig:corrected_raw_avg_exec_time}
 \end{figure}
@@ -804,7 +803,7 @@ where the function $\symHelper(\symX)$ is defined as
 $\symHelper(\symX)$ is strictly increasing and concave as can be seen in \cref{fig:helper_function}. For non-negative values $\symX$ the function ranges from $\symHelper(0)=0$ to $\symHelper(\symX\rightarrow \infty)=1$.
 \begin{figure}
 \centering
-\includesvg[width=0.6\textwidth]{helper}
+\includegraphics[width=0.6\textwidth]{helper}
 \caption{The function $\symHelper(\symX)$.}
 \label{fig:helper_function}
 \end{figure}
@@ -1122,42 +1121,42 @@ What is different for the maximum likelihood estimation approach is a somewhat s
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_12_20}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_12_20}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:max_likelihood_estimation_error_12_20}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_8_24}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_8_24}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
 \label{fig:max_likelihood_estimation_error_8_24}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_16_16}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_16_16}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
 \label{fig:max_likelihood_estimation_error_16_16}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_22_10}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_22_10}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
 \label{fig:max_likelihood_estimation_error_22_10}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_12_52}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_12_52}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
 \label{fig:max_likelihood_estimation_error_12_52}
 \end{figure}
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_estimate_12_14}
+\includegraphics[width=1\textwidth]{max_likelihood_estimate_12_14}
 \caption{Relative error of the maximum likelihood estimates as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
 \label{fig:max_likelihood_estimation_error_12_14}
 \end{figure}
@@ -1167,7 +1166,7 @@ We also measured the performance of \cref{alg:estimate_ml} using the same test s
 
 \begin{figure}
 \centering
-\includesvg[width=1\textwidth]{max_likelihood_avg_exec_time}
+\includegraphics[width=1\textwidth]{max_likelihood_avg_exec_time}
 \caption{Average execution time of the maximum likelihood estimation algorithm as a function of the true cardinality with an Intel Core i5-2500K clocking at \SI{3.3}{\giga\hertz} for HyperLogLog sketches with parameters $\symPrecision=12$, $\symRegRange=20$ and $\symPrecision=12$, $\symRegRange=52$, respectively.}
 \label{fig:avg_exec_time}
 \end{figure}
@@ -2512,7 +2511,7 @@ As shown in \cref{fig:equal_register_probability} the bounds are very close, esp
 \end{equation}
 \begin{figure}
 \centering
-\includesvg[width=0.6\textwidth]{equal-register-probability}
+\includegraphics[width=0.6\textwidth]{equal-register-probability}
 \caption{The approximate probability range of equal register values as a function of the Jaccard distance.}
 \label{fig:equal_register_probability}
 \end{figure}
