@@ -744,10 +744,8 @@ The numbers do not yet include the required processing time to extract the multi
 \section{Maximum likelihood estimation}
 We know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. Moreover, we know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
 
-We remark that we are not the first applying the maximum likelihood method to HyperLogLog sketches \cite{Clifford2012}, where the case without stochastic averaging (compare \cref{sec:data_element_insertion}) was considered. The register values are statistically independent by nature in this case which 
-allows factorization of the joint probability mass function and allows a straightforward application of the maximum likelihood method. 
-
-The more relevant case with stochastic averaging, which is considered in this paper, is more complicated. However, with the help of the Poisson approximation, it is still feasible to apply the maximum likelihood method and we are able to derive a new robust and efficient cardinality estimation algorithm. Furthermore, we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
+For HyperLogLog sketches that have been obtained without stochastic averaging (see \cref{sec:data_element_insertion}) the maximum likelihood method was already previously considered for cardinality estimation \cite{Clifford2012}. However, in this case the register values are statistically independent by nature which 
+allows factorization of the joint probability mass function and a straightforward calculation of the maximum likelihood estimate. The practically more relevant stochastic averaging case, which is considered in this paper, gives a more complicated likelihood function. However, the Poisson approximation makes the maximum likelihood method feasible again and we are finally able to derive another new robust and efficient cardinality estimation algorithm. Furthermore, in the course of the derivation we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
 
 \subsection{Log-likelihood function}
 
@@ -967,7 +965,7 @@ the iteration scheme can also be written as
 \\
 \symX_{\symIndexI} = \symX_{\symIndexI-1} + \Delta\symX_{\symIndexI}.
 \end{gather}
-The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results that will be presented in \cref{sec:maximum_likelihood_estimation_error} we have used $\symStopEpsilon = 10^{-2}$.
+The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results presented later in \cref{sec:maximum_likelihood_estimation_error} we have used $\symStopEpsilon = 10^{-2}$.
 
 \subsection{Maximum likelihood estimation algorithm}
 In order to get a fast cardinality estimation algorithm, it is crucial to minimize the evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of the computational effort:
@@ -1020,7 +1018,7 @@ $\symCountVariate_{\symRegRange+1}=0$, we can find an upper bound for the smalle
 In practice, $\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\leq0.5$ is satisfied most of the time as long as only a few registers are saturated, that is $\symCountVariate_{\symRegRange+1}\ll \symNumReg$. In case $\frac{\symX}{2^{\symRegValVariate'_\text{max}}} > 0.5$, $\symHelper\!\left(\frac{\symX}{2^{\symKappa}}\right)$ is calculated instead with $\symKappa = 2+\lfloor\log_2(\symX)\rfloor$. By definition, $\frac{\symX}{2^{\symKappa}}\leq 0.5$ which allows using the Taylor series approximation. $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ is finally obtained after $\symKappa -\symRegValVariate'_\text{max}$ iterations using \eqref{equ:helper_recursion1}. As shown in \cref{app:error_approx}, a small approximation error of $\symHelper$ does not have much impact on the error of the maximum likelihood estimate as long as most registers are not yet saturated.
 \end{itemize}
 
-Putting all these optimizations together finally gives the new cardinality estimation algorithm presented in \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by savings in the number of iteration cycles.
+Putting all these optimizations together finally gives the new cardinality estimation algorithm presented as \cref{alg:estimate_ml}. The algorithm requires mainly only elementary operations. The square root that appears for the calculation of the stopping limit $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ can be precomputed, because it only depends on the HyperLogLog precision parameter $\symPrecision$. For large cardinalities it is worth to take the strong \eqref{equ:strong_lower_bound} instead of the weak lower bound \eqref{equ:weak_lower_bound} as initial value, which requires a single logarithm evaluation. The stronger bound is a much better approximation especially for large cardinalities, where the extra logarithm evaluation is amortized by savings in the number of iteration cycles.
 
 \begin{algorithm}
 \caption{Maximum likelihood cardinality estimation.}
@@ -2739,9 +2737,9 @@ Combination of \eqref{equ:h2}, \eqref{equ:h2_approx}, and \eqref{equ:h2_relative
 \symError_1
 \frac{\symHelper_1}{\symX+1-\symHelper_1}
 \right|
-}.
+}
 \end{equation}
-The triangle inequality leads to
+and the triangle inequality leads to
 \begin{equation}
 \left|\symError_2\right|
 \leq
@@ -2763,7 +2761,7 @@ The triangle inequality leads to
 \symError_1
 \frac{\symHelper_1}{\symX+1-\symHelper_1}
 \right|
-}
+}.
 \end{equation}
 
 By numerical means it is easy to show that the inequalities $\left|
