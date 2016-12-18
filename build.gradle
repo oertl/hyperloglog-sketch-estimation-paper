@@ -385,3 +385,25 @@ task paper {
     doLast {
     }
 }
+
+//#########################
+// publication
+//#########################
+
+task arxiv(type: Zip) {
+   def pdfFigureFiles = figureNames.collect {"$project.paperDir/" + it + ".pdf"}
+   pdfFigureFiles.each {
+        from it
+   }
+   from "$project.paperDir/paper.bbl"
+   from "$project.paperDir/paper.tex"
+
+   from "$project.paperDir/joint_cardinality_calculation.csv"
+   from "$project.paperDir/max_errror_propagation_factor1.txt"
+   from "$project.paperDir/max_errror_propagation_factor2.txt"
+   from "$project.paperDir/max_errror_propagation_factor3.txt"
+   from "$project.paperDir/max_errror_propagation_factor4.txt"
+
+   archiveName 'arxiv.zip'
+   destinationDir file(project.paperDir)
+}

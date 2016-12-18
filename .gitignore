@@ -38,5 +38,6 @@ paper/paper.blg
 paper/paper.log
 paper/paper.out
 paper/texput.log
+paper/arxiv.zip
 paper/*.png
 data/cardinalities.dat
