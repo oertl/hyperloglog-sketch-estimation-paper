@@ -968,7 +968,7 @@ the iteration scheme can also be written as
 The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results presented later in \cref{sec:maximum_likelihood_estimation_error} we have used $\symStopEpsilon = 10^{-2}$.
 
 \subsection{Maximum likelihood estimation algorithm}
-In order to get a fast cardinality estimation algorithm, it is crucial to minimize the evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of the computational effort:
+In order to get a fast cardinality estimation algorithm, it is crucial to minimize evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of computational effort:
 \begin{itemize}
 \item Only a fraction of all count values $\symCountVariate_\symRegVal$ is non-zero. If we denote $\symRegValVariate_\text{min}:=\min\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace$ and $\symRegValVariate_\text{max}:=\max\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace$,  it is sufficient to loop over all indices in the range $[\symRegValVariate_\text{min}, \symRegValVariate_\text{max}]$.
 \item The sum $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}$ in \eqref{equ:funcprime} can be precalculated and reused for all function evaluations.
@@ -2152,7 +2152,7 @@ We also investigated, if the new approach could give better estimates for the un
 
 \begin{table}
 \centering
-\caption{List of true cardinalities of the pairwise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetS_1 = \symSetA\cup\symSetX$ and  $\symSetS_2 = \symSetB\cup\symSetX$ was investigated. The last column shows the average number of iteration cycles until the stop criterion of the BFGS algorithm was satisfied.
+\captionabove{List of true cardinalities of the pairwise disjoint sets $\symSetA$, $\symSetB$, and $\symSetX$, for which maximum likelihood estimation from two HyperLogLog sketches with parameters $\symPrecision=20$ and $\symRegRange=44$ representing sets $\symSetS_1 = \symSetA\cup\symSetX$ and  $\symSetS_2 = \symSetB\cup\symSetX$ was investigated. The last column shows the average number of iteration cycles until the stop criterion of the BFGS algorithm was satisfied.
 }
 \label{tbl:joint_estimation_cases}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rr|rr, table head= & 
@@ -2189,7 +2189,7 @@ avgNumEvaluations=\avgNumEvaluations
 
 \begin{table}
 \centering
-\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_a}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2230,7 +2230,7 @@ improvementRmseA=\improvementRmseA
 
 \begin{table}
 \centering
-\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_b}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2271,7 +2271,7 @@ improvementRmseB=\improvementRmseB
 
 \begin{table}
 \centering
-\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_x}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2312,7 +2312,7 @@ improvementRmseX=\improvementRmseX
 
 \begin{table}
 \centering
-\caption{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
 \label{tbl:joint_estimation_abx}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2350,47 +2350,6 @@ improvementRmseABX=\improvementRmseABX
 \numformattwo{\improvementRmseABX}
 }
 \end{table}
-
-%\begin{table}
-%\centering
-%\caption{TODO}
-%\label{tbl:joint_estimation_jaccard}
-%\csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
-% & 
-%\multicolumn{3}{c|}{conventional approach}
-%&
-%\multicolumn{3}{c|}{maximum likelihood method}
-%&
-%\multicolumn{1}{c}{improvement}
-%\\
-%\# & 
-%\multicolumn{1}{c}{mean} & 
-%\multicolumn{1}{c}{stdev} & 
-%\multicolumn{1}{c|}{rmse} & 
-%\multicolumn{1}{c}{mean} & 
-%\multicolumn{1}{c}{stdev} & 
-%\multicolumn{1}{c|}{rmse} &
-%\multicolumn{1}{c}{rmse ratio}
-%\\\hline]
-%{joint_cardinality_calculation.csv}{
-%inclExclMeanJaccardIdx=\inclExclMeanJaccardIdx,
-%inclExclStdDevJaccardIdx=\inclExclStdDevJaccardIdx,
-%inclExclRMSEJaccardIdx=\inclExclRMSEJaccardIdx,
-%maxLikeMeanJaccardIdx=\maxLikeMeanJaccardIdx,
-%maxLikeStdDevJaccardIdx=\maxLikeStdDevJaccardIdx,
-%maxLikeRMSEJaccardIdx=\maxLikeRMSEJaccardIdx,
-%improvementRmseJaccard=\improvementRmseJaccard
-%}{
-%\thecsvrow & 
-%\numformat{\inclExclMeanJaccardIdx} & 
-%\numformat{\inclExclStdDevJaccardIdx} & 
-%\numformat{\inclExclRMSEJaccardIdx} & 
-%\numformat{\maxLikeMeanJaccardIdx} & 
-%\numformat{\maxLikeStdDevJaccardIdx} & 
-%\numformat{\maxLikeRMSEJaccardIdx} &
-%\numformattwo{\improvementRmseJaccard}
-%}
-%\end{table}
 
 \section{Future work}
 As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased estimator for the cardinality. We have shown that this approach works well for the corrected raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
@@ -2528,14 +2487,14 @@ The maximum likelihood method was also applied to the estimation of set operatio
 
 \section{Analysis of $\symPowerSeriesFunc(\symX)$}
 \label{app:analysis_xi}
-The Fourier series of the function $\symPowerSeriesFunc(\symX)$, which is defined by
+The Fourier series of the periodic function
 \begin{equation}
 \label{equ:def_xi}
 \symPowerSeriesFunc(\symX):= \log(2) \sum_{\symRegVal = -\infty}^\infty
 2^{\symRegVal+\symX}
-e^{-2^{\symRegVal+\symX}}
+e^{-2^{\symRegVal+\symX}},
 \end{equation}
-and which has period equal to 1, is
+which has a period equal to 1, is
 \begin{equation}
 \symPowerSeriesFunc(\symX) = \frac{\symA_0}{2} + \Re\!\left(\sum_{\symIndexL=1}^{\infty}
 \symA_\symIndexL e^{2\pi\symImaginary\symIndexL\symX}\right)
@@ -2592,7 +2551,7 @@ we are able to write for the absolute values of the coefficients
 In particular, the amplitude of the first harmonic is 
 $|\symA_1|
 \approx
-\num{9.884e-6}$. Obviously, the maximum deviation of $\symPowerSeriesFunc(\symX)-1$ from the first harmonic must be smaller than $\sum_{\symIndexL=2}^{\infty} 
+\num{9.884e-6}$. Clearly, the maximum deviation of $\symPowerSeriesFunc(\symX)-1$ from the first harmonic must be smaller than $\sum_{\symIndexL=2}^{\infty} 
 |\symA_\symIndexL|$. The ratio of subsequent coefficients is given by
 \begin{equation}
 \frac{|\symA_{\symIndexL+1}|}{|\symA_{\symIndexL}|}
@@ -2682,7 +2641,7 @@ As a consequence, the maximum deviation of $\symPowerSeriesFunc(\symX)$ from 1 i
 \sum_{\symIndexL=2}^{\infty} 
 |\symA_\symIndexL|
 \leq
-\max(|\symPowerSeriesFunc(\symX)-1|) 
+\max_{\symX}(|\symPowerSeriesFunc(\symX)-1|) 
 \leq 
 |\symA_1|
 +
@@ -2710,7 +2669,7 @@ If $\symHelper_1$ is approximated by $\tilde{\symHelper}_1 = \symHelper_1\left(1
 \begin{equation}
 \label{equ:h2_approx}
 \tilde{\symHelper}_2 = 
-\frac{\symX+\tilde{\symHelper}_1(1-\tilde{\symHelper}_1)}{\symX+(1-\tilde{\symHelper}_1)}
+\frac{\symX+\tilde{\symHelper}_1(1-\tilde{\symHelper}_1)}{\symX+(1-\tilde{\symHelper}_1)}.
 \end{equation}
 The corresponding relative error $\symError_2$ is given by
 \begin{equation}
@@ -2796,14 +2755,14 @@ According to \eqref{equ:func} the exact estimate $\symXEstimate$ fulfills
 +
 \symCountVariate_{\symRegRange+1}\symHelper\!\left(\frac{\symXEstimate}{2^\symRegRange}\right)
 =
-\symNumReg-\symCountVariate_0
+\symNumReg-\symCountVariate_0.
 \end{equation}
 If $\symHelper$ is not calculated exactly but approximated by $\symHelperApprox$ with maximum relative error $\symError_\symHelper\ll 1$
 \begin{equation}
 \label{equ:abs_error_helper}
 \left|\symHelperApprox(\symX) - \symHelper(\symX) \right|  \leq \symError_\symHelper\symHelper(\symX)
 \end{equation}
-the solution of the equation will be off by a relative error $\symError_\symX$:
+the solution of the equation will be off by some relative error $\symError_\symX$:
 \begin{equation}
 \label{equ:ml_equation}
 \symXEstimate\left(1+\symError_\symX\right)\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}+
@@ -2813,25 +2772,25 @@ the solution of the equation will be off by a relative error $\symError_\symX$:
 \symHelperApprox\!\left(
 \frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegRange}\right)
 =
-\symNumReg-\symCountVariate_0
+\symNumReg-\symCountVariate_0.
 \end{equation}
 Due to \eqref{equ:abs_error_helper} there exists some $\symAlpha \in [-\symError_\symHelper, \symError_\symHelper]$ for which
 \begin{multline}
-\symXEstimate\left(1+\symError_\symX\right)\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}+
-\left(
-1+\symAlpha
-\right)
-\left(
+\symXEstimate\left(1+\symError_\symX\right)\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}
++
+\left(1+\symAlpha\right)
 \sum_{\symRegVal=1}^\symRegRange \symCountVariate_\symRegVal
 \symHelper\!\left(\frac{\symXEstimate\left(1+\symError_\symX\right)
 }{2^\symRegVal}\right)
 +
+\\
++
+\left(1+\symAlpha\right)
 \symCountVariate_{\symRegRange+1}
 \symHelper\!\left(
 \frac{\symXEstimate\left(1+\symError_\symX\right)}{2^\symRegRange}\right)
-\right)
 =
-\symNumReg-\symCountVariate_0
+\symNumReg-\symCountVariate_0.
 \end{multline}
 Since $\symHelper'(\symX)\in[0,0.5]$ for $\symX \geq 0$, there exists a $\symBeta\in[0,0.5]$ for which
 \begin{multline}
@@ -2865,7 +2824,7 @@ Since $\symHelper'(\symX)\in[0,0.5]$ for $\symX \geq 0$, there exists a $\symBet
 \symXEstimate\symError_\symX\symBeta
 \right)
 =
-\symNumReg-\symCountVariate_0
+\symNumReg-\symCountVariate_0.
 \end{multline}
 Subtracting \eqref{equ:max_likelihood_2} multiplied by $\left(1+\symAlpha\right)$ from \eqref{equ:appendix3} and resolving 
 $\symError_\symX$ gives
@@ -2894,7 +2853,7 @@ $\symError_\symX$ gives
 }{2^\symRegRange}
 \right)
 \right)
-}
+}.
 \end{equation}
 Using $\left|\symAlpha\right|\leq\symError_\symHelper$, $\symBeta\geq0$, and \eqref{equ:weak_upper_bound} the absolute value of the relative error
 can be bounded by
@@ -2910,7 +2869,7 @@ can be bounded by
 {
 \symXEstimate
 \sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}
-}
+}.
 \end{equation}
 Furthermore, using \eqref{equ:weak_lower_bound} we finally get
 \begin{equation}
@@ -2951,10 +2910,9 @@ Furthermore, using \eqref{equ:weak_lower_bound} we finally get
 {
 \symNumReg-\symCountVariate_{\symRegRange+1}
 }
-\right)
+\right).
 \end{equation}
-Hence, as long as most registers are not in the saturated state ($\symCountVariate_{\symRegRange+1}\ll\symNumReg$), the relative error $\symError_\symX$ of the calculated estimate using the approximation $\symHelperApprox(\symX)$ for $\symHelper(\symX)$ has the same order of magnitude as $\symError_\symHelper$.
-
+Hence, as long as most registers are not saturated ($\symCountVariate_{\symRegRange+1}\ll\symNumReg$), the relative error $\symError_\symX$ of the calculated estimate using the approximation $\symHelperApprox(\symX)$ for $\symHelper(\symX)$ has the same order of magnitude as $\symError_\symHelper$.
 
 \bibliographystyle{unsrt}
 \bibliography{bibliography.bib}
