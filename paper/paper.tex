@@ -575,7 +575,7 @@ Inserting all these estimators into \eqref{equ:raw_estimate_with_multiplicities}
 \symNumReg\,\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg) + \sum_{\symRegVal=1}^\symRegRange \symCountVariate_\symRegVal 2^{-\symRegVal} + \symNumReg\, \symLargeCorrectionFunc(1-\symCountVariate_{\symRegRange+1}/\symNumReg) 2^{-\symRegRange}
 }
 \end{equation}
-which we call the corrected raw estimator. Here $\symNumReg\,\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg)$ and $2\symNumReg\,\symLargeCorrectionFunc(1-\symCountVariate_{\symRegRange+1}/\symNumReg)$ are replacements for  $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ in the raw estimator \eqref{equ:raw_estimator}, respectively. The functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are defined as
+which we call the improved raw estimator. Here $\symNumReg\,\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg)$ and $2\symNumReg\,\symLargeCorrectionFunc(1-\symCountVariate_{\symRegRange+1}/\symNumReg)$ are replacements for  $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ in the raw estimator \eqref{equ:raw_estimator}, respectively. The functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ are defined as
 \begin{equation}
 \symSmallCorrectionFunc(\symX) := 
 \symX
@@ -606,12 +606,12 @@ We can cross-check the new estimator for the linear counting case with $\symRegR
 \frac{\symNumReg\log\!\left(\symNumReg/\symCountVariate_0\right)}{\symPowerSeriesFunc\!\left(\log_2\!\left(\log\!\left(\symNumReg/\symCountVariate_0\right)\right)\right)}
 \end{equation}
 which is as expected almost identical to the linear counting estimator \eqref{equ:linear_counting_estimator}, because $\symPowerSeriesFunc(\symX)\approx 1$ (see \cref{sec:derivation_raw_estimator}).
-\subsection{Corrected raw estimation algorithm}
-The corrected raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
+\subsection{Improved raw estimation algorithm}
+The improved raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
 The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm.
 
 \begin{algorithm}
-\caption{Cardinality estimation algorithm based on the corrected raw estimator.}
+\caption{Cardinality estimation algorithm based on the improved raw estimator.}
 \label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
@@ -667,13 +667,13 @@ In order to verify the new estimation algorithm, we generated \num{10000} HyperL
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_12_20}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=20$.}
 \label{fig:raw_corrected_estimation_error_12_20}
 \end{figure}
 
-The corrected raw estimator beats the precision of methods that apply bias correction on the raw estimator \cite{Heule2013,Rhodes2015,Sanfilippo2014}.
+The improved raw estimator beats the precision of methods that apply bias correction on the raw estimator \cite{Heule2013,Rhodes2015,Sanfilippo2014}.
 Based on the simulated data we have empirically determined the bias correction function $\symBiasCorrectionFunc$ for the raw estimator that satisfies $\symCardinality = \symExpectation(\symBiasCorrectionFunc(\symCardinalityRawEstimate)\vert\symCardinality)$ for all cardinalities. By definition, 
-the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinalityRawEstimate)$ is unbiased and a function of the raw estimator. Its standard deviation can be compared with that of the corrected raw estimator in \cref{fig:stdev_comparison}. For cardinalities smaller than \num{10000} the empirical bias correction approach is not very precise. This is the reason why all previous approaches had to switch over to the linear counting estimator at some point. The standard deviation of the linear counting estimator is also shown in \cref{fig:stdev_comparison}. Obviously, the previous approaches cannot do better than given by the minimum of both curves for linear counting and raw estimator. In practice, the standard deviation is even larger, because the choice between both estimators must be made based on an estimate and not on the true cardinality, for which the intersection point of both curves represents the ideal transition point. In contrast, the corrected raw estimator performs well over the entire cardinality range.
+the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinalityRawEstimate)$ is unbiased and a function of the raw estimator. Its standard deviation can be compared with that of the improved raw estimator in \cref{fig:stdev_comparison}. For cardinalities smaller than \num{10000} the empirical bias correction approach is not very precise. This is the reason why all previous approaches had to switch over to the linear counting estimator at some point. The standard deviation of the linear counting estimator is also shown in \cref{fig:stdev_comparison}. Obviously, the previous approaches cannot do better than given by the minimum of both curves for linear counting and raw estimator. In practice, the standard deviation is even larger, because the choice between both estimators must be made based on an estimate and not on the true cardinality, for which the intersection point of both curves represents the ideal transition point. In contrast, the improved raw estimator performs well over the entire cardinality range.
 
 \begin{figure}
 \centering
@@ -687,21 +687,21 @@ The new estimation algorithm also works well for other HyperLogLog configuration
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_8_24}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 8$ and $\symRegRange=24$.}
 \label{fig:raw_corrected_estimation_error_8_24}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_16_16}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 16$ and $\symRegRange=16$.}
 \label{fig:raw_corrected_estimation_error_16_16}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_22_10}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 22$ and $\symRegRange=10$.}
 \label{fig:raw_corrected_estimation_error_22_10}
 \end{figure}
 
@@ -711,7 +711,7 @@ replacing the 32-bit hash function by a 64-bit hash function. \cref{fig:raw_corr
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_12_52}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=52$.}
 \label{fig:raw_corrected_estimation_error_12_52}
 \end{figure}
 
@@ -720,13 +720,13 @@ We also evaluated the case $\symPrecision = 12$ and $\symRegRange=14$, which is 
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{raw_corrected_estimate_12_14}
-\caption{Relative error of the corrected raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
+\caption{Relative error of the improved raw estimator as a function of the true cardinality for a HyperLogLog sketch with parameters $\symPrecision = 12$ and $\symRegRange=14$.}
 \label{fig:raw_corrected_estimation_error_12_14}
 \end{figure}
 
 \subsection{Performance}
 \label{sec:corrected_raw_estimation_algorithm}
-In order to evaluate the performance of the corrected raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded precalculated multiplicity vectors of \num{1000} randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to \num{100000} algorithm executions for each cardinality value. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at \SI{3.3}{\giga\hertz}. 
+In order to evaluate the performance of the improved raw estimation algorithm, we investigated the average computation time for estimating the cardinality from a given HyperLogLog sketch. For different cardinalities we loaded precalculated multiplicity vectors of \num{1000} randomly generated HyperLogLog sketches into main memory. The average computation time was determined by cycling over these multiplicity vectors and passing them as input to the algorithm. For each evaluated cardinality value the average execution time was calculated after 100 cycles which corresponds to \num{100000} algorithm executions for each cardinality value. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:corrected_raw_avg_exec_time}. Two variants of \cref{alg:corrected_raw_estimation} have been evaluated for which the functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ have been either calculated on-demand or taken from a lookup table. All these benchmarks where carried out on an Intel Core i5-2500K clocking at \SI{3.3}{\giga\hertz}. 
 
 The results show that the execution times are nearly constant for $\symRegRange=52$. Using a lookup table makes not much difference, because the on-demand calculation for  $\symSmallCorrectionFunc$ is very fast and the calculation of $\symLargeCorrectionFunc$ is rarely needed due to the small probability of saturated registers, $\symProbability(\symCountVariate_{53}>0)\approx 0$, for realistic cardinalities.
 
@@ -1124,9 +1124,9 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 
 \subsection{Estimation error}
 \label{sec:maximum_likelihood_estimation_error}
-In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the corrected raw estimation algorithm. \cref{fig:max_likelihood_estimation_error_12_20}, \cref{fig:max_likelihood_estimation_error_8_24},  \cref{fig:max_likelihood_estimation_error_16_16}, \cref{fig:max_likelihood_estimation_error_22_10}, \cref{fig:max_likelihood_estimation_error_12_52}, and \cref{fig:max_likelihood_estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
+In order to investigate the estimation error for the maximum likelihood estimation algorithm, we investigated the same HyperLogLog configurations as in \cref{sec:corrected_raw_estimation_error} for the improved raw estimation algorithm. \cref{fig:max_likelihood_estimation_error_12_20}, \cref{fig:max_likelihood_estimation_error_8_24},  \cref{fig:max_likelihood_estimation_error_16_16}, \cref{fig:max_likelihood_estimation_error_22_10}, \cref{fig:max_likelihood_estimation_error_12_52}, and \cref{fig:max_likelihood_estimation_error_12_14} show very similar results for various HyperLogLog parameters. 
 
-What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. The standard deviation of the relative error is also slightly better for the maximum likelihood estimator than for the corrected raw estimator as shown in \cref{fig:stdev_comparison}. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
+What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. The standard deviation of the relative error is also slightly better for the maximum likelihood estimator than for the improved raw estimator as shown in \cref{fig:stdev_comparison}. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
 
 \begin{figure}
 \centering
@@ -1171,7 +1171,7 @@ What is different for the maximum likelihood estimation approach is a somewhat s
 \end{figure}
 
 \subsection{Performance}
-We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time for the maximum likelihood algorithm shows a different behavior than for the corrected raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}).As can be seen, the average execution time is larger for most cardinalities, but nevertheless, it never exceeds \SI{700}{\nano\second} which is still fast enough for many applications. The steps in the chart can be explained by different numbers of iteration cycles until the secant method is stopped. For example, at a cardinality value around \num{5000} the average number of required cycles until the stop criterion is met increases abruptly from two to three. More than three iteration cycles have never been observed for any cardinality estimate in this performance test.
+We also measured the performance of \cref{alg:estimate_ml} using the same test setup as described in \cref{sec:corrected_raw_estimation_algorithm}. The results for HyperLogLog configurations $\symPrecision=12, \symRegRange=20$ and $\symPrecision=12, \symRegRange=52$ are shown in \cref{fig:avg_exec_time}. The average computation time for the maximum likelihood algorithm shows a different behavior than for the improved raw estimation algorithm (compare \cref{fig:corrected_raw_avg_exec_time}).As can be seen, the average execution time is larger for most cardinalities, but nevertheless, it never exceeds \SI{700}{\nano\second} which is still fast enough for many applications. The steps in the chart can be explained by different numbers of iteration cycles until the secant method is stopped. For example, at a cardinality value around \num{5000} the average number of required cycles until the stop criterion is met increases abruptly from two to three. More than three iteration cycles have never been observed for any cardinality estimate in this performance test.
 
 \begin{figure}
 \centering
@@ -2363,9 +2363,9 @@ improvementRmseABX=\improvementRmseABX
 \end{table}
 
 \section{Future work}
-As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased estimator for the cardinality. We have shown that this approach works well for the corrected raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
+As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased estimator for the cardinality. We have shown that this approach works well for the improved raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 
-Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the corrected raw estimator which is almost as accurate as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
+Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the improved raw estimator which is almost as accurate as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
 
 The presented maximum likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. As for the inclusion-exclusion principle, the effort would scale exponentially with the number of involved HyperLogLog sketches.
 

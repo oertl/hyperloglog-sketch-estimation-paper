@@ -22,11 +22,11 @@ def readData(filename):
         return numpy.array([[float(e) for e in r] for r in reader][1:])
 
 config = [
-["12_20_max_likelihood_estimates.dat", "blue", False, "maximum likelihood estimator"],
-#["12_20_flajolet_mid_range_estimates.dat", "gray", False, "raw estimator"],
-["12_20_flajolet_mid_range_estimates.dat", "red", True, "subsequently bias corrected raw estimator"],
 ["12_20_flajolet_small_range_estimates.dat", "black", False, "linear counting estimator"],
-["12_20_corrected_raw_estimates.dat", "green", False, "corrected raw estimator"]
+["12_20_flajolet_mid_range_estimates.dat", "red", True, "bias corrected raw estimator"],
+#["12_20_flajolet_mid_range_estimates.dat", "gray", False, "raw estimator"],
+["12_20_corrected_raw_estimates.dat", "green", False, "improved raw estimator"],
+["12_20_max_likelihood_estimates.dat", "blue", False, "maximum likelihood estimator"]
 ]
 
 cardinalities = readData('cardinalities.dat').flatten()
@@ -89,9 +89,7 @@ plt.setp(axins.get_xticklabels(), visible=False)
 mark_inset(ax1, axins, loc1=1, loc2=3, fc="none", ec="0.5")
 
 fig1.savefig('../paper/stdev_comparison.svg', format='svg', dpi=600)
-fig1.savefig('../paper/stdev_comparison.png', format='png', dpi=100)
 plt.close(fig1)
 fig2.savefig('../paper/mean_comparison.svg', format='svg', dpi=600)
-fig2.savefig('../paper/mean_comparison.png', format='png', dpi=100)
 plt.close(fig2)
 
