@@ -102,7 +102,7 @@
 \author{Otmar Ertl \\ otmar.ertl@gmail.com}
 \begin{document}
 \maketitle
-\let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}. The first version of this paper was published on April 17, 2016.}
+\let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}. A first version of this paper was published on April 17, 2016.}
 \begin{abstract}
 This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle a second unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood approach can also be applied to more than a single HyperLogLog sketch. In particular, it is shown that it gives more accurate cardinality estimates for the union, intersection, or relative complements of two sets that are represented by HyperLogLog sketches compared to conventional techniques like the inclusion-exclusion principle. All the new methods are demonstrated and verified by extensive simulations.
 \end{abstract}
@@ -115,9 +115,17 @@ Currently, the most memory efficient algorithm that also works for distributed s
 
 In case the data is not distributed and results do not need to be aggregated further, there are even more efficient estimation algorithms available. On the one hand there is the self-learning bitmap \cite{Chen2011}, and on the other hand there is the HyperLogLog algorithm extended by a historic inverse probability estimator that is continuously updated together with the HyperLogLog sketch \cite{Ting2014, Cohen2014}. Both achieve the same estimation error using less space. However, the estimated cardinality depends on the insertion order of elements and hence cannot be used in a distributed environment. 
 
-%In contrast, HyperLogLog sketches (without historic inverse probability estimator) built from different sets of elements can be merged and the result is identical to a HyperLogLog sketch obtained by inserting all elements of the union set. Therefore, the HyperLogLog sketch inherently supports cardinality estimation of unions. However, there are also applications which require the cardinality estimation of intersections.
+\subsection{Outline}
+In \cref{sec:hyperloglog_data_structure} we give an introduction to HyperLogLog sketches and the corresponding update algorithm. We also discuss how the resulting state can be statistically described and approximated by a Poisson model.
+
+In \cref{sec:cardinality_estimation} we describe the original cardinality estimation algorithm, its shortcomings at low and large cardinalities, and previous approaches to overcome them. We present a simple derivation of the original raw estimator and analyze the root cause for its limited operating range. We derive an improved version of the raw estimator, which leads to a new fast cardinality estimation algorithm that works over the full cardinality range as demonstrated by extensive simulations.
+
+In \cref{sec:max_likelihood_estimation} we derive a second even more precise cardinality estimation algorithm based on the maximum likelihood principle which is again verified by simulations. As presented in \cref{sec:cardinality_estimation_set_intersections} the same approach can be generalized to two HyperLogLog sketches, which allows result cardinality estimation of set operations like intersections or complements. The simulation results show that the estimates are significantly better than those obtained by the inclusion-exclusion principle.
+
+Finally, in \cref{sec:future_work} we discuss open problems and ideas for future work including HyperLogLog's potential use as locality-sensitve hashing algorithm before we conclude in \cref{sec:conclusion}.
 
 \section{HyperLogLog data structure}
+\label{sec:hyperloglog_data_structure}
 The HyperLogLog algorithm uses a sketching data structure that consists of $\symNumReg$ registers. For performance reasons the number of registers $\symNumReg$ is chosen to be a power of 2, $\symNumReg = 2^\symPrecision$. $\symPrecision$ is the precision parameter that directly controls the relative error which scales like $1/\sqrt{\symNumReg}$. All registers start with zero initial value. Each element insertion potentially increases the value of one of these registers. The maximum value a register can reach is a natural bound given either by the output size of the used hash algorithm or the space that is reserved for a single register. Common implementations allocate up to 8 bits per register.
 
 \subsection{Data element insertion}
@@ -742,6 +750,7 @@ The numbers do not yet include the required processing time to extract the multi
 \end{figure}
 
 \section{Maximum likelihood estimation}
+\label{sec:max_likelihood_estimation}
 We know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. Moreover, we know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
 
 For HyperLogLog sketches that have been obtained without stochastic averaging (see \cref{sec:data_element_insertion}) the maximum likelihood method was already previously considered for cardinality estimation \cite{Clifford2012}. However, in this case the register values are statistically independent by nature which 
@@ -2363,6 +2372,7 @@ improvementRmseABX=\improvementRmseABX
 \end{table}
 
 \section{Future work}
+\label{sec:future_work}
 As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased estimator for the cardinality. We have shown that this approach works well for the improved raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 
 Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the improved raw estimator which is almost as accurate as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
@@ -2491,6 +2501,7 @@ Particularly, for the case $D=0.3$, this gives \num{6.72} for conventional minwi
 Since HyperLogLog sketches can be effectively constructed, because only a single hash function evaluation is needed for each item, the preprocessing step would be very fast. In contrast, preprocessing is very costly for minwise hashing, because of the many required permutations \cite{Li2011}. To overcome this problem, one permutation hashing was proposed \cite{Li2012} which keeps for a predefined number of bins the minimum of all values that are mapped to this bin. Actually, this is very similar to the HyperLogLog algorithm. The bins correspond to HyperLogLog registers which keep the first one-bit position of the minimum value instead of the minimum value itself. This close connection was also pointed out in \cite{Cohen2014}, where both methods have been considered as variants of $k$-partion minwise hashing. The only difference is that the HyperLogLog algorithm uses base-2 ranks while one permutation hashing uses full ranks. 
 
 \section{Conclusion}
+\label{sec:conclusion}
 We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches based on the Poisson approximation. For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without dependence on empirically determined bias correction data.
 
 The maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle.
