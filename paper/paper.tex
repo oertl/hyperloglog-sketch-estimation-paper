@@ -172,7 +172,8 @@ At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch can be compress
 \caption{Compression of a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}=(\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$ into a $(\symPrecision', \symRegRange')$-HyperLogLog sketch with $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$.}
 \label{alg:compress}
 \begin{algorithmic}
-\Function {Compress}{\symDataItem, $\boldsymbol{\symRegValVariate}$}
+\Function {Compress}{$\boldsymbol{\symRegValVariate}$}
+\comm{.4}{$\boldsymbol{\symRegValVariate}\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$, $\symNumReg = 2^\symPrecision$}
 \State allocate registers for new HyperLogLog sketch $\boldsymbol{\symRegValVariate}' = (\symRegValVariate_1,\ldots,\symRegValVariate_{2^{\symPrecision'}})$
 \For{$\symIndexI\gets 1, 2^{\symPrecision'}$}
 \State $\symB \gets (\symIndexI-1)\cdot 2^{\symPrecision-\symPrecision'}$
@@ -194,6 +195,7 @@ $}
 \EndIf
 \EndFor
 \State \Return $\boldsymbol{\symRegValVariate}'$
+\comm{.4}{$\boldsymbol{\symRegValVariate}'\in\lbrace 0,1,\ldots,\symRegRange'+1\rbrace^{\symNumReg'}$, $\symNumReg' = 2^{\symPrecision'}$}
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
@@ -359,7 +361,7 @@ The original estimation algorithm as presented in \cite{Flajolet2007} including 
 \label{alg:estimate_original}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symRegValVariate}$}
-\State $\symNumReg \gets \dim \boldsymbol{\symRegValVariate}$
+\comm{.4}{$\boldsymbol{\symRegValVariate}\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$, $\symNumReg = 2^\symPrecision$}
 \State $\symCardinalityRawEstimate = \symAlpha_\symNumReg \symNumReg^2\left(\sum_{\symIndexI=1}^\symNumReg 2^{-\symRegValVariate_\symIndexI}\right)^{\!-1}$
 \comm{.4}{raw estimate \eqref{equ:raw_estimator}}
 \If{$\symCardinalityRawEstimate\leq \frac{5}{2}\symNumReg$}
@@ -615,28 +617,28 @@ We can cross-check the new estimator for the linear counting case with $\symRegR
 \end{equation}
 which is as expected almost identical to the linear counting estimator \eqref{equ:linear_counting_estimator}, because $\symPowerSeriesFunc(\symX)\approx 1$ (see \cref{sec:derivation_raw_estimator}).
 \subsection{Improved raw estimation algorithm}
-The improved raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. The possible value range of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ is $[0, \symNumReg]$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
+The improved raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. Possible values of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ are $\{0,1,\ldots, \symNumReg\}$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
 The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm.
 
 \begin{algorithm}
-\caption{Cardinality estimation algorithm based on the improved raw estimator.}
+\caption{Cardinality estimation based on the improved raw estimator.}
 \label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
-\State $\symNumReg \gets \left\Vert\boldsymbol{\symCountVariate}\right\Vert_1$
+\comm{.45}{$\dim \boldsymbol{\symCountVariate} = \symRegRange + 2$, $\left\Vert\boldsymbol{\symCountVariate}\right\Vert_1 = \symNumReg$}
 \State $\symZ\gets\symNumReg\cdot\symLargeCorrectionFunc(1 - \symCountVariate_{\symRegRange+1}/\symNumReg)$
-\comm{.5}{alternatively, take $\symNumReg\cdot\symLargeCorrectionFunc(1 - \symCountVariate_{\symRegRange+1}/\symNumReg)$ from precalculated lookup table}
+\comm{.45}{alternatively, take $\symNumReg\cdot\symLargeCorrectionFunc(1 - \symCountVariate_{\symRegRange+1}/\symNumReg)$ from precalculated lookup table}
 \For{$\symRegVal\gets \symRegRange, 1$}
 \State $\symZ\gets0.5\cdot\left(\symZ + \symCountVariate_\symRegVal\right)$
 \EndFor
 \State $\symZ\gets\symZ+\symNumReg\cdot\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg)$
-\comm{.5}{alternatively, take $\symNumReg\cdot\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg)$ from precalculated lookup table}
+\comm{.45}{alternatively, take $\symNumReg\cdot\symSmallCorrectionFunc(\symCountVariate_0/\symNumReg)$ from precalculated lookup table}
 \State \Return$\symAlpha_\infty\symNumReg^2 / \symZ$
-\comm{.5}{$\symAlpha_\infty := 1/(2\log(2))$}
+\comm{.45}{$\symAlpha_\infty := 1/(2\log(2))$}
 \EndFunction
 \\
 \Function {$\symSmallCorrectionFunc$}{$\symX$}
-\comm{.5}{$\symX\in[0,1]$}
+\comm{.45}{$\symX\in[0,1]$}
 \If{$\symX=1$}
 \State\Return$\infty$
 \EndIf
@@ -652,7 +654,7 @@ The new estimation algorithm is very elegant, because it does neither contain ma
 \EndFunction
 \\
 \Function {$\symLargeCorrectionFunc$}{$\symX$}
-\comm{0.5}{$\symX\in[0,1]$}
+\comm{0.45}{$\symX\in[0,1]$}
 \State $\symY\gets1$
 \State $\symZ\gets0$
 \Repeat
@@ -1041,12 +1043,12 @@ For very large cardinalities it makes sense to use the strong \eqref{equ:strong_
 is satisfied. The threshold value of $1.5$ was found to be a reasonable choice in order to reduce the computation time for large cardinalities significantly.
 
 \begin{algorithm}
-\caption{Maximum likelihood cardinality estimation.}
+\caption{Cardinality estimation based on the maximum likelihood principle.}
 \ContinuedFloat
 \label{alg:estimate_ml}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
-\State $\symRegRange\gets\dim(\boldsymbol{\symCountVariate})-2$
+\comm{.35}{$\dim \boldsymbol{\symCountVariate} = \symRegRange + 2$, $\left\Vert\boldsymbol{\symCountVariate}\right\Vert_1 = \symNumReg$}
 \State $\symRegValVariate_\text{min} \gets \min\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace$
 \If{$\symRegValVariate_\text{min} > \symRegRange$}
 \State\Return $\infty$
@@ -1055,17 +1057,14 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \State $\symRegValVariate_\text{max} \gets \max\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace$
 \State $\symRegValVariate'_\text{max} \gets \min(\symRegValVariate_\text{max}, \symRegRange)$
 \State $\symZ \gets 0$
-\State $\symNumReg'\gets \symCountVariate_{\symRegRange+1}$
 \State $\symY \gets 2^{-\symRegValVariate'_\text{max}}$
 \For{$\symRegVal \gets \symRegValVariate'_\text{max},\symRegValVariate'_\text{min}$}
 \State $\symZ \gets \symZ + \symCountVariate_\symRegVal\cdot\symY$
 \comm{0.35}{here $\symY = 2^{-\symRegVal}$}
 \State $\symY \gets 2\symY$
-\State $\symNumReg'\gets\symNumReg' + \symCountVariate_\symRegVal$
 \EndFor
 \State
 \comm{0.35}{here $\symZ=\sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal}$}
-\State $\symNumReg \gets \symNumReg' + \symCountVariate_0$ 
 \State $\symCount \gets \symCountVariate_{\symRegRange+1}$
 \If{$\symRegRange\geq 1$}
 \State $\symCount \gets \symCount + \symCountVariate_{\symRegValVariate'_\text{max}}$
@@ -1076,10 +1075,11 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \State $\symB\gets \symZ + 
 \symCountVariate_{\symRegRange+1}\cdot 2^{-\symRegRange}$
 \comm{0.35}{$\symB = \sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal} + \frac{\symCountVariate_{\symRegRange+1}}{2^\symRegRange}$}
+\State $\symNumReg' \gets \symNumReg - \symCountVariate_0$
 \If{$\symB \leq 1.5\cdot\symA$}
 \State $\symX \gets \symNumReg'/(0.5\cdot \symB+\symA)$ \comm{0.35}{weak lower bound \eqref{equ:weak_lower_bound}}
 \Else
-\State $\symX \gets \symNumReg'/b \cdot \log(1+\symB/\symA)$ 
+\State $\symX \gets \symNumReg'/\symB \cdot \log(1+\symB/\symA)$ 
 \comm{0.35}{strong lower bound \eqref{equ:strong_lower_bound}}
 \EndIf
 \algstore{myalg}
@@ -1087,7 +1087,7 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Maximum likelihood cardinality estimation (continued).}
+\caption{Cardinality estimation based on the maximum likelihood principle (continued).}
 \begin{algorithmic}
 \algrestore{myalg}
 \State $\Delta\symX \gets \symX$

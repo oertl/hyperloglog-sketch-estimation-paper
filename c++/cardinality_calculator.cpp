@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
         vector<int> kMaxSum(cardinalities.size());
 
         const MaxLikelihoodEstimator maxLikelihoodEstimator(p,q);
-        const CorrectedRawEstimator correctedRawEstimator(p,q);
+        const ImprovedRawEstimator improvedRawEstimator(p,q);
 
         #pragma omp parallel for
         for(size_t seedCounter = 0; seedCounter < seeds.size(); ++seedCounter) {
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
 
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
-                flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate_on_demand(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
+                flajoletMidRangeEstimatesCorrected[resultPos] = improvedRawEstimator.estimate_on_demand(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
                 //flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate_precalculated(c);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
                 maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);

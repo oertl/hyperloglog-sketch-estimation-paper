@@ -102,12 +102,10 @@ public:
         if (kMin > q) return std::numeric_limits<double>::infinity();
 
         double z = 0.;
-        int mPrime = c[q+1];
         double y = ldexp(1., -kMaxPrime);
         for (int k = kMaxPrime; k >= kMinPrime; --k) {
             z += y*c[k];
             y += y;
-            mPrime += c[k];
         }
 
         int cPrime = c[q+1];
@@ -119,6 +117,7 @@ public:
 
         double x;
         double a = z + c[0];
+        int mPrime = m - c[0];
         {
             double b = z + ldexp(c[q+1], -q);
             if (b <= 1.5*a) {
@@ -215,7 +214,7 @@ double flajoletRawEstimate(const std::vector<int>& c, int m) {
     return (alpha*m)*m/z;
 }
 
-class CorrectedRawEstimator {
+class ImprovedRawEstimator {
     const int p;
     const int q;
     const int m = 1 << p;
@@ -274,7 +273,7 @@ class CorrectedRawEstimator {
 
 public:
 
-    CorrectedRawEstimator(const int p_, const int q_) : p(p_), q(q_) {}
+    ImprovedRawEstimator(const int p_, const int q_) : p(p_), q(q_) {}
 
     double estimate_on_demand(const std::vector<int>& c, int& numSmallCorrectionIterations, int& numLargeCorrectionIterations) const {
 
