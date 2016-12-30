@@ -618,7 +618,8 @@ We can cross-check the new estimator for the linear counting case with $\symRegR
 which is as expected almost identical to the linear counting estimator \eqref{equ:linear_counting_estimator}, because $\symPowerSeriesFunc(\symX)\approx 1$ (see \cref{sec:derivation_raw_estimator}).
 \subsection{Improved raw estimation algorithm}
 The improved raw estimator \eqref{equ:correctedestimator} leads to a new cardinality estimation algorithm for HyperLogLog sketches. \cref{alg:corrected_raw_estimation} demonstrates the numerical evaluation of the estimator. The values of functions $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$ can be either calculated on-demand or pre-calculated. Possible values of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$ are $\{0,1,\ldots, \symNumReg\}$. Therefore, if performance matters, the function values can be precalculated for all possible arguments and kept in lookup tables of size $\symNumReg+1$.
-The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm.
+
+The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm. Moreover, the algorithm guarantees monotonicity of the cardinality estimate. The estimate will never become smaller when adding new elements. Although this sounds self-evident, previous approaches that combine estimators for different cardinality ranges or make use of empirical collected data have problems to satisfy this property throughout all cardinalities.
 
 \begin{algorithm}
 \caption{Cardinality estimation based on the improved raw estimator.}
