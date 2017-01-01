@@ -136,7 +136,7 @@ In order to insert a data element into a HyperLogLog data structure a hash value
 \caption{Insertion of a data element $\symDataItem$ into a HyperLogLog data structure that consists of $\symNumReg=2^\symPrecision$ registers. All registers $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$ have zero initial value and remain in the range $[0, \symRegRange+1]$.}
 \label{alg:insert}
 \begin{algorithmic}
-\Procedure {InsertElement}{\symDataItem, $\boldsymbol{\symRegValVariate}$}
+\Procedure {InsertElement}{\symDataItem}
 \State $\langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision,\symBitRepB_1,\ldots,\symBitRepB_\symRegRange\rangle_2 \gets$ $(\symPrecision + \symRegRange)$-bit hash value of $\symDataItem$
 \comm{0.2}{$\symBitRepA_\symIndexI,\symBitRepB_\symIndexI\in\{0,1\}$}
 \State $\symIndexI \gets 1+ \langle \symBitRepA_1, \ldots, \symBitRepA_\symPrecision\rangle_2$
@@ -226,7 +226,23 @@ where $\symCardinality$ is the cardinality. The $\symCardinality$ distinct eleme
 \end{equation}
 
 The order of register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ is not important for the estimation of the cardinality. More formally, the multiset $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace$ is a sufficient statistic for $\symCardinality$.
-Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the multiset can also be represented as $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace = 0^{\symCountVariate_0}1^{\symCountVariate_1}\cdots\symRegRange^{\symCountVariate_{\symRegRange}}(\symRegRange+1)^{\symCountVariate_{\symRegRange+1}}$ where $\symCountVariate_\symRegVal$ is the multiplicity of value $\symRegVal$. As a consequence, the multiplicity vector $\boldsymbol{\symCountVariate} := (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ is also a sufficient statistic for the cardinality. In addition, this vector contains all the information about the HyperLogLog sketch that is required for cardinality estimation. The two HyperLogLog parameters can be obtained by $\symPrecision = \log_2 \left\Vert\boldsymbol{\symCountVariate}\right\Vert_1$ and $\symRegRange=\dim\boldsymbol{\symCountVariate}-2$, respectively.
+Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the multiset can also be represented as $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace = 0^{\symCountVariate_0}1^{\symCountVariate_1}\cdots\symRegRange^{\symCountVariate_{\symRegRange}}(\symRegRange+1)^{\symCountVariate_{\symRegRange+1}}$ where $\symCountVariate_\symRegVal$ is the multiplicity of value $\symRegVal$. As a consequence, the multiplicity vector $\boldsymbol{\symCountVariate} := (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ is also a sufficient statistic for the cardinality. In addition, this vector contains all the information about the HyperLogLog sketch that is required for cardinality estimation. The two HyperLogLog parameters can be obtained by $\symPrecision = \log_2 \left\Vert\boldsymbol{\symCountVariate}\right\Vert_1$ and $\symRegRange=\dim\boldsymbol{\symCountVariate}-2$, respectively. As \cref{alg:sufficient_statistic} shows the calculation of the multiplicity vector $\boldsymbol{\symCountVariate}$ for a given HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}$ is straightforward.
+
+\begin{algorithm}
+\caption{Multiplicity vector extraction from a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with $\symNumReg=2^\symPrecision$ registers having values $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$.} 
+\label{alg:sufficient_statistic}
+\begin{algorithmic}
+\Function {ExtractMultiplicities}{$\boldsymbol{\symRegValVariate}$}
+\comm{.4}{$\boldsymbol{\symRegValVariate}\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
+\State $\boldsymbol{\symCountVariate}\gets \left(0,0,\ldots, 0\right)$
+\comm{.4}{$\boldsymbol{\symCountVariate} = (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$}
+\For{$\symIndexI\gets 1, \symNumReg$}
+\State $\symCountVariate_{\symRegValVariate_\symIndexI} \gets \symCountVariate_{\symRegValVariate_\symIndexI} + 1$
+\EndFor
+\State \Return $\boldsymbol{\symCountVariate}$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Poisson approximation}
 \label{sec:poisson_approximation}
@@ -622,7 +638,7 @@ The improved raw estimator \eqref{equ:correctedestimator} leads to a new cardina
 The new estimation algorithm is very elegant, because it does neither contain magic numbers nor special cases as the original algorithm. Moreover, the algorithm guarantees monotonicity of the cardinality estimate. The estimate will never become smaller when adding new elements. Although this sounds self-evident, previous approaches that combine estimators for different cardinality ranges or make use of empirical collected data have problems to satisfy this property throughout all cardinalities.
 
 \begin{algorithm}
-\caption{Cardinality estimation based on the improved raw estimator.}
+\caption{Cardinality estimation based on the improved raw estimator. The input is the multiplicity vector $\boldsymbol{\symCountVariate} = (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ as obtained by \cref{alg:sufficient_statistic}.}
 \label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
@@ -1044,7 +1060,7 @@ For very large cardinalities it makes sense to use the strong \eqref{equ:strong_
 is satisfied. The threshold value of $1.5$ was found to be a reasonable choice in order to reduce the computation time for large cardinalities significantly.
 
 \begin{algorithm}
-\caption{Cardinality estimation based on the maximum likelihood principle.}
+\caption{Cardinality estimation based on the maximum likelihood principle. The input is the multiplicity vector $\boldsymbol{\symCountVariate} = (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ as obtained by \cref{alg:sufficient_statistic}.}
 \ContinuedFloat
 \label{alg:estimate_ml}
 \begin{algorithmic}
@@ -1088,7 +1104,7 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Cardinality estimation based on the maximum likelihood principle (continued).}
+\caption{(continued)}
 \begin{algorithmic}
 \algrestore{myalg}
 \State $\Delta\symX \gets \symX$
