@@ -14,7 +14,13 @@
 #include <cstdlib>
 #include <functional>
 
+#ifdef CARDINALITY_ESTIMATION_USE_CERES
+#include "ceres/ceres.h"
+#endif
+
+#ifdef CARDINALITY_ESTIMATION_USE_DLIB
 #include "dlib/optimization.h"
+#endif
 
 #include "two_hyperloglog_statistic.hpp"
 
@@ -29,50 +35,6 @@ int getPFromNumberRegisters(int m) {
 int getPFromCounts(const std::vector<int>& c) {
     int m = std::accumulate(c.begin(), c.end(), 0);
     return getPFromNumberRegisters(m);
-}
-
-
-double estimateCardinalityFromCdf(const std::vector<double> cdf, int m) {
-    int q = cdf.size() - 1;
-
-    if (cdf[0] >= 1.) std::numeric_limits<double>::infinity();
-
-    double lowerTail = 0;
-    {
-        double arg = cdf[0];
-        double pow2 = 1;
-        while(true) {
-            const double lowerTailBak = lowerTail;
-            lowerTail += pow2 * arg;
-            if (lowerTail == lowerTailBak) break;
-            pow2 += pow2;
-            arg *= arg;
-        }
-    }
-
-    double upperTail = 0;
-    {
-        double arg = std::sqrt(cdf[cdf.size()-1]);
-        double pow2 = 0.5;
-        while(true) {
-            const double upperTailBak = upperTail;
-            upperTail += pow2 * arg;
-            if (upperTail == upperTailBak) break;
-            pow2 *= 0.5;
-            arg = std::sqrt(arg);
-        }
-    }
-
-    double sum = upperTail;
-    for (int k = q; k >= 1; --k) {
-        sum += cdf[k];
-        sum *= 0.5;
-    }
-
-    sum += lowerTail;
-
-    return (m/std::log(2))/sum;
-
 }
 
 class MaxLikelihoodEstimator {
@@ -420,22 +382,17 @@ void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& j
 }
 
 
-
-class LogLikelihoodFunctionForDlib {
+class JointLogLikelihoodFunction {
 
     const TwoHyperLogLogStatistic& jointStatistic;
-    int numEvaluations = 0;
-    double fa;
-    double fb;
-    double fx;
-    bool status = false;
     const int q;
+    std::vector<double> pow2k;
+    std::size_t* numFunctionEvaluations;
+    std::size_t* numGradientEvaluations;
 
     double linTermA, linTermB, linTermX;
 
-    std::vector<double> pow2k;
-
-    static void calcExp(double x, double& y, double& z) {
+    static void calcExp(double x, double& y, double& z, double& xy) {
         static const double ln2 = std::log(2);
         if (x >= ln2) {
             y = std::exp(-x);
@@ -445,17 +402,30 @@ class LogLikelihoodFunctionForDlib {
             z = -std::expm1(-x);
             y = 1 - z;
         }
+        if (y > 0) {
+            xy = x * y;
+        }
+        else {
+            xy = 0;
+        }
     }
 
-    // the minimum of this function gives the max likelihood estimate
-    void eval_joint_log_likelihood_function_and_derivatives(
+public:
+
+    void evaluate(
         const double phiA,
         const double phiB,
         const double phiX,
+        const bool calculateGradient,
         double& f,
         double& fa,
         double& fb,
-        double& fx) {
+        double& fx) const {
+
+        (*numFunctionEvaluations) += 1;
+        if (calculateGradient) {
+            (*numGradientEvaluations) += 1;
+        }
 
         const double expPhiA = std::exp(phiA);
         const double expPhiB = std::exp(phiB);
@@ -474,58 +444,63 @@ class LogLikelihoodFunctionForDlib {
             int cLarger2 = jointStatistic.getLarger2Count(k);
             int cEqual = jointStatistic.getEqualCount(k);
 
-            double xa = 0, ya = 0, za = 0;
-            double xb = 0, yb = 0, zb = 0;
-            double xx = 0, yx = 0, zx = 0;
+            double ya = 0, za = 0, xaya = 0;
+            double yb = 0, zb = 0, xbyb = 0;
+            double yx = 0, zx = 0, xxyx = 0;
 
             if (cSmaller1 > 0 || cEqual > 0 || cLarger1 > 0) {
-                xa = expPhiA * pow2k[k];
-                calcExp(xa, ya, za);
+                double xa = expPhiA * pow2k[k];
+                calcExp(xa, ya, za, xaya);
             }
             if (cSmaller2 > 0 || cEqual > 0 || cLarger2 > 0) {
-                xb = expPhiB * pow2k[k];
-                calcExp(xb, yb, zb);
+                double xb = expPhiB * pow2k[k];
+                calcExp(xb, yb, zb, xbyb);
             }
             if (cSmaller1 > 0 || cEqual > 0 || cSmaller2 > 0) {
-                xx = expPhiX * pow2k[k];
-                calcExp(xx, yx, zx);
+                double xx = expPhiX * pow2k[k];
+                calcExp(xx, yx, zx, xxyx);
             }
 
             if (cSmaller1 > 0) {
-                double arg = zx + yx*za;
+                double arg = zx + yx * za;
                 f  += cSmaller1 * std::log(arg);
-                double tmp = cSmaller1 * ya * yx / arg;
-                fa += tmp * xa;
-                fx += tmp * xx;
+                if (calculateGradient) {
+                    double tmp = cSmaller1 / arg;
+                    fa += tmp * yx * xaya;
+                    fx += tmp * ya * xxyx;
+                }
             }
 
             if (cLarger1 > 0) {
                 f  += cLarger1 * std::log(za);
-                fa += cLarger1 * ya * xa / za;
+                if (calculateGradient) fa += cLarger1 * xaya / za;
             }
 
             if (cSmaller2 > 0) {
-                double arg = zx + yx*zb;
+                double arg = zx + yx * zb;
                 f  += cSmaller2 * std::log(arg);
-                double tmp = cSmaller2 * yb * yx / arg;
-                fb += tmp * xb;
-                fx += tmp * xx;
+                if (calculateGradient) {
+                    double tmp = cSmaller2 / arg;
+                    fb += tmp * yx * xbyb;
+                    fx += tmp * yb * xxyx;
+                }
             }
 
             if (cLarger2 > 0) {
                 f  += cLarger2 * std::log(zb);
-                fb += cLarger2 * yb * xb / zb;
+                if (calculateGradient) fb += cLarger2 * xbyb / zb;
             }
 
             if (cEqual > 0) {
                 double arg = za * zb * yx + zx;
                 f  += cEqual * std::log(arg);
-                double yazb = ya*zb;
-                double ybza = yb*za;
-                double tmp = cEqual * yx / arg;
-                fa += tmp * yazb * xa;
-                fb += tmp * ybza * xb;
-                fx += tmp * (ya + ybza) * xx;
+                if (calculateGradient) {
+                    double tmp = cEqual / arg;
+                    double tmpyx = tmp * yx;
+                    fa += tmpyx * zb * xaya;
+                    fb += tmpyx * za * xbyb;
+                    fx += tmp * (ya + yb * za) * xxyx;
+                }
             }
         }
 
@@ -540,10 +515,13 @@ class LogLikelihoodFunctionForDlib {
     }
 
 public:
-    LogLikelihoodFunctionForDlib(const TwoHyperLogLogStatistic& jointStatistic_) :
+
+    JointLogLikelihoodFunction(const TwoHyperLogLogStatistic& jointStatistic_) :
         jointStatistic(jointStatistic_),
         q(jointStatistic_.getQ()),
-        pow2k(q+2) {
+        pow2k(q+2),
+        numFunctionEvaluations(new std::size_t(0)),
+        numGradientEvaluations(new std::size_t(0)) {
 
         pow2k[q] = ldexp(1., -q);
         pow2k[q+1] = pow2k[q];
@@ -572,11 +550,170 @@ public:
         linTermX += jointStatistic.getMinCount(0);
     }
 
+    ~JointLogLikelihoodFunction() {
+        delete numFunctionEvaluations;
+        delete numGradientEvaluations;
+    }
+
+    std::size_t getNumFunctionEvaluations() const {
+        return *numFunctionEvaluations;
+    }
+
+    std::size_t getNumGradientEvaluations() const {
+        return *numGradientEvaluations;
+    }
+};
+
+void estimateInitialCardinalities(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, bool& isOptimum) {
+
+    isOptimum = false;
+
+    const int m = jointStatistic.getNumRegisters();
+
+    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
+    const double cardinalityAX = estimator(jointStatistic.get1Counts());
+    const double cardinalityBX = estimator(jointStatistic.get2Counts());
+
+    if(jointStatistic.getMinCount(0) == m) {
+        cardinalityX = 0;
+        cardinalityA = cardinalityAX;
+        cardinalityB = cardinalityBX;
+        isOptimum = true;
+        return;
+    }
+    if(jointStatistic.getMinCounts() == jointStatistic.get1Counts()) {
+        cardinalityA = 0;
+        cardinalityB = std::max(0., cardinalityBX - cardinalityAX);
+        cardinalityX = cardinalityAX;
+        return;
+    }
+    if(jointStatistic.getMinCounts() == jointStatistic.get2Counts()) {
+        cardinalityB = 0;
+        cardinalityA = std::max(0., cardinalityAX - cardinalityBX);
+        cardinalityX = cardinalityBX;
+        return;
+    }
+
+    const double cardinalityABX = estimator(jointStatistic.getMaxCounts());
+
+    cardinalityA = std::max(1., cardinalityABX - cardinalityBX);
+    cardinalityB = std::max(1., cardinalityABX - cardinalityAX);
+    cardinalityX = std::max(1., cardinalityAX + cardinalityBX - cardinalityABX);
+
+}
+
+#ifdef CARDINALITY_ESTIMATION_USE_CERES
+
+class LogLikelihoodFunctionForCeres : public ceres::FirstOrderFunction {
+
+    const JointLogLikelihoodFunction& _logLikelihoodFunction;
+
+public:
+
+    LogLikelihoodFunctionForCeres(const JointLogLikelihoodFunction& logLikelihoodFunction) : _logLikelihoodFunction(logLikelihoodFunction) {}
+
+    virtual bool Evaluate(const double* parameters, double* cost, double* gradient) const {
+
+        const double phiA = parameters[0];
+        const double phiB = parameters[1];
+        const double phiX = parameters[2];
+
+        double f, fa, fb, fx;
+        _logLikelihoodFunction.evaluate(phiA, phiB, phiX, gradient != NULL, f, fa, fb, fx);
+
+        cost[0] = -f;
+        if (gradient != NULL) {
+            gradient[0] = -fa;
+            gradient[1] = -fb;
+            gradient[2] = -fx;
+        }
+        return true;
+    }
+
+    virtual int NumParameters() const { return 3; }
+
+};
+
+class TerminationCheckingCallback : public ceres::IterationCallback {
+    const double eps_;
+public:
+    TerminationCheckingCallback(double eps ) : eps_(eps) {}
+
+    ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary) {
+
+        if (summary.step_is_successful && summary.step_norm <= eps_) {
+            return ceres::SOLVER_TERMINATE_SUCCESSFULLY;
+        }
+        return ceres::SOLVER_CONTINUE;
+    }
+};
+
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, std::size_t& numFunctionEvaluations, std::size_t& numGradientEvaluations) {
+
+    const double eps = 1e-2;
+    const int m = jointStatistic.getNumRegisters();
+    const double relativeErrorLimit = eps/(sqrt(m));
+
+    const double zeroPhi = 2 * std::log(std::numeric_limits<double>::min());
+    assert(std::exp(zeroPhi) == 0);
+
+    bool isOptimum;
+    estimateInitialCardinalities(jointStatistic, cardinalityA, cardinalityB, cardinalityX, isOptimum);
+    if (isOptimum) {
+        numFunctionEvaluations = 0;
+        numGradientEvaluations = 0;
+        return;
+    }
+
+    double phiA = (cardinalityA > 0)?std::log(cardinalityA/m):zeroPhi;
+    double phiB = (cardinalityB > 0)?std::log(cardinalityB/m):zeroPhi;
+    double phiX = (cardinalityX > 0)?std::log(cardinalityX/m):zeroPhi;
+    double parameters[3] = {phiA, phiB, phiX};
+
+    JointLogLikelihoodFunction logLikelihoodFunction(jointStatistic);
+
+    ceres::GradientProblem problem(new LogLikelihoodFunctionForCeres(logLikelihoodFunction));
+    ceres::GradientProblemSolver::Options options;
+    options.line_search_direction_type = ceres::BFGS;
+    options.function_tolerance = 0;
+    options.gradient_tolerance = 0;
+    options.parameter_tolerance = 0;
+    options.logging_type = ceres::SILENT;
+    TerminationCheckingCallback callback(relativeErrorLimit);
+    options.callbacks.push_back(&callback);
+
+    ceres::GradientProblemSolver::Summary summary;
+    ceres::Solve(options, problem, parameters, &summary);
+    numFunctionEvaluations = logLikelihoodFunction.getNumFunctionEvaluations();
+    numGradientEvaluations = logLikelihoodFunction.getNumGradientEvaluations();
+    assert(summary.termination_type == ceres::USER_SUCCESS || summary.termination_type == ceres::CONVERGENCE);
+
+    cardinalityA = std::exp(parameters[0]) * m;
+    cardinalityB = std::exp(parameters[1]) * m;
+    cardinalityX = std::exp(parameters[2]) * m;
+}
+
+#endif
+
+#ifdef CARDINALITY_ESTIMATION_USE_DLIB
+
+
+class LogLikelihoodFunctionForDlib {
+
+    const JointLogLikelihoodFunction& _logLikelihoodFunction;
+    double fa;
+    double fb;
+    double fx;
+    bool status = false;
+
+public:
+    LogLikelihoodFunctionForDlib(const JointLogLikelihoodFunction& logLikelihoodFunction) :
+        _logLikelihoodFunction(logLikelihoodFunction) {}
+
     double value(const dlib::matrix<double,3,1>& x) {
         assert(status == false); // check if value and derivative are alternately called
         double f;
-        eval_joint_log_likelihood_function_and_derivatives(x(0), x(1), x(2), f, fa, fb, fx);
-        numEvaluations += 1;
+        _logLikelihoodFunction.evaluate(x(0), x(1), x(2), true, f, fa, fb, fx);
         status = true;
         return f;
     }
@@ -585,10 +722,6 @@ public:
         assert(status == true); // check if value and derivative are alternately called
         status = false;
         return {fa, fb, fx};
-    }
-
-    int getNumEvaluations() const {
-        return numEvaluations;
     }
 
 };
@@ -615,54 +748,48 @@ public:
 };
 
 
-
-void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, int& numEvaluations) {
+void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX, std::size_t& numFunctionEvaluations, std::size_t& numGradientEvaluations) {
 
     const double eps = 1e-2;
 
     const int m = jointStatistic.getNumRegisters();
     const double relativeErrorLimit = eps/(sqrt(m));
 
-    numEvaluations = 0;
+    const double zeroPhi = 2 * std::log(std::numeric_limits<double>::min());
+    assert(std::exp(zeroPhi) == 0);
 
-    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
-
-    double cardinalityAX = estimator(jointStatistic.get1Counts());
-    double cardinalityBX = estimator(jointStatistic.get2Counts());
-
-    // special handling, the sets A u X and B u X are disjoint, therefore X = O
-    if (jointStatistic.getMinCount(0) == m) {
-        cardinalityX = 0;
-        cardinalityA = cardinalityAX;
-        cardinalityB = cardinalityBX;
+    bool isOptimum;
+    estimateInitialCardinalities(jointStatistic, cardinalityA, cardinalityB, cardinalityX, isOptimum);
+    if (isOptimum) {
+        numFunctionEvaluations = 0;
+        numGradientEvaluations = 0;
         return;
     }
-    double cardinalityABX = estimator(jointStatistic.getMaxCounts());
 
-    // set initial vector using inclusion exclusion principle
-    double initCardinalityA = std::max(1., cardinalityABX - cardinalityBX);
-    double initCardinalityB = std::max(1., cardinalityABX - cardinalityAX);
-    double initCardinalityX = std::max(1., cardinalityAX + cardinalityBX - cardinalityABX);
+    double phiA = (cardinalityA > 0)?std::log(cardinalityA/m):zeroPhi;
+    double phiB = (cardinalityB > 0)?std::log(cardinalityB/m):zeroPhi;
+    double phiX = (cardinalityX > 0)?std::log(cardinalityX/m):zeroPhi;
 
-    double phiA = std::log(initCardinalityA/m);
-    double phiB = std::log(initCardinalityB/m);
-    double phiX = std::log(initCardinalityX/m);
+    JointLogLikelihoodFunction logLikelihoodFunction(jointStatistic);
 
-    LogLikelihoodFunctionForDlib logLikelihoodFunction(jointStatistic);
+    LogLikelihoodFunctionForDlib logLikelihoodFunctionForDlib(logLikelihoodFunction);
 
     dlib::matrix<double,3,1> starting_point = {phiA, phiB, phiX};
     dlib::find_max(
         dlib::bfgs_search_strategy(),  // Use BFGS search algorithm
         StopStrategy(relativeErrorLimit),
-        std::bind(&LogLikelihoodFunctionForDlib::value, std::ref(logLikelihoodFunction), std::placeholders::_1),
-        std::bind(&LogLikelihoodFunctionForDlib::derivative, std::ref(logLikelihoodFunction), std::placeholders::_1),
+        std::bind(&LogLikelihoodFunctionForDlib::value, std::ref(logLikelihoodFunctionForDlib), std::placeholders::_1),
+        std::bind(&LogLikelihoodFunctionForDlib::derivative, std::ref(logLikelihoodFunctionForDlib), std::placeholders::_1),
         starting_point,
         std::numeric_limits<double>::infinity());
 
     cardinalityA = std::exp(starting_point(0)) * m;
     cardinalityB = std::exp(starting_point(1)) * m;
     cardinalityX = std::exp(starting_point(2)) * m;
-    numEvaluations = logLikelihoodFunction.getNumEvaluations();
+    numFunctionEvaluations = logLikelihoodFunction.getNumFunctionEvaluations();
+    numGradientEvaluations = logLikelihoodFunction.getNumGradientEvaluations();
 }
+
+#endif
 
 #endif // _CARDINALITY_ESTIMATION_HPP_

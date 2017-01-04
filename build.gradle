@@ -297,6 +297,7 @@ task buildJointCardinalityCalculation(type: Exec) {
     outputs.files "$project.cppDir/joint_cardinality_calculation"
     standardOutput = new ByteArrayOutputStream()
     commandLine 'g++','-std=c++11','-Wall','joint_cardinality_calculation.cpp','-Ofast','-march=native','-o','joint_cardinality_calculation'
+    // commandLine 'g++','-std=c++11','-I/usr/include/eigen3','-Wall','joint_cardinality_calculation.cpp','-Ofast','-march=native','-lceres','-lglog','-fopenmp','-lblas','-llapack','-lcholmod', '-o','joint_cardinality_calculation'
 }
 
 task doJointCardinalityCalculation(type: Exec) {

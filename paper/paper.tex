@@ -232,7 +232,7 @@ Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the 
 \caption{Multiplicity vector extraction from a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with $\symNumReg=2^\symPrecision$ registers having values $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$.} 
 \label{alg:sufficient_statistic}
 \begin{algorithmic}
-\Function {ExtractMultiplicities}{$\boldsymbol{\symRegValVariate}$}
+\Function {ExtractCounts}{$\boldsymbol{\symRegValVariate}$}
 \comm{.4}{$\boldsymbol{\symRegValVariate}\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
 \State $\boldsymbol{\symCountVariate}\gets \left(0,0,\ldots, 0\right)$
 \comm{.4}{$\boldsymbol{\symCountVariate} = (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$}
@@ -2212,7 +2212,7 @@ trueCardB=\trueCardB,
 trueCardX=\trueCardX,
 trueJaccardIdx=\trueJaccardIdx,
 trueRatio=\trueRatio,
-avgNumEvaluations=\avgNumEvaluations
+avgNumFunctionEvaluations=\avgNumFunctionEvaluations
 }{
 \thecsvrow & 
 \num{\trueCardA} & 
@@ -2220,7 +2220,7 @@ avgNumEvaluations=\avgNumEvaluations
 \num{\trueCardX} & 
 \numformat{\trueJaccardIdx} & 
 \numformattwo{\trueRatio} &
-\numformattwo{\avgNumEvaluations}
+\numformattwo{\avgNumFunctionEvaluations}
 }
 \end{table}
 
