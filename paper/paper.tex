@@ -1730,16 +1730,16 @@ $(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \bolds
 $(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$. In contrast, the maximum likelihood method incorporates each value of the sufficient statistic \eqref{equ:sufficient_joint_statistic} individually.
 
 \subsection{Computation of the maximum likelihood estimates}
-The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=\symNumReg e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
+The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
 
 The transformed log-likelihood function can be written as
 \begin{multline}
 \label{equ:max_likelihood_phi_func}
 \symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix):=
 \log \symLikelihood(
-\symNumReg e^{\symPhi_\symSetASuffix},
-\symNumReg e^{\symPhi_\symSetBSuffix},
-\symNumReg e^{\symPhi_\symSetXSuffix}
+e^{\symPhi_\symSetASuffix},
+e^{\symPhi_\symSetBSuffix},
+e^{\symPhi_\symSetXSuffix}
 \vert
 \boldsymbol{\symRegValVariate}_1,
 \boldsymbol{\symRegValVariate}_2
@@ -1833,7 +1833,7 @@ The transformed log-likelihood function can be written as
 Here we introduced the following expressions for simplification:
 \begin{equation}
 \label{equ:definition_xyz}
-\symX_{\ast\symRegVal} :=\frac{e^{\symPhi_\ast}}{2^{\symRegVal}},\quad
+\symX_{\ast\symRegVal} :=\frac{e^{\symPhi_\ast}}{\symNumReg 2^{\symRegVal}},\quad
 \symY_{\ast\symRegVal} := e^{-\symX_{\ast\symRegVal}},\quad
 \symZ_{\ast\symRegVal} := 1 - \symY_{\ast\symRegVal}.
 \end{equation}
@@ -2092,20 +2092,15 @@ Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuf
 $.
 For the last inequality we used $1-e^{-\symX}\geq\frac{1}{2}\min(1,\symX)$. The derived lower bound shows that the argument of the logarithm is large enough to be accurately represented by double-precision floating-point numbers, provided that $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetXSuffix$ are not both substantially smaller than 1. Similar argumentation holds for all other logarithmic terms and also the divisions that appear in \eqref{equ:df_dphi}.
 
-\cref{alg:joint_cardinality_estimation} demonstrates the calculation of the estimates given $\boldsymbol\symCountVariate^{>}_{1}$,
+\cref{alg:joint_cardinality_estimation} demonstrates the calculation of the estimates given the register values $\boldsymbol\symRegValVariate_{1}$ and 
+$\boldsymbol\symRegValVariate_{2}$ of both HyperLogLog sketches. First, the sufficient statistic consisting of $\boldsymbol\symCountVariate^{>}_{1}$,
 $\boldsymbol\symCountVariate^{<}_{1}$,
 $\boldsymbol\symCountVariate^{>}_{2}$,
 $\boldsymbol\symCountVariate^{<}_{2}$, and
-$\boldsymbol\symCountVariate^{=}$. First, a case is distinguished, where
+$\boldsymbol\symCountVariate^{=}$ is extracted. Next, a case is distinguished, where
 all registers have a value equal to zero in at least one of both HyperLogLog sketches, that is $\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$. In this case it is certain that the HyperLogLog sketches represent disjoint sets and their corresponding  cardinality estimates can be  used for $\symPoissonRateEstimate_{\symSetASuffix}$ and $\symPoissonRateEstimate_{\symSetBSuffix}$, respectively.
 
-%TODO
-
-%The initial guess values are important to ensure fast convergence of the optimization algorithm. An obvious choice are the cardinality estimates obtained by using the conventional approach \eqref{equ:conventional_approach}. 
-
-%As demonstrated by we In all other cases, the maximum likelihood estimates for $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$ will be non-zero. We use the conventional approach to get start values for the estimates of $\symPoissonRate_\symSetASuffix$, $\symPoissonRate_\symSetBSuffix$, and $\symPoissonRate_\symSetXSuffix$, respectively. However, in order to ensure that the values are positive we restrict them to values greater than or equal to 1.
-
-For the general case the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007} can be applied, which is a very popular algorithm for non-linear optimization problems. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}.
+For the general case, the three-dimensional function $\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix)$ needs to be optimized numerically. A very popular algorithm for such non-linear optimization problems is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007}. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}. Good initial guess values are important to ensure fast convergence for the optimization algorithm. An obvious choice are the cardinality estimates obtained by the conventional approach \eqref{equ:conventional_approach}. However, in order to ensure that their logarithms are defined, we require that the initial values are not smaller than 1. Within the optimization loop the function $\symFunc$ and its gradient $\nabla\symFunc$ need to evaluated using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by the optimization algorithm. The optimization loop is continued as long as the absolute change of at least one parameter is larger than a predefined threshold. The threshold is again set proportional to $1/\sqrt{\symNumReg}$ (compare \cref{sec:comp_ml_estimate}).
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2113,40 +2108,88 @@ For the general case the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite
 \begin{algorithmic}
 \Function {EstimateCardinalities}
 {
-$\boldsymbol\symCountVariate^{>}_{1}$,
-$\boldsymbol\symCountVariate^{<}_{1}$,
-$\boldsymbol\symCountVariate^{>}_{2}$,
-$\boldsymbol\symCountVariate^{<}_{2}$,
-$\boldsymbol\symCountVariate^{=}$
+$\boldsymbol\symRegValVariate_{1}$,
+$\boldsymbol\symRegValVariate_{2}$
 }
-\State $\symNumReg\gets
-\left\Vert\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}\right\Vert_1$
+\comm{.32}{$\boldsymbol{\symRegValVariate}_1,\boldsymbol{\symRegValVariate}_2\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
+\State 
+$\boldsymbol\symCountVariate^{>}_{1}\gets 0$,
+$\boldsymbol\symCountVariate^{<}_{1}\gets 0$,
+$\boldsymbol\symCountVariate^{>}_{2}\gets 0$,
+$\boldsymbol\symCountVariate^{<}_{2}\gets 0$,
+$\boldsymbol\symCountVariate^{=}\gets 0$
+\comm{.32}{$\boldsymbol\symCountVariate^{>}_{1},
+\boldsymbol\symCountVariate^{<}_{1},
+\boldsymbol\symCountVariate^{>}_{2},
+\boldsymbol\symCountVariate^{<}_{2},
+\boldsymbol\symCountVariate^{=}\\\in\lbrace 0, 1, \ldots,\symNumReg\rbrace^{\symRegRange+1}$}
+\For{$\symIndexI\gets 1, \symNumReg$}
+\If{$\symRegValVariate_{1\symIndexI}
+<
+\symRegValVariate_{2\symIndexI}$}
+\State $\symCountVariate^{<}_{1\symRegValVariate_{1\symIndexI}}
+\gets
+\symCountVariate^{<}_{1\symRegValVariate_{1\symIndexI}}+1$
+\State
+$\symCountVariate^{>}_{2\symRegValVariate_{2\symIndexI}}
+\gets
+\symCountVariate^{>}_{2\symRegValVariate_{2\symIndexI}}+1$
+\ElsIf{$\symRegValVariate_{1\symIndexI}
+>
+\symRegValVariate_{2\symIndexI}$}
+\State $\symCountVariate^{>}_{1\symRegValVariate_{1\symIndexI}}
+\gets
+\symCountVariate^{>}_{1\symRegValVariate_{1\symIndexI}}+1$
+\State
+$\symCountVariate^{<}_{2\symRegValVariate_{2\symIndexI}}
+\gets
+\symCountVariate^{<}_{2\symRegValVariate_{2\symIndexI}}+1$
+\Else
+\State $\symCountVariate^{=}_{\symRegValVariate_{1\symIndexI}}
+\gets
+\symCountVariate^{=}_{1\symRegValVariate_{1\symIndexI}}+1$
+\EndIf
+\EndFor
 \State $\symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}$}
+\comm{0.32}{use \cref{alg:corrected_raw_estimation} or \ref{alg:estimate_ml}}
 \State $\symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
 \If{$\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$}
+\comm{0.32}{$\Leftrightarrow\min(\symRegValVariate_{1\symIndexI},\symRegValVariate_{2\symIndexI})=0\ \forall\symIndexI$}
 \State $\symPoissonRateEstimate_{\symSetASuffix}\gets
 \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix},\ 
 \symPoissonRateEstimate_{\symSetBSuffix}\gets
 \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix},\
 \symPoissonRateEstimate_{\symSetXSuffix}\gets0$
-\comm{0.27}{in this case $\symSetS_1\cap\symSetS_2 = \symSetX = \emptyset$ holds}
 \State \textbf{return} $(
 \symPoissonRateEstimate_{\symSetASuffix},
 \symPoissonRateEstimate_{\symSetBSuffix},
 \symPoissonRateEstimate_{\symSetXSuffix}
 )$
 \EndIf
+
+%\If{$\boldsymbol\symCountVariate^{>}_{1} = 0$}
+%\comm{0.27}{$\symRegValVariate_{1\symIndexI}\leq
+%\symRegValVariate_{2\symIndexI}\ \forall\symIndexI$}
+%\EndIf
+
+%\If{$\boldsymbol\symCountVariate^{>}_{2} = 0$}
+%\comm{0.27}{$\symRegValVariate_{2\symIndexI}\leq
+%\symRegValVariate_{1\symIndexI}\ \forall\symIndexI$}
+%\EndIf
+
+
 \State $\symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
-\State $\symPhi_\symSetASuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix})/\symNumReg)$
-\State $\symPhi_\symSetBSuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix})/\symNumReg)$
+\State $\symPhi_\symSetASuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix}))$
+\State $\symPhi_\symSetBSuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix}))$
 \State $\symPhi_\symSetXSuffix \gets \log(\max(1,
 \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix}+
 \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix}
 -
-\symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix})/\symNumReg)$
+\symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix}))$
 \State $\symStopDelta\gets\symStopEpsilon/\sqrt{\symNumReg}$
-\comm{0.27}{$\symStopEpsilon = 10^{-2}$}
+\comm{0.32}{$\symStopEpsilon = 10^{-2}$}
 \Repeat
+\comm{0.32}{start optimization}
 \State 
 $
 \symPhi'_\symSetASuffix\gets\symPhi_\symSetASuffix,\ \symPhi'_\symSetBSuffix\gets\symPhi_\symSetBSuffix,\  \symPhi'_\symSetXSuffix\gets\symPhi_\symSetXSuffix$
@@ -2158,24 +2201,26 @@ $
 \gets$
 \Call{OptimizationStep}{$\symPhi_\symSetASuffix,
 \symPhi_\symSetBSuffix,
-\symPhi_\symSetXSuffix;
-\symFunc,
-\nabla\symFunc
+\symPhi_\symSetXSuffix
 $}
-\comm{0.27}{e.g. BFGS update step}
+\comm{0.32}{calculate $\symFunc$ and
+$\nabla\symFunc$ as needed by optimizer using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi},
+respectively
+}
 \Until{
 $\max(
 \left|\symPhi_\symSetASuffix - \symPhi'_\symSetASuffix\right|,
 \left|\symPhi_\symSetBSuffix - \symPhi'_\symSetBSuffix\right|,
 \left|\symPhi_\symSetXSuffix - \symPhi'_\symSetXSuffix\right|) \leq \symStopDelta
 $}
+\comm{0.32}{stop criterion}
 \State 
 $
 \symPoissonRateEstimate_{\symSetASuffix}
-\gets \symNumReg e^{\symPhi_\symSetASuffix},\ \symPoissonRateEstimate_{\symSetBSuffix}
-\gets \symNumReg e^{\symPhi_\symSetBSuffix},\ 
+\gets e^{\symPhi_\symSetASuffix},\ \symPoissonRateEstimate_{\symSetBSuffix}
+\gets e^{\symPhi_\symSetBSuffix},\ 
 \symPoissonRateEstimate_{\symSetXSuffix}
-\gets \symNumReg e^{\symPhi_\symSetXSuffix}
+\gets e^{\symPhi_\symSetXSuffix}
 $
 \State \textbf{return} $(
 \symPoissonRateEstimate_{\symSetASuffix},

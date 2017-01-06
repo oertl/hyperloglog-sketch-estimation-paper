@@ -523,7 +523,7 @@ public:
         numFunctionEvaluations(new std::size_t(0)),
         numGradientEvaluations(new std::size_t(0)) {
 
-        pow2k[q] = ldexp(1., -q);
+        pow2k[q] = ldexp(1., -q-jointStatistic.getP());
         pow2k[q+1] = pow2k[q];
         for (int k = q; k >= 1; --k) {
             pow2k[k-1] = pow2k[k] + pow2k[k];
@@ -548,6 +548,9 @@ public:
         linTermA += jointStatistic.get1Count(0);
         linTermB += jointStatistic.get2Count(0);
         linTermX += jointStatistic.getMinCount(0);
+        linTermA /= jointStatistic.getNumRegisters();
+        linTermB /= jointStatistic.getNumRegisters();
+        linTermX /= jointStatistic.getNumRegisters();
     }
 
     ~JointLogLikelihoodFunction() {
@@ -581,13 +584,16 @@ void estimateInitialCardinalities(const TwoHyperLogLogStatistic& jointStatistic,
         isOptimum = true;
         return;
     }
-    if(jointStatistic.getMinCounts() == jointStatistic.get1Counts()) {
+
+    const std::vector<int>& larger1Counts = jointStatistic.getLarger1Counts();
+    if(std::all_of(larger1Counts.begin(), larger1Counts.end(), [](int i) { return i==0; })) {
         cardinalityA = 0;
         cardinalityB = std::max(0., cardinalityBX - cardinalityAX);
         cardinalityX = cardinalityAX;
         return;
     }
-    if(jointStatistic.getMinCounts() == jointStatistic.get2Counts()) {
+    const std::vector<int>& larger2Counts = jointStatistic.getLarger2Counts();
+    if(std::all_of(larger2Counts.begin(), larger2Counts.end(), [](int i) { return i==0; })) {
         cardinalityB = 0;
         cardinalityA = std::max(0., cardinalityAX - cardinalityBX);
         cardinalityX = cardinalityBX;
@@ -665,9 +671,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         return;
     }
 
-    double phiA = (cardinalityA > 0)?std::log(cardinalityA/m):zeroPhi;
-    double phiB = (cardinalityB > 0)?std::log(cardinalityB/m):zeroPhi;
-    double phiX = (cardinalityX > 0)?std::log(cardinalityX/m):zeroPhi;
+    double phiA = (cardinalityA > 0)?std::log(cardinalityA):zeroPhi;
+    double phiB = (cardinalityB > 0)?std::log(cardinalityB):zeroPhi;
+    double phiX = (cardinalityX > 0)?std::log(cardinalityX):zeroPhi;
     double parameters[3] = {phiA, phiB, phiX};
 
     JointLogLikelihoodFunction logLikelihoodFunction(jointStatistic);
@@ -688,9 +694,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
     numGradientEvaluations = logLikelihoodFunction.getNumGradientEvaluations();
     assert(summary.termination_type == ceres::USER_SUCCESS || summary.termination_type == ceres::CONVERGENCE);
 
-    cardinalityA = std::exp(parameters[0]) * m;
-    cardinalityB = std::exp(parameters[1]) * m;
-    cardinalityX = std::exp(parameters[2]) * m;
+    cardinalityA = std::exp(parameters[0]);
+    cardinalityB = std::exp(parameters[1]);
+    cardinalityX = std::exp(parameters[2]);
 }
 
 #endif
@@ -766,9 +772,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         return;
     }
 
-    double phiA = (cardinalityA > 0)?std::log(cardinalityA/m):zeroPhi;
-    double phiB = (cardinalityB > 0)?std::log(cardinalityB/m):zeroPhi;
-    double phiX = (cardinalityX > 0)?std::log(cardinalityX/m):zeroPhi;
+    double phiA = (cardinalityA > 0)?std::log(cardinalityA):zeroPhi;
+    double phiB = (cardinalityB > 0)?std::log(cardinalityB):zeroPhi;
+    double phiX = (cardinalityX > 0)?std::log(cardinalityX):zeroPhi;
 
     JointLogLikelihoodFunction logLikelihoodFunction(jointStatistic);
 
@@ -783,9 +789,9 @@ void maxLikelihoodTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointS
         starting_point,
         std::numeric_limits<double>::infinity());
 
-    cardinalityA = std::exp(starting_point(0)) * m;
-    cardinalityB = std::exp(starting_point(1)) * m;
-    cardinalityX = std::exp(starting_point(2)) * m;
+    cardinalityA = std::exp(starting_point(0));
+    cardinalityB = std::exp(starting_point(1));
+    cardinalityX = std::exp(starting_point(2));
     numFunctionEvaluations = logLikelihoodFunction.getNumFunctionEvaluations();
     numGradientEvaluations = logLikelihoodFunction.getNumGradientEvaluations();
 }
