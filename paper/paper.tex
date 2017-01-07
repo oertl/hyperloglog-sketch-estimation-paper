@@ -92,7 +92,7 @@
 \symDefine{\symEpsPowerSeriesFunc}{\varepsilon_\symPowerSeriesFunc}
 \symDefine{\symBiasCorrectionFunc}{w_{\text{corr}}}
 
-\newcommand{\numformat}[1]{{\num[scientific-notation = true,round-mode = places,round-precision = 3, output-exponent-marker = \ensuremath{\mathrm{e}}]{#1}}}
+\newcommand{\numformat}[1]{{\num[scientific-notation = true,round-mode = places,round-precision = 3, output-exponent-marker = \ensuremath{\mathrm{E}}]{#1}}}
 
 \newcommand{\numformattwo}[1]{{\num[scientific-notation = fixed,round-mode = places,round-precision = 3]{#1}}}
 
@@ -510,7 +510,8 @@ A random variable $\symRegValVariate'$ with cumulative distribution function \eq
 \label{equ:dist_transformation}
 \symRegValVariate = \min\!\left(\max\!\left(\symRegValVariate',0\right), \symRegRange+1\right).
 \end{equation}
-Therefore, register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ can be seen as the result after applying this transformation to a sample $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ of the distribution described by \eqref{equ:assumed_register_val_distribution}. If all registers values fall into the range $[1,\symRegRange]$, they must  be identical to the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$. In other words, the observed register values are also a plausible sample of the assumed distribution described by \eqref{equ:assumed_register_val_distribution} in this case. Hence, as long as all or at least most register values are in the range $[1,\symRegRange]$, the approximation of \eqref{equ:register_value_distribution} by \eqref{equ:assumed_register_val_distribution} is valid. This explains why the raw estimator works best for intermediate cardinalities. However, for small and large cardinalities many register values are equal to 0 or $\symRegRange+1$, respectively, which cannot be described by \eqref{equ:assumed_register_val_distribution} and finally leads to the observed bias.
+Therefore, register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ can be seen as the result after applying this transformation to a sample $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ of the distribution described by \eqref{equ:assumed_register_val_distribution}. If all registers values fall into the range $[1,\symRegRange]$, they must  be identical to the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$. In other words, the observed register values are also a plausible sample of the assumed distribution described by \eqref{equ:assumed_register_val_distribution} in this case. Hence, as long as all or at least most register values are in the range $[1,\symRegRange]$, which is the case if $2^\symPrecision \ll \symPoissonRate \ll 2^{\symPrecision
++\symRegRange}$, the approximation of \eqref{equ:register_value_distribution} by \eqref{equ:assumed_register_val_distribution} is valid. This explains why the raw estimator works best for intermediate cardinalities. However, for small and large cardinalities many register values are equal to 0 or $\symRegRange+1$, respectively, which cannot be described by \eqref{equ:assumed_register_val_distribution} and finally leads to the observed bias.
 
 \subsection{Corrections to the raw estimator}
 If we knew the values $\symRegValVariate'_1,\ldots,\symRegValVariate'_\symNumReg$ for which transformation \eqref{equ:dist_transformation} led to the observed register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$, we would be able to estimate $\symPoissonRate$ using
@@ -1727,7 +1728,7 @@ The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEst
 
 The inclusion-exclusion method does not use all the available information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}, because the estimator is a function of the three vectors $(\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1})$, 
 $(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$, and 
-$(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$. In contrast, the maximum likelihood method incorporates each value of the sufficient statistic \eqref{equ:sufficient_joint_statistic} individually.
+$(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$. In contrast, the maximum likelihood method uses more information as it incorporates all the individual values of the sufficient statistic.
 
 \subsection{Computation of the maximum likelihood estimates}
 The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
@@ -2573,9 +2574,7 @@ Since HyperLogLog sketches can be effectively constructed, because only a single
 
 \section{Conclusion}
 \label{sec:conclusion}
-We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches based on the Poisson approximation. For the estimation from a single sketch, we have developed two fast algorithms that make use of the Poisson approximation. The first uses the original estimator extended by theoretically motivated correction terms. The second is based on the maximum likelihood method and solves the corresponding optimization problem using the secant method. Both algorithms are inherently unbiased and can be implemented without dependence on empirically determined bias correction data.
-
-The maximum likelihood method was also applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to conventional approaches such as the inclusion-exclusion principle.
+We have presented new algorithms for the estimation of cardinalities from HyperLogLog sketches based on the Poisson approximation. For the estimation from a single sketch, we have developed two different algorithms that are inherently unbiased over the full cardinality range without dependence on empirically determined bias correction data. The first uses the original estimator extended by theoretically motivated correction terms. Due to its simplicity we believe that it has the potential to become the standard textbook cardinality estimation algorithm for HyperLogLog sketches. The second is based on the maximum likelihood method and solves the corresponding optimization problem using the secant method. The maximum likelihood method was also successfully applied to the estimation of set operation result sizes where the operands are represented by HyperLogLog sketches. The new approach improves the cardinality estimates of set intersections, relative complements, as well as unions significantly when compared to the conventional approach using the inclusion-exclusion principle.
 \appendix
 
 \section{Analysis of $\symPowerSeriesFunc(\symX)$}
