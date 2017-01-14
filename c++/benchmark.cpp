@@ -166,13 +166,10 @@ void run(const int p, const int q, const string& resultsFileName) {
             int innerLoop1IterationsCount;
             int innerLoop2IterationsCount;
             int logEvaluationCount;
-            int kMin;
-            int kMax;
-
 
             auto start = std::chrono::system_clock::now();
             for(auto c : counts) {
-                sum += maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
+                sum += maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount);
                 outerLoopIterationsCountSum += outerLoopIterationsCount;
                 innerLoop1IterationsCountSum += innerLoop1IterationsCount;
                 innerLoop2IterationsCountSum += innerLoop2IterationsCount;

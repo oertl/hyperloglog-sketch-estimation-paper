@@ -156,9 +156,6 @@ int main(int argc, char* argv[])
         vector<double> strongUpperBoundEstimates(resultBufferSize);
         vector<double> weakUpperBoundEstimates(resultBufferSize);
 
-        vector<int> kMinSum(cardinalities.size());
-        vector<int> kMaxSum(cardinalities.size());
-
         const MaxLikelihoodEstimator maxLikelihoodEstimator(p,q);
         const ImprovedRawEstimator improvedRawEstimator(p,q);
 
@@ -181,36 +178,18 @@ int main(int argc, char* argv[])
 
                 size_t resultPos = cardinalityIdx*seeds.size()+seedCounter;
 
-                int kMin;
-                int kMax;
-
                 flajoletSmallRangeEstimates[resultPos] = flajoletSmallRangeEstimate(c);
                 flajoletMidRangeEstimates[resultPos] = flajoletRawEstimate(c);
                 flajoletMidRangeEstimatesCorrected[resultPos] = improvedRawEstimator.estimate_on_demand(c, numSmallCorrectionIterations[resultPos], numLargeCorrectionIterations[resultPos]);
                 //flajoletMidRangeEstimatesCorrected[resultPos] = correctedRawEstimator.estimate_precalculated(c);
                 flajoletEstimates[resultPos] = flajoletEstimate(c);
-                maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos], kMin, kMax);
+                maxLikelihoodEstimates[resultPos] = maxLikelihoodEstimator.estimate(c, outerLoopIterationsCount[resultPos], innerLoop1IterationsCount[resultPos], innerLoop2IterationsCount[resultPos], logEvaluationCount[resultPos]);
                 weakLowerBoundEstimates[resultPos] = weakLowerBoundEstimate(c);
                 strongLowerBoundEstimates[resultPos] = strongLowerBoundEstimate(c);
                 weakUpperBoundEstimates[resultPos] = weakUpperBoundEstimate(c);
                 strongUpperBoundEstimates[resultPos] = strongUpperBoundEstimate(c);
-
-                #pragma omp atomic
-                kMinSum[cardinalityIdx] += kMin;
-
-                #pragma omp atomic
-                kMaxSum[cardinalityIdx] += kMax;
             }
         }
-
-        vector<double> kMinAvg(cardinalities.size());
-        vector<double> kMaxAvg(cardinalities.size());
-
-        for(size_t cardinalityIdx = 0; cardinalityIdx < cardinalities.size(); ++cardinalityIdx) {
-            kMinAvg[cardinalityIdx] = kMinSum[cardinalityIdx] / (double) seeds.size();
-            kMaxAvg[cardinalityIdx] = kMaxSum[cardinalityIdx] / (double) seeds.size();
-        }
-
         const string filePrefix = getFilePrefix(par);
 
         printToFile(filePrefix + "max_likelihood_estimates.dat", &maxLikelihoodEstimates[0], seeds.size(), cardinalities.size());
@@ -226,8 +205,6 @@ int main(int argc, char* argv[])
         printToFile(filePrefix + "inner_loop_1_iterations_count.dat", &innerLoop1IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "inner_loop_2_iterations_count.dat", &innerLoop2IterationsCount[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "log_evaluation_count.dat", &logEvaluationCount[0], seeds.size(), cardinalities.size());
-        printToFile(filePrefix + "kMin.dat", &kMinAvg[0], 1, cardinalities.size());
-        printToFile(filePrefix + "kMax.dat", &kMaxAvg[0], 1, cardinalities.size());
 
         printToFile(filePrefix + "weak_lower_bound_estimates.dat", &weakLowerBoundEstimates[0], seeds.size(), cardinalities.size());
         printToFile(filePrefix + "strong_lower_bound_estimates.dat", &strongLowerBoundEstimates[0], seeds.size(), cardinalities.size());

@@ -48,12 +48,16 @@ public:
 
     MaxLikelihoodEstimator(const int p_, const int q_) :p(p_), q(q_), m(1 << p_), relativeErrorLimit(eps/(sqrt(m))) {}
 
-    double estimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount, int& kMin, int& kMax) const {
+    double estimate(const std::vector<int>& c, int& outerLoopIterationsCount, int& innerLoop1IterationsCount, int& innerLoop2IterationsCount, int& logEvaluationCount) const {
 
         outerLoopIterationsCount = 0;
         innerLoop1IterationsCount = 0;
         innerLoop2IterationsCount = 0;
         logEvaluationCount = 0;
+
+        if (c[q+1] == m) return std::numeric_limits<double>::infinity();
+
+        int kMin, kMax;
 
         for(kMin=0; c[kMin]==0; ++kMin);
         int kMinPrime = std::max(1, kMin);
@@ -61,14 +65,11 @@ public:
         for(kMax=q+1; c[kMax]==0; --kMax);
         int kMaxPrime = std::min(q, kMax);
 
-        if (kMin > q) return std::numeric_limits<double>::infinity();
-
         double z = 0.;
-        double y = ldexp(1., -kMaxPrime);
         for (int k = kMaxPrime; k >= kMinPrime; --k) {
-            z += y*c[k];
-            y += y;
+            z = 0.5*z + c[k];
         }
+        z = ldexp(z, -kMinPrime);
 
         int cPrime = c[q+1];
         if (q >= 1) {
@@ -132,10 +133,8 @@ public:
         int innerLoop1IterationsCount;
         int innerLoop2IterationsCount;
         int logEvaluationCount;
-        int kMin;
-        int kMax;
 
-        return estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount, kMin, kMax);
+        return estimate(c, outerLoopIterationsCount, innerLoop1IterationsCount, innerLoop2IterationsCount, logEvaluationCount);
     }
 };
 
@@ -196,12 +195,13 @@ class ImprovedRawEstimator {
             zPrime = z;
             z += x * y;
             y += y;
-        } while(zPrime < z);
+        } while(zPrime != z);
         return z;
     }
 
     static double tau(double x, int& numIterations) {
         numIterations = 0;
+        if (x == 0. || x == 1.) return 0.;
         double zPrime;
         double y = 1.0;
         double z = 0;
@@ -211,7 +211,7 @@ class ImprovedRawEstimator {
             zPrime = z;
             y *= 0.5;
             z += (1 - x)*x*y;
-        } while(zPrime < z);
+        } while(zPrime != z);
         return z;
     }
 
@@ -367,6 +367,43 @@ double strongUpperBoundEstimate(const std::vector<int>& c) {
     }
     return std::ldexp(m*std::log1p((m-c[0])/(ldexp(z, kPrime))), kPrime);
 }
+
+void newTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
+
+    const MaxLikelihoodEstimator estimator(jointStatistic.getP(), jointStatistic.getQ());
+
+    const double cardinalityAX = estimator(jointStatistic.get1Counts());
+    const double cardinalityBX = estimator(jointStatistic.get2Counts());
+    const double cardinalityABX = estimator(jointStatistic.getMaxCounts());
+
+
+    std::vector<int> countsAXBhalf(jointStatistic.getQ() + 1);
+    std::vector<int> countsBXAhalf(jointStatistic.getQ() + 1);
+    int sumAXBhalf= jointStatistic.getNumRegisters();
+    int sumBXAhalf= jointStatistic.getNumRegisters();
+    for (int q = 0; q < jointStatistic.getQ(); ++q) {
+        countsAXBhalf[q] = jointStatistic.getLarger1Count(q) + jointStatistic.getEqualCount(q) + jointStatistic.getLarger2Count(q+1);
+        countsBXAhalf[q] = jointStatistic.getLarger2Count(q) + jointStatistic.getEqualCount(q) + jointStatistic.getLarger1Count(q+1);
+        sumAXBhalf -= countsAXBhalf[q];
+        sumBXAhalf -= countsBXAhalf[q];
+    }
+    countsAXBhalf[jointStatistic.getQ()] = sumAXBhalf;
+    countsBXAhalf[jointStatistic.getQ()] = sumBXAhalf;
+    const MaxLikelihoodEstimator estimator2(jointStatistic.getP(), jointStatistic.getQ()-1);
+
+    const double cardinalityAXBhalf = estimator2(countsAXBhalf);
+    const double cardinalityBXAhalf = estimator2(countsBXAhalf);
+
+    cardinalityA = cardinalityABX - cardinalityBX;
+    cardinalityB = cardinalityABX - cardinalityAX;
+    double cardinalityX1 = 1.5*cardinalityBX + 1.5*cardinalityAX - cardinalityBXAhalf - cardinalityAXBhalf;
+    double cardinalityX2 = 2.*(cardinalityBXAhalf + cardinalityAXBhalf) - 3*cardinalityABX;
+
+    cardinalityX = std::max(0., 0.5*(cardinalityX1 + cardinalityX2));
+}
+
+
+
 
 void inclusionExclusionTwoHyperLogLogEstimation(const TwoHyperLogLogStatistic& jointStatistic, double& cardinalityA, double& cardinalityB, double& cardinalityX) {
 
