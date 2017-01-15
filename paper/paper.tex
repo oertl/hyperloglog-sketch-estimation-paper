@@ -1010,7 +1010,7 @@ as upper bound which can be weakened using $\log(1+\symX)\leq \symX$ for $\symX\
 {\sum_{\symRegVal=0}^{\symRegRange}
 \frac{\symCountVariate_\symRegVal}{2^\symRegVal}}.
 \end{equation}
-If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_0=\symCountVariate_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor from the raw estimator \eqref{equ:raw_estimator}. Hence, consequent application of the maximum likelihood method leads directly to the harmonic mean that is used by the raw estimator.
+If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_0=\symCountVariate_{\symRegRange+1}=0$ the bounds \eqref{equ:weak_lower_bound} and \eqref{equ:weak_upper_bound} differ only by a constant factor and both are proportional to the harmonic mean of $2^{\symRegValVariate_1},\ldots,2^{\symRegValVariate_\symNumReg}$. Hence, consequent application of the maximum likelihood method would have directly suggested to use a cardinality estimator that is proportional to the harmonic mean without knowing the raw estimator \eqref{equ:raw_estimator} in advance.
 
 \subsection{Computation of the maximum likelihood estimate}
 \label{sec:comp_ml_estimate}
@@ -1757,17 +1757,7 @@ The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have
 \symCountVariate_{2\symRegVal}^{>}
 =
 0$ for all $\symRegVal$, the function can be rewritten as sum of two functions, one dependent on $\symPoissonRate_\symSetASuffix$ and the other dependent on $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix$. 
-The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the maximum likelihood cardinality estimates for the first and second HyperLogLog sketch, respectively. This means that the maximum likelihood method makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach would give $\symPoissonRateEstimate_2$ as estimate. This result is questionable, because there is no evidence in this case, that the sets $\symSetS_1$ and $\symSetS_2$ really have common elements.
-
-%Since \eqref{equ:log_likelihood_pair} is the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assuming $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$, respectively. As expected, both functions correspond to \eqref{equ:log_likelihood_single}. Another extreme case is that both sketches represent identical sets. In this case all registers are equal, which means  that $\symCountVariate^{>}_{1\symRegVal}=\symCountVariate^{>}_{2\symRegVal}=
-%\symCountVariate^{<}_{1\symRegVal}=\symCountVariate^{<}_{2\symRegVal}=0$ for all $\symRegVal$, and therefore the maximum likelihood method yields $\symPoissonRateEstimate_\symSetASuffix = \symPoissonRateEstimate_\symSetBSuffix = 0$ and the value for $\symPoissonRateEstimate_\symSetXSuffix$ will be equal to the individual maximum likelihood estimate of both identical sketches.
-
-%$
-%\symPoissonRate_\symSetASuffix
-%=
-%\symPoissonRate_\symSetBSuffix=0
-%$ and all the register values must be pairwise identical, which finally 
-%yields \eqref{equ:log_likelihood_single} for $\symPoissonRate_\symSetXSuffix$.
+The maximum is obtained, if $\symPoissonRate_\symSetASuffix = \symPoissonRateEstimate_1$ and $\symPoissonRate_\symSetBSuffix+\symPoissonRate_\symSetXSuffix = \symPoissonRateEstimate_2$. Here $\symPoissonRateEstimate_1$ and $\symPoissonRateEstimate_2$ are the maximum likelihood cardinality estimates for the first and second HyperLogLog sketch, respectively. This means that the maximum likelihood method makes no clear statement about the intersection size in this case. The estimate for $\symPoissonRate_\symX$ could be anything between 0 and $\symPoissonRateEstimate_2$. For comparison, the inclusion-exclusion approach would give $\symPoissonRateEstimate_2$ as estimate for $\symPoissonRate_\symX$. This result is questionable, because there is no evidence that sets $\symSetS_1$ and $\symSetS_2$ really have common elements in this case.
 
 The inclusion-exclusion method does not use all the available information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}, because the estimator is a function of the three vectors $(\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1})$, 
 $(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$, and 
@@ -2118,9 +2108,8 @@ given by
 \end{aligned}
 \end{equation}
 
-The calculation of \eqref{equ:max_likelihood_phi_func} and its derivatives requires some care when calculating $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$. Since $\symX_{\ast\symRegVal}$ is nonnegative, we have $\symY_{\ast\symRegVal},\symZ_{\ast\symRegVal}\in[0,1]$. In order to reduce the numerical error of $\symZ_{\ast\symRegVal}$ for small $\symX_{\ast\symRegVal}$, it is essential to use the function $\operatorname{expm1}(\symX):=e^\symX-1$ that is available in most programming languages. If $\symX_{\ast\symRegVal}$ is smaller than $\log(2)$, we calculate $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$ via $\symZ_{\ast\symRegVal} = 
--\operatorname{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$ and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and still only a single exponential function needs to be evaluated.
-
+The calculation of \eqref{equ:max_likelihood_phi_func} and its derivatives requires some care when calculating $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$. Since $\symX_{\ast\symRegVal}$ is nonnegative, we have $\symY_{\ast\symRegVal},\symZ_{\ast\symRegVal}\in[0,1]$. In order to reduce the numerical error of $\symZ_{\ast\symRegVal}$ for small $\symX_{\ast\symRegVal}$, it is essential to use the function $\operatorname{expm1}(\symX):=e^\symX-1$ that is available in most programming languages. If $\symX_{\ast\symRegVal}$ is smaller than $\log(2)$, we calculate $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$ using $\symZ_{\ast\symRegVal} = 
+-\operatorname{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$, repsectively, and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and still only a single exponential function needs to be evaluated.
 Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. The arguments of all logarithms are in range $[0,1]$. The case that some argument vanishes, which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is at least in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
 Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuffix\symRegVal}
 +
@@ -2144,7 +2133,7 @@ $\boldsymbol\symCountVariate^{<}_{2}$, and
 $\boldsymbol\symCountVariate^{=}$ is extracted. Next, a case is distinguished, where
 all registers have a value equal to zero in at least one of both HyperLogLog sketches, that is $\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$. In this case it is certain that the HyperLogLog sketches represent disjoint sets and their corresponding  cardinality estimates can be  used for $\symPoissonRateEstimate_{\symSetASuffix}$ and $\symPoissonRateEstimate_{\symSetBSuffix}$, respectively.
 
-For the general case, the three-dimensional function $\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix)$ needs to be optimized numerically. A very popular algorithm for such non-linear optimization problems is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007}. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}. Good initial guess values are important to ensure fast convergence for the optimization algorithm. An obvious choice are the cardinality estimates obtained by the conventional approach \eqref{equ:conventional_approach}. However, in order to ensure that their logarithms are defined, we require that the initial values are not smaller than 1. Within the optimization loop the function $\symFunc$ and its gradient $\nabla\symFunc$ need to evaluated using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by the optimization algorithm. The optimization loop is continued as long as the absolute change of at least one parameter is larger than a predefined threshold. The threshold is again set proportional to $1/\sqrt{\symNumReg}$ (compare \cref{sec:comp_ml_estimate}).
+For the general case, the three-dimensional function $\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix)$ needs to be optimized numerically. A very popular algorithm for such non-linear optimization problems is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007}. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}. Good initial guess values are important to ensure fast convergence for the optimization algorithm. An obvious choice are the cardinality estimates obtained by application of the inclusion-exclusion principle \eqref{equ:conventional_approach}. However, in order to ensure that their logarithms are all defined, we require that the initial values are not smaller than 1. Within the optimization loop the function $\symFunc$ and its gradient $\nabla\symFunc$ need to evaluated using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by the optimization algorithm. The optimization loop is continued as long as the absolute change of at least one parameter is larger than a predefined threshold. The threshold is again set proportional to $1/\sqrt{\symNumReg}$ (compare \cref{sec:comp_ml_estimate}).
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2156,17 +2145,18 @@ $\boldsymbol\symRegValVariate_{1}$,
 $\boldsymbol\symRegValVariate_{2}$
 }
 \comm{.32}{$\boldsymbol{\symRegValVariate}_1,\boldsymbol{\symRegValVariate}_2\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
-\State 
-$\boldsymbol\symCountVariate^{>}_{1}\gets 0$,
-$\boldsymbol\symCountVariate^{<}_{1}\gets 0$,
-$\boldsymbol\symCountVariate^{>}_{2}\gets 0$,
-$\boldsymbol\symCountVariate^{<}_{2}\gets 0$,
-$\boldsymbol\symCountVariate^{=}\gets 0$
-\comm{.32}{$\boldsymbol\symCountVariate^{>}_{1},
-\boldsymbol\symCountVariate^{<}_{1},
-\boldsymbol\symCountVariate^{>}_{2},
-\boldsymbol\symCountVariate^{<}_{2},
-\boldsymbol\symCountVariate^{=}\\\in\lbrace 0, 1, \ldots,\symNumReg\rbrace^{\symRegRange+1}$}
+
+\State $\boldsymbol\symCountVariate^{>}_{1}\gets (0,\ldots,0)$
+\comm{.32}{$\boldsymbol{\symCountVariate}^{>}_{1} = (\symCountVariate^{>}_{10},\ldots,\symCountVariate^{>}_{1,\symRegRange+1})$}
+\State $\boldsymbol\symCountVariate^{<}_{1}\gets (0,\ldots,0)$
+\comm{.32}{$\boldsymbol{\symCountVariate}^{<}_{1} = (\symCountVariate^{<}_{10},\ldots,\symCountVariate^{<}_{1,\symRegRange+1})$}
+\State $\boldsymbol\symCountVariate^{>}_{2}\gets (0,\ldots,0)$
+\comm{.32}{$\boldsymbol{\symCountVariate}^{>}_{2} = (\symCountVariate^{>}_{20},\ldots,\symCountVariate^{>}_{2,\symRegRange+1})$}
+\State $\boldsymbol\symCountVariate^{<}_{2}\gets (0,\ldots,0)$
+\comm{.32}{$\boldsymbol{\symCountVariate}^{<}_{2} = (\symCountVariate^{<}_{20},\ldots,\symCountVariate^{<}_{2,\symRegRange+1})$}
+\State $\boldsymbol\symCountVariate^{=}\gets (0,\ldots,0)$
+\comm{.32}{$\boldsymbol{\symCountVariate}^{=} = (\symCountVariate^{=}_{0},\ldots,\symCountVariate^{=}_{\symRegRange+1})$}
+
 \For{$\symIndexI\gets 1, \symNumReg$}
 \If{$\symRegValVariate_{1\symIndexI}
 <
@@ -2210,18 +2200,6 @@ $\symCountVariate^{<}_{2\symRegValVariate_{2\symIndexI}}
 \symPoissonRateEstimate_{\symSetXSuffix}
 )$
 \EndIf
-
-%\If{$\boldsymbol\symCountVariate^{>}_{1} = 0$}
-%\comm{0.27}{$\symRegValVariate_{1\symIndexI}\leq
-%\symRegValVariate_{2\symIndexI}\ \forall\symIndexI$}
-%\EndIf
-
-%\If{$\boldsymbol\symCountVariate^{>}_{2} = 0$}
-%\comm{0.27}{$\symRegValVariate_{2\symIndexI}\leq
-%\symRegValVariate_{1\symIndexI}\ \forall\symIndexI$}
-%\EndIf
-
-
 \State $\symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2}$}
 \State $\symPhi_\symSetASuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetBSuffix\symSetXSuffix}))$
 \State $\symPhi_\symSetBSuffix \gets \log(\max(1, \symPoissonRateEstimate_{\symSetASuffix\symSetBSuffix\symSetXSuffix} - \symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix}))$
@@ -2281,7 +2259,7 @@ In order to investigate the estimation error of the joint cardinality estimation
 $|\symSetX|$ random values are added to both sketches. \cref{tbl:joint_estimation_cases} lists all the different cases we have evaluated. For each case \num{3333} different HyperLogLog sketch pairs were constructed and passed to the joint cardinality estimation algorithm. 
 \cref{tbl:joint_estimation_cases} also shows the average number of iterations of the BFGS algorithm until the stop criterion was satisfied. Each iteration step involved a function \eqref{equ:max_likelihood_phi_func} and a gradient \eqref{equ:df_dphi} evaluation.
 
-\cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to square root error scaling law, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
+\cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to the  square root scaling of the error, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
 
 We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \eqref{equ:hll_union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm provides another opportunity. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
 
