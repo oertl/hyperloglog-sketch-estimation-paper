@@ -80,10 +80,12 @@
 \symDefine{\symHelperU}{u}
 \symDefine{\symSetA}{A}
 \symDefine{\symSetB}{B}
+\symDefine{\symSetC}{C}
 \symDefine{\symSetS}{S}
 \symDefine{\symSetX}{X}
 \symDefine{\symSetASuffix}{a}
 \symDefine{\symSetBSuffix}{b}
+\symDefine{\symSetCSuffix}{c}
 \symDefine{\symSetXSuffix}{x}
 \symDefine{\symCountMatrix}{\mathbf{c}}
 \symDefine{\symPowerSeriesFunc}{\xi}
@@ -104,19 +106,22 @@
 \maketitle
 \let\thefootnote\relax\footnotetext{This paper together with source code for all presented algorithms and simulations is available at \\ \url{https://github.com/oertl/hyperloglog-sketch-estimation-paper}. A first version of this paper was published there on April 17, 2016.}
 \begin{abstract}
-This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle a second unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood approach can also be applied to more than a single HyperLogLog sketch. In particular, it is shown that it gives more accurate cardinality estimates for the union, intersection, or relative complements of two sets that are represented by HyperLogLog sketches compared to conventional techniques like the inclusion-exclusion principle. All the new methods are demonstrated and verified by extensive simulations.
+This paper presents new methods to estimate the cardinalities of multisets recorded by HyperLogLog sketches. A theoretically motivated extension to the original estimator is presented that eliminates the bias for small and large cardinalities. Based on the maximum likelihood principle a second unbiased method is derived together with a robust and efficient numerical algorithm to calculate the estimate. The maximum likelihood approach can also be applied to more than a single HyperLogLog sketch. In particular, it is shown that it gives more accurate cardinality estimates for the union, intersection, or relative complements of two sets that are both represented by HyperLogLog sketches compared to the conventional technique using the inclusion-exclusion principle. All the new methods are demonstrated and verified by extensive simulations.
 \end{abstract}
 
 \section{Introduction}
-Counting the number of distinct elements in a data stream or large datasets is a common problem in big data processing. Often there are parallel streams  or data is spread over a cluster, which makes this task even more challenging.
-In principle, finding the number of distinct elements $\symCardinality$ with a maximum relative error $\symError$  in a data stream requires $\Omega(\symCardinality)$ space \cite{Alon1999}. However, probabilistic algorithms that achieve the requested accuracy only with high probability are able to drastically reduce space requirements. Many different probabilistic algorithms have been developed over the past two decades \cite{Metwally2008,Ting2014}. An algorithm with an optimal space complexity of $\Omega(\symError^{-2}+\log \symCardinality)$ \cite{Alon1999, Indyk2003} was finally presented \cite{Kane2010}. This algorithm, however, is not very efficient in practice \cite{Ting2014}.
+Counting the number of distinct elements in a data stream or large datasets is a common problem in big data processing. In principle, finding the number of distinct elements $\symCardinality$ with a maximum relative error $\symError$  in a data stream requires $\Omega(\symCardinality)$ space \cite{Alon1999}. However, probabilistic algorithms that achieve the requested accuracy only with high probability are able to drastically reduce space requirements. Many different probabilistic algorithms have been developed over the past two decades \cite{Metwally2008,Ting2014} until a theoretically optimal algorithm was finally found \cite{Kane2010}. Although this algorithm achieves the optimal space complexity of $\Omega(\symError^{-2}+\log \symCardinality)$ \cite{Alon1999, Indyk2003}, it is not very efficient in practice \cite{Ting2014}.
 
-Currently, the most memory efficient algorithm that also works for distributed setups is the near-optimal HyperLogLog algorithm \cite{Flajolet2007} with space complexity $\Omega(\symError^{-2} \log\log\symCardinality +\log \symCardinality)$. The originally proposed estimation method has some problems to guarantee the same estimation error over the entire range of cardinalities. It was proposed to correct the estimate by empirical means \cite{Heule2013,Rhodes2015,Sanfilippo2014}. 
+More practicable and already widely used for many applications is the HyperLogLog algorithm \cite{Flajolet2007} with a near-optimal space complexity $\Omega(\symError^{-2} \log\log\symCardinality +\log \symCardinality)$. It has the nice property that partial results can be easily merged, which is a necessity for distributed environments. Unfortunately, the originally proposed estimation method has some problems to guarantee the same accuracy over the full cardinality range. Therefore, a couple of variants have been developed to correct the original estimate by empirical means \cite{Heule2013,Rhodes2015,Sanfilippo2014}. 
 
-In case the data is not distributed and results do not need to be aggregated further, there are even more efficient estimation algorithms available. On the one hand there is the self-learning bitmap \cite{Chen2011}, and on the other hand there is the HyperLogLog algorithm extended by a historic inverse probability estimator that is continuously updated together with the HyperLogLog sketch \cite{Ting2014, Cohen2014}. Both achieve the same estimation error using less space. However, the estimated cardinality depends on the insertion order of elements and hence cannot be used in a distributed environment. 
+A more theoretically profound estimator for HyperLogLog sketches that does not depend on empirical data and significantly improves the estimation error is the historic inverse probability estimator \cite{Ting2014, Cohen2014}. It trades memory-efficiency for mergeability. The estimator needs to be continuously updated while inserting elements and the estimate depends on the element insertion order. Moreover, the estimator cannot be further used after merging two sketches, which limits its application to single data streams. If this restriction is okay, the self-learning bitmap \cite{Chen2011} 
+could also be used, which provides a similar trade-off and is also 
+more memory-efficient than the original HyperLogLog method. 
+
+Sometimes not only the number of distinct elements but also a sample of them is needed, in order to allow later filtering according to some predicate and estimating the cardinalities of corresponding subsets. In this case the k-minimum values algorithm \cite{Beyer2007} is the method of choice which also allows set manipulations like construction of intersections, disjoint sets, or unions \cite{Dasgupta2015}. The latter operation is the only one that is natively supported by HyperLogLog sketches. A sketch that represents the set operation result is not always needed. One approach to estimate the corresponding result cardinality directly is based on the inclusion-exclusion principle, which however can become quite inaccurate, especially for small Jaccard indices of the input sets \cite{Dasgupta2015}. Alternatively, the HyperLogLog sketches can be combined with some additional data structure that allows estimating the Jaccard index. Together with the HyperLogLog cardinality estimates the error of the intersection size estimate can be reduced \cite{Pascoe2013, Cohen2016}, however, at the expense of a significantly larger memory footprint due to the additional data structure.
 
 \subsection{Outline}
-In \cref{sec:hyperloglog_data_structure} we give an introduction to HyperLogLog sketches and the corresponding update algorithm. We also discuss how the resulting state can be statistically described and approximated by a Poisson model.
+This paper presents new algorithms for cardinality estimation from HyperLogLog sketches. In \cref{sec:hyperloglog_data_structure} we start with an introduction to HyperLogLog sketches and the corresponding update algorithm. We also discuss how the resulting state can be statistically described and approximated by a Poisson model.
 In \cref{sec:cardinality_estimation} we describe the original cardinality estimation algorithm, its shortcomings at low and large cardinalities, and previous approaches to overcome them. We present a simple derivation of the original raw estimator and analyze the root cause for its limited operating range. We derive an improved version of the raw estimator, which leads to a new fast cardinality estimation algorithm that works over the full cardinality range as demonstrated by extensive simulations.
 In \cref{sec:max_likelihood_estimation} we derive a second even more precise cardinality estimation algorithm based on the maximum likelihood principle which is again verified by simulations. As presented in \cref{sec:cardinality_estimation_set_intersections} the same approach can be generalized to two HyperLogLog sketches, which allows result cardinality estimation of set operations like intersections or complements. The simulation results show that the estimates are significantly better than those obtained by the inclusion-exclusion principle.
 Finally, in \cref{sec:future_work} we discuss open problems and ideas for future work including HyperLogLog's potential use as locality-sensitve hashing algorithm before we conclude in \cref{sec:conclusion}.
@@ -149,21 +154,28 @@ In order to insert a data element into a HyperLogLog data structure a hash value
 
 The described element insertion algorithm makes use of what is known as stochastic averaging \cite{Flajolet1985}. Instead of updating each of all $\symNumReg$ registers using $\symNumReg$ independent hash values, which would be an $\symBigO(\symNumReg)$ operation, only one register is selected and updated, which requires only a single hash function and reduces the complexity to $\symBigO(1)$.
 
-A HyperLogLog sketch can be characterized by a parameter pair $(\symPrecision, \symRegRange)$. The precision parameter $\symPrecision$ controls the relative error while the second parameter defines the possible value range of a register. A register can take all values starting from 0 to $\symRegRange+1$, inclusively. The sum $\symPrecision+\symRegRange$ corresponds to the number of consumed hash value bits and defines the maximum cardinality that can be tracked. Obviously, if the cardinality reaches values in the order of $2^{\symPrecision+\symRegRange}$, hash collisions will become more apparent and the estimation accuracy will be drastically reduced.
+A HyperLogLog sketch can be characterized by a parameter pair $(\symPrecision, \symRegRange)$. The precision parameter $\symPrecision$ controls the relative error while the second parameter defines the possible value range of a register. A register can take all values starting from 0 to $\symRegRange+1$, inclusively. The sum $\symPrecision+\symRegRange$ corresponds to the number of consumed hash value bits and defines the maximum cardinality that can be tracked. Obviously, if the cardinality reaches values in the order of $2^{\symPrecision+\symRegRange}$, hash collisions will become more apparent and the estimation error will increase drastically.
 
-\cref{alg:insert} has some properties which are especially useful for distributed data streams. First, the insertion order of elements has no influence on the final HyperLogLog sketch. Furthermore, any two HyperLogLog sketches with same parameters $(\symPrecision, \symRegRange)$ representing sets $\symSetA$ and $\symSetB$ can be easily merged. The HyperLogLog sketch that represents the union of both sets is simply constructed by taking the register-wise maximum values
-\begin{equation}
-\label{equ:hll_union}
-\symRegValVariate^{\symSetA\cup\symSetB}_{\symIndexI} = 
-\max
-\!
-\left(
-\symRegValVariate^{\symSetA}_{\symIndexI},
-\symRegValVariate^{\symSetB}_{\symIndexI}
-\right)
-\quad
-\text{for $1\leq\symIndexI\leq\symNumReg$}.
-\end{equation}
+\cref{alg:insert} has some properties which are especially useful for distributed data streams. First, the insertion order of elements has no influence on the final HyperLogLog sketch. Furthermore, any two HyperLogLog sketches with same parameters $(\symPrecision, \symRegRange)$ representing sets $\symSetA$ and $\symSetB$ can be easily merged. The HyperLogLog sketch that represents the union of both sets is simply constructed by taking the register-wise maximum values as demonstrated by \cref{alg:union}.
+
+\begin{algorithm}
+\caption{Merge operation for two HyperLogLog sketches with register values $\boldsymbol{\symRegValVariate}_1 = (\symRegValVariate_{11},\ldots,\symRegValVariate_{1\symNumReg})$ and
+$\boldsymbol{\symRegValVariate}_2 = (\symRegValVariate_{21},\ldots,\symRegValVariate_{2\symNumReg})$ representing sets $\symSetS_1$ and $\symSetS_2$, respectively, to obtain the register values $\boldsymbol{\symRegValVariate}' = (\symRegValVariate'_{1},\ldots,\symRegValVariate'_{\symNumReg})$ of a HyperLogLog sketch representing $\symSetS_1\cup\symSetS_2$.}
+\label{alg:union}
+\begin{algorithmic}
+\Function {Merge}{$\boldsymbol{\symRegValVariate}_1$,$\boldsymbol{\symRegValVariate}_2$}
+\comm{.4}{$\boldsymbol{\symRegValVariate}_1,\boldsymbol{\symRegValVariate}_2\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
+\State allocate $\boldsymbol{\symRegValVariate'} = (\symRegValVariate'_{1},\ldots,\symRegValVariate'_{\symNumReg})$
+\comm{.4}{$\boldsymbol{\symRegValVariate}'\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$}
+\For{$\symIndexI\gets 1, \symNumReg$}
+\State $\symRegValVariate'_{\symIndexI}
+\gets\max(\symRegValVariate_{1\symIndexI},\symRegValVariate_{2\symIndexI})$
+\EndFor
+\State \Return $\boldsymbol{\symRegValVariate'}$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
 
 At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch can be compressed into a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied (see \cref{alg:compress}). This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
 
@@ -173,7 +185,7 @@ At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch can be compress
 \begin{algorithmic}
 \Function {Compress}{$\boldsymbol{\symRegValVariate}$}
 \comm{.4}{$\boldsymbol{\symRegValVariate}\in\lbrace 0,1,\ldots,\symRegRange+1\rbrace^\symNumReg$, $\symNumReg = 2^\symPrecision$}
-\State allocate $\boldsymbol{\symRegValVariate}' = (\symRegValVariate_1,\ldots,\symRegValVariate_{2^{\symPrecision'}})$
+\State allocate $\boldsymbol{\symRegValVariate}' = (\symRegValVariate'_1,\ldots,\symRegValVariate'_{2^{\symPrecision'}})$
 \comm{.4}{$\boldsymbol{\symRegValVariate}'\in\lbrace 0,1,\ldots,\symRegRange'+1\rbrace^{\symNumReg'}$, $\symNumReg' = 2^{\symPrecision'}$}
 \For{$\symIndexI\gets 1, 2^{\symPrecision'}$}
 \State $\symB \gets (\symIndexI-1)\cdot 2^{\symPrecision-\symPrecision'}$
@@ -225,7 +237,8 @@ where $\symCardinality$ is the cardinality. The $\symCardinality$ distinct eleme
 \end{equation}
 
 The order of register values $\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg$ is not important for the estimation of the cardinality. More formally, the multiset $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace$ is a sufficient statistic for $\symCardinality$.
-Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the multiset can also be represented as $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace = 0^{\symCountVariate_0}1^{\symCountVariate_1}\cdots\symRegRange^{\symCountVariate_{\symRegRange}}(\symRegRange+1)^{\symCountVariate_{\symRegRange+1}}$ where $\symCountVariate_\symRegVal$ is the multiplicity of value $\symRegVal$. As a consequence, the multiplicity vector $\boldsymbol{\symCountVariate} := (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ is also a sufficient statistic for the cardinality. In addition, this vector contains all the information about the HyperLogLog sketch that is required for cardinality estimation. The two HyperLogLog parameters can be obtained by $\symPrecision = \log_2 \left\Vert\boldsymbol{\symCountVariate}\right\Vert_1$ and $\symRegRange=\dim\boldsymbol{\symCountVariate}-2$, respectively. As \cref{alg:sufficient_statistic} shows the calculation of the multiplicity vector $\boldsymbol{\symCountVariate}$ for a given HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}$ is straightforward.
+Since the values of the multiset are all in the range $[0, \symRegRange+1]$ the multiset can also be represented as $\lbrace\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg\rbrace = 0^{\symCountVariate_0}1^{\symCountVariate_1}\cdots\symRegRange^{\symCountVariate_{\symRegRange}}(\symRegRange+1)^{\symCountVariate_{\symRegRange+1}}$ where $\symCountVariate_\symRegVal$ is the multiplicity of value $\symRegVal$. As a consequence, the multiplicity vector $\boldsymbol{\symCountVariate} := (\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ is also a sufficient statistic for the cardinality. In addition, this vector contains all the information about the HyperLogLog sketch that is required for cardinality estimation. The two HyperLogLog parameters can be obtained by $\symPrecision = \log_2 (\sum_{\symRegVal=0}^{\symRegRange+1}\symCountVariate_\symRegVal
+)$ and $\symRegRange=\dim\boldsymbol{\symCountVariate}-2$, respectively. As \cref{alg:sufficient_statistic} shows the calculation of the multiplicity vector $\boldsymbol{\symCountVariate}$ for a given HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}$ is straightforward.
 
 \begin{algorithm}
 \caption{Multiplicity vector extraction from a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with $\symNumReg=2^\symPrecision$ registers having values $\boldsymbol{\symRegValVariate} = (\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$.} 
@@ -319,7 +332,6 @@ Hence, the unbiased estimator $\symPoissonRateEstimate$ conditioned on $\symCard
 \section{Original cardinality estimation method}
 \label{sec:cardinality_estimation}
 The original cardinality estimator \cite{Flajolet2007} is based on the idea that the number of distinct element insertions a register needs to reach the value $\symRegVal$ is proportional to $\symNumReg  2^{\symRegVal}$. Given that, a rough cardinality estimate can be obtained by averaging the values $\lbrace \symNumReg 2^{\symRegValVariate_1},\ldots,\symNumReg2^{\symRegValVariate_\symNumReg}\rbrace$. 
-
 In the history of the HyperLogLog algorithm different averaging techniques have been proposed. First, there was the LogLog algorithm using the geometric mean and the SuperLogLog algorithm that enhanced the estimate by truncating the largest register values before applying the geometric mean \cite{Durand2003}. Finally, the harmonic mean was found to give even better estimates as it is inherently less sensitive to outliers. The result is the so-called raw estimator which is given by
 \begin{equation}
 \label{equ:raw_estimator}
@@ -593,8 +605,7 @@ as estimator for $\symRegVal \leq 0$ and
 as estimator for $\symRegVal \geq \symRegRange+1$, respectively. This choice of estimators also conserves the mass of zero-valued and saturated registers, because  
 \eqref{equ:multiplicity_transformation} is satisfied,
 if $\symCountVariate'_\symRegVal$ is replaced by $\hat{\symCount}'_\symRegVal$. 
-
-Inserting all the registers into \eqref{equ:raw_estimate_with_multiplicities} as replacements for $\symCountVariate'_\symRegVal$ finally gives
+Plugging all these estimators into \eqref{equ:raw_estimate_with_multiplicities} as replacements for $\symCountVariate'_\symRegVal$ finally gives
 \begin{equation}
 \label{equ:correctedestimator}
 \symPoissonRateEstimate 
@@ -647,7 +658,7 @@ The new estimation algorithm is very elegant, because it does neither contain ma
 \label{alg:corrected_raw_estimation}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
-\comm{.45}{$\dim \boldsymbol{\symCountVariate} = \symRegRange + 2$, $\left\Vert\boldsymbol{\symCountVariate}\right\Vert_1 = \symNumReg$}
+\comm{.45}{$\sum_{\symRegVal=0}^{\symRegRange+1}\symCountVariate_\symRegVal = \symNumReg$}
 \State $\symZ\gets\symNumReg\cdot\symLargeCorrectionFunc(1 - \symCountVariate_{\symRegRange+1}/\symNumReg)$
 \comm{.45}{alternatively, take $\symNumReg\cdot\symLargeCorrectionFunc(1 - \symCountVariate_{\symRegRange+1}/\symNumReg)$ from precalculated lookup table}
 \For{$\symRegVal\gets \symRegRange, 1$}
@@ -1115,7 +1126,7 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \label{alg:estimate_ml}
 \begin{algorithmic}
 \Function {EstimateCardinality}{$\boldsymbol{\symCountVariate}$}
-\comm{.35}{$\dim \boldsymbol{\symCountVariate} = \symRegRange + 2$, $\left\Vert\boldsymbol{\symCountVariate}\right\Vert_1 = \symNumReg$}
+\comm{.31}{$\sum_{\symRegVal=0}^{\symRegRange+1}\symCountVariate_\symRegVal = \symNumReg$}
 \If{$\symCountVariate_{\symRegRange+1} = \symNumReg$}
 \State\Return $\infty$
 \EndIf
@@ -1128,23 +1139,23 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \State $\symZ \gets 0.5\cdot\symZ + \symCountVariate_\symRegVal$
 \EndFor
 \State $\symZ \gets \symZ\cdot 2^{-\symRegValVariate'_\text{min}}$
-\comm{0.35}{here $\symZ=\sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal}$}
+\comm{0.31}{here $\symZ=\sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal}$}
 \State $\symCount \gets \symCountVariate_{\symRegRange+1}$
 \If{$\symRegRange\geq 1$}
 \State $\symCount \gets \symCount + \symCountVariate_{\symRegValVariate'_\text{max}}$
 \EndIf
 \State $\symFuncPrime_\text{prev}\gets 0$
 \State $\symA\gets \symZ + \symCountVariate_0$
-\comm{0.35}{$\symA = \sum_{\symRegVal=0}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal}$}
+\comm{0.31}{$\symA = \sum_{\symRegVal=0}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal}$}
 \State $\symB\gets \symZ + 
 \symCountVariate_{\symRegRange+1}\cdot 2^{-\symRegRange}$
-\comm{0.35}{$\symB = \sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal} + \frac{\symCountVariate_{\symRegRange+1}}{2^\symRegRange}$}
+\comm{0.31}{$\symB = \sum_{\symRegVal=1}^{\symRegRange}\frac{\symCountVariate_\symRegVal}{2^\symRegVal} + \frac{\symCountVariate_{\symRegRange+1}}{2^\symRegRange}$}
 \State $\symNumReg' \gets \symNumReg - \symCountVariate_0$
 \If{$\symB \leq 1.5\cdot\symA$}
-\State $\symX \gets \symNumReg'/(0.5\cdot \symB+\symA)$ \comm{0.35}{weak lower bound \eqref{equ:weak_lower_bound}}
+\State $\symX \gets \symNumReg'/(0.5\cdot \symB+\symA)$ \comm{0.31}{weak lower bound \eqref{equ:weak_lower_bound}}
 \Else
 \State $\symX \gets \symNumReg'/\symB \cdot \log(1+\symB/\symA)$ 
-\comm{0.35}{strong lower bound \eqref{equ:strong_lower_bound}}
+\comm{0.31}{strong lower bound \eqref{equ:strong_lower_bound}}
 \EndIf
 \algstore{myalg}
 \end{algorithmic}
@@ -1156,34 +1167,34 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \algrestore{myalg}
 \State $\Delta\symX \gets \symX$
 \State $\symStopDelta\gets\symStopEpsilon/\sqrt{\symNumReg}$
-\comm{0.35}{$\symStopEpsilon = 10^{-2}$ (see \cref{sec:comp_ml_estimate})}
+\comm{0.31}{$\symStopEpsilon = 10^{-2}$ (see \cref{sec:comp_ml_estimate})}
 \While{$\Delta\symX > \symX\cdot\symStopDelta$} 
-\comm{0.35}{secant method iteration}
+\comm{0.31}{secant method iteration}
 \State $\symKappa \gets 2+\lfloor\log_2(\symX)\rfloor$
 \State $\symXNormalized \gets
 \symX \cdot2^{-\max(\symRegValVariate'_\text{max}, \symKappa)-1}$
-\comm{0.35}{$\symXNormalized \in [0, 0.25]$}
+\comm{0.31}{$\symXNormalized \in [0, 0.25]$}
 \State $\symX''\gets \symXNormalized\cdot\symXNormalized$
 \State $\symHelper \gets
 \symX' - \symX''/3 + \left(\symX''\cdot \symX''\right)\cdot\left(1/45-\symX''/472.5\right)$
-\comm{0.35}{Taylor approximation \eqref{equ:taylor}}
+\comm{0.31}{Taylor approximation \eqref{equ:taylor}}
 \For{$\symRegVal\gets (\symKappa - 1),\symRegValVariate'_\text{max}$}
 \State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\comm{0.35}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
+\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
 \State $\symXNormalized \gets 2\symXNormalized$
 \EndFor
 \State $\symFuncPrime \gets \symCount\cdot\symHelper$
-\comm{0.35}{compare \eqref{equ:funcprime}}
+\comm{0.31}{compare \eqref{equ:funcprime}}
 \For{$\symRegVal\gets(\symRegValVariate'_\text{max}-1),\symRegValVariate'_\text{min}$}
 \State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\comm{0.35}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
+\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
 \State $\symFuncPrime\gets \symFuncPrime + \symCountVariate_\symRegVal\cdot\symHelper$
 \State $\symXNormalized \gets 2\symXNormalized$
 \EndFor
 \State $\symFuncPrime\gets \symFuncPrime + \symX\cdot\symA$
 \If{$\symFuncPrime > \symFuncPrime_\text{prev} \wedge \symNumReg' \geq\symFuncPrime$}
 \State $\Delta\symX \gets \Delta\symX \cdot \frac{\symNumReg' - \symFuncPrime}{\symFuncPrime - \symFuncPrime_\text{prev}}$
-\comm{0.35}{see \eqref{equ:secant_delta}}
+\comm{0.31}{see \eqref{equ:secant_delta}}
 \Else
 \State $\Delta\symX \gets 0$
 \EndIf
@@ -1256,7 +1267,7 @@ We also measured the performance of \cref{alg:estimate_ml} using the same test s
 \section{Cardinality estimation of set intersections and complements}
 \label{sec:cardinality_estimation_set_intersections}
 
-While the union of two sets that are represented by HyperLogLog sketches can be straightforwardly computed using \eqref{equ:hll_union}, the computation of cardinalities of other set operations like intersections and complements is more challenging. The conventional approach uses the inclusion-exclusion principle 
+While the union of two sets that are represented by HyperLogLog sketches can be straightforwardly computed using \cref{alg:union}, the computation of cardinalities of other set operations like intersections and complements is more challenging. The conventional approach uses the inclusion-exclusion principle 
 \begin{equation}
 \label{equ:conventional_approach}
 \begin{aligned}
@@ -1281,7 +1292,7 @@ While the union of two sets that are represented by HyperLogLog sketches can be 
 \left\vert\symSetS_1 \cup \symSetS_2\right\vert,
 \end{aligned}
 \end{equation}
-and the fact that HyperLogLog sketches can be easily merged using \eqref{equ:hll_union}. Unfortunately, the estimation error does not scale well for this approach. Especially for small Jaccard indices, the relative estimation error can become very large \cite{Dasgupta2015}. In the worst case, the estimate could be negative without artificial restriction to nonnegative values. Therefore, it was proposed to combine HyperLogLog sketches with minwise hashing \cite{Pascoe2013, Cohen2016}, which improves the estimation error, even though at the expense of significant more space consumption. 
+and the fact that HyperLogLog sketches can be easily merged using \cref{alg:union}. Unfortunately, the estimation error does not scale well for this approach. Especially for small Jaccard indices, the relative estimation error can become very large \cite{Dasgupta2015}. In the worst case, the estimate could be negative without artificial restriction to nonnegative values. Therefore, it was proposed to combine HyperLogLog sketches with minwise hashing \cite{Pascoe2013, Cohen2016}, which improves the estimation error, even though at the expense of significant more space consumption. 
 
 It was recently pointed out without special focus on HyperLogLog sketches, that the application of the maximum likelihood method to the joint likelihood function of two probabilistic data structures, which represent the intersection operands, gives better intersection size estimates \cite{Ting2016}. For HyperLogLog sketches recorded without stochastic averaging (compare \cref{sec:data_element_insertion}) this was shown in \cite{Cohen2016}, where also an algorithm based on the maximum likelihood principle was outlined. However, in practice, HyperLogLog sketches are recorded using stochastic averaging because of the much cheaper element insertions as described by \cref{alg:insert}. Motivated by the good results we have obtained for a single HyperLogLog sketch using the maximum likelihood method in combination with the Poisson approximation, we are tempted to apply this approach also for the estimation of set operation result sizes.
 
@@ -1290,7 +1301,7 @@ Assume two given  HyperLogLog sketches with register values $\boldsymbol{\symReg
 \subsection{Joint log-likelihood funtion}
 In order to get maximum likelihood estimators for $\symPoissonRateEstimate_\symSetASuffix$, $\symPoissonRateEstimate_\symSetBSuffix$, and $\symPoissonRateEstimate_\symSetXSuffix$ we need to derive the joint probability distribution of two HyperLogLog sketches. Under the Poisson model the register values are independent and identically distributed. Therefore, we first derive the joint probability distribution for a single register that has value $\symRegValVariate_1$ in the first HyperLogLog sketch representing $\symSetS_1$ and value $\symRegValVariate_2$ in the second HyperLogLog sketch representing $\symSetS_2$. 
 
-The HyperLogLog sketch that represents $\symSetS_1$ can be thought to be constructed from two HyperLogLog sketches representing $\symSetA$ and $\symSetX$ and merging both using \eqref{equ:hll_union}. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let  $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ be the value of the considered register in the HyperLogLog sketch representing $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
+The HyperLogLog sketch that represents $\symSetS_1$ can be thought to be constructed from two HyperLogLog sketches representing $\symSetA$ and $\symSetX$ and merging both using \cref{alg:union}. Analogously, the HyperLogLog sketch for $\symSetS_2$ could have been obtained from sketches for $\symSetB$ and $\symSetX$. Let  $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ be the value of the considered register in the HyperLogLog sketch representing $\symSetA$, $\symSetB$, and $\symSetX$, respectively. The corresponding values in sketches for $\symSetS_1$ and $\symSetS_2$ are given by
 \begin{equation}
 \symRegValVariate_1 = \max\!\left(\symRegValVariate_\symSetASuffix, \symRegValVariate_\symSetXSuffix\right)
 ,\quad
@@ -2109,8 +2120,8 @@ given by
 \end{equation}
 
 The calculation of \eqref{equ:max_likelihood_phi_func} and its derivatives requires some care when calculating $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$. Since $\symX_{\ast\symRegVal}$ is nonnegative, we have $\symY_{\ast\symRegVal},\symZ_{\ast\symRegVal}\in[0,1]$. In order to reduce the numerical error of $\symZ_{\ast\symRegVal}$ for small $\symX_{\ast\symRegVal}$, it is essential to use the function $\operatorname{expm1}(\symX):=e^\symX-1$ that is available in most programming languages. If $\symX_{\ast\symRegVal}$ is smaller than $\log(2)$, we calculate $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$ using $\symZ_{\ast\symRegVal} = 
--\operatorname{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$, repsectively, and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and still only a single exponential function needs to be evaluated.
-Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. The arguments of all logarithms are in range $[0,1]$. The case that some argument vanishes, which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is at least in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
+-\operatorname{expm1}(-\symX_{\ast\symRegVal})$ and $\symY_{\ast\symRegVal} = 1 - \symZ_{\ast\symRegVal}$, respectively, and not as defined in \eqref{equ:definition_xyz}. In this way the numerical error of both, $\symY_{\ast\symRegVal}$ and $\symZ_{\ast\symRegVal}$, is minimized and still only a single exponential function needs to be evaluated.
+Apart from that, the numerical evaluation of \eqref{equ:max_likelihood_phi_func} is straightforward. Apparently, the arguments of all logarithms are in range $[0,1]$. The case that some argument vanishes, which would cause the logarithm to be negative infinite, does not occur in practice. Consider for example the logarithm evaluation associated with $\symCountVariate^{<}_{1\symRegVal}$ which is only relevant if $\symCountVariate^{<}_{1\symRegVal} > 0$. In this case however, we can be certain that the cardinality of $\symSetA\cup\symSetX$ is at least 1. Therefore, it is expected that at least one of the two maximum likelihood estimates $\symPoissonRateEstimate_\symSetASuffix$ and $\symPoissonRateEstimate_\symSetXSuffix$ is at least in the order of 1. If the optimization algorithm starts with appropriate initial values, function evaluations for which $\max(\symPoissonRate_\symSetASuffix,\symPoissonRate_\symSetXSuffix)\ll 1$ are not expected.
 Furthermore, the argument of the logarithm can be bounded by $\symZ_{\symSetXSuffix\symRegVal}
 +
 \symY_{\symSetXSuffix\symRegVal}
@@ -2181,7 +2192,7 @@ $\symCountVariate^{<}_{2\symRegValVariate_{2\symIndexI}}
 \Else
 \State $\symCountVariate^{=}_{\symRegValVariate_{1\symIndexI}}
 \gets
-\symCountVariate^{=}_{1\symRegValVariate_{1\symIndexI}}+1$
+\symCountVariate^{=}_{\symRegValVariate_{1\symIndexI}}+1$
 \EndIf
 \EndFor
 \State $\symPoissonRateEstimate_{\symSetASuffix\symSetXSuffix} \gets$ \Call{EstimateCardinality}{$\boldsymbol\symCountVariate^{<}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{1}$}
@@ -2261,7 +2272,7 @@ $|\symSetX|$ random values are added to both sketches. \cref{tbl:joint_estimatio
 
 \cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to the  square root scaling of the error, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
 
-We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \eqref{equ:hll_union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm provides another opportunity. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
+We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \cref{alg:union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm provides another opportunity. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
 
 \begin{table}
 \centering
