@@ -204,15 +204,15 @@ class ImprovedRawEstimator {
         if (x == 0. || x == 1.) return 0.;
         double zPrime;
         double y = 1.0;
-        double z = 0;
+        double z = 1 - x;
         do {
             numIterations += 1;
             x = std::sqrt(x);
             zPrime = z;
             y *= 0.5;
-            z += (1 - x)*x*y;
+            z -= std::pow(1 - x, 2)*y;
         } while(zPrime != z);
-        return z;
+        return z / 3;
     }
 
     static std::vector<double> initSigma(int m) {

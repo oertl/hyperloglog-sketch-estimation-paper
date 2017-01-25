@@ -629,10 +629,29 @@ and
 \begin{equation}
 \symLargeCorrectionFunc(\symX)
 :=
+\frac{1}{2}
+\left(
+-
+\symX
++
 \sum_{\symRegVal=1}^\infty
 \symX^{2^{-\symRegVal}}
-\left(1-\symX^{2^{-\symRegVal}}\right)
-2^{-\symRegVal}.
+2^{-\symRegVal}
+\right)
+=
+\frac{1}{3}
+\left(
+1
+-
+\symX
+-
+\sum_{\symRegVal=1}^\infty
+\left(
+1-
+\symX^{2^{-\symRegVal}}
+\right)^2
+2^{-\symRegVal}
+\right).
 \end{equation}
 
 We can cross-check the new estimator for the linear counting case with $\symRegRange=0$. Using the identity $\symSmallCorrectionFunc(\symX) + \symLargeCorrectionFunc(\symX) = \symAlpha_\infty\symPowerSeriesFunc(\log_2(\log(1/\symX)))/\log(1/\symX)$, we get
@@ -692,14 +711,14 @@ The new estimation algorithm is very elegant, because it does neither contain ma
 \State\Return$0$
 \EndIf
 \State $\symY\gets1$
-\State $\symZ\gets0$
+\State $\symZ\gets 1 - \symX$
 \Repeat
 \State $\symX\gets\sqrt{\symX}$
 \State $\symZ'\gets\symZ$
 \State $\symY\gets0.5\cdot\symY$
-\State $\symZ\gets\symZ + \left(1-\symX\right)\cdot\symX\cdot\symY$
+\State $\symZ\gets\symZ - \left(1-\symX\right)^2\cdot\symY$
 \Until{$\symZ=\symZ'$}
-\State\Return$\symZ$
+\State\Return$\symZ/3$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
