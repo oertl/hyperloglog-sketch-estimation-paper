@@ -58,11 +58,11 @@ fig_time, ax_time = plt.subplots(subplot_kw=dict(xlim=[xMin,xMax], ylim=[0,800],
 fig_time.set_size_inches(10, 5)
 ax_time.yaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_time.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
-ax_time.set_xlabel("cardinality")
-ax_time.set_ylabel("time (ns)")
+ax_time.set_xlabel(r"cardinality")
+ax_time.set_ylabel(r"time (ns)")
 
-ax_time.plot(cardinalities_12_20, max_likelihood_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20')
-ax_time.plot(cardinalities_12_52, max_likelihood_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52')
+ax_time.plot(cardinalities_12_20, max_likelihood_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=20$")
+ax_time.plot(cardinalities_12_52, max_likelihood_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=52$")
 
 ax_time.legend(loc=2,prop={'size':12})
 
@@ -78,10 +78,10 @@ ax_time.xaxis.grid(b=True, which='major', color='gray', linestyle='--')
 ax_time.set_xlabel("cardinality")
 ax_time.set_ylabel("time (ns)")
 
-ax_time.plot(cardinalities_12_20, corrected_raw_1_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label='p=12, q=20, on-demand')
-ax_time.plot(cardinalities_12_52, corrected_raw_1_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label='p=12, q=52, on-demand')
-ax_time.plot(cardinalities_12_20, corrected_raw_2_avg_exec_time_nanos_12_20, color='red', linestyle='-',linewidth=1.0, label='p=12, q=20, precalculated')
-ax_time.plot(cardinalities_12_52, corrected_raw_2_avg_exec_time_nanos_12_52, color='black', linestyle='-',linewidth=1.0, label='p=12, q=52, precalculated')
+ax_time.plot(cardinalities_12_20, corrected_raw_1_avg_exec_time_nanos_12_20, color='green', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=20$, $\sigma$ and $\tau$ calculated on demand")
+ax_time.plot(cardinalities_12_52, corrected_raw_1_avg_exec_time_nanos_12_52, color='blue', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=52$, $\sigma$ and $\tau$ calculated on demand")
+ax_time.plot(cardinalities_12_20, corrected_raw_2_avg_exec_time_nanos_12_20, color='red', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=20$, $\sigma$ and $\tau$ precalculated")
+ax_time.plot(cardinalities_12_52, corrected_raw_2_avg_exec_time_nanos_12_52, color='black', linestyle='-',linewidth=1.0, label=r"$p=12$, $q=52$, $\sigma$ and $\tau$ precalculated")
 
 ax_time.legend(loc=2,prop={'size':12})
 
