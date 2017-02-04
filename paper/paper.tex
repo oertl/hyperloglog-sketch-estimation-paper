@@ -36,8 +36,8 @@
 \symDefine{\symBitRepA}{a}
 \symDefine{\symBitRepB}{b}
 \symDefine{\symNumBitsMinwiseHashing}{b}
-\symDefine{\symIndexI}{i}
 \symDefine{\symImaginary}{\mathrm{i}}
+\symDefine{\symIndexI}{i}
 \symDefine{\symIndexJ}{j}
 \symDefine{\symIndexL}{l}
 \symDefine{\symCount}{c}
@@ -46,17 +46,13 @@
 \symDefine{\symBeta}{\beta}
 \symDefine{\symA}{a}
 \symDefine{\symB}{b}
-\symDefine{\symKappa}{\kappa}
+\symDefine{\symS}{s}
 \symDefine{\symX}{x}
 \symDefine{\symY}{y}
 \symDefine{\symZ}{z}
+\symDefine{\symKappa}{\kappa}
 \symDefine{\symPhi}{\varphi}
 \symDefine{\symXEstimate}{\hat{\symX}}
-\symDefine{\symXNormalized}{\symX'}
-\symDefine{\symN}{n}
-\symDefine{\symS}{s}
-\symDefine{\symInteger}{z}
-\symDefine{\symIntegerVariate}{Z}
 \symDefine{\symCardinality}{n}
 \symDefine{\symCardinalityEstimate}{\hat{\symCardinality}}
 \symDefine{\symCardinalityRawEstimate}{\symCardinalityEstimate_\text{raw}}
@@ -75,19 +71,13 @@
 \symDefine{\symFuncPrime}{g}
 \symDefine{\symHelper}{h}
 \symDefine{\symHelperApprox}{\tilde{\symHelper}}
-\symDefine{\symHelperW}{w}
-\symDefine{\symHelperV}{v}
-\symDefine{\symHelperU}{u}
 \symDefine{\symSetA}{A}
 \symDefine{\symSetB}{B}
-\symDefine{\symSetC}{C}
 \symDefine{\symSetS}{S}
 \symDefine{\symSetX}{X}
 \symDefine{\symSetASuffix}{a}
 \symDefine{\symSetBSuffix}{b}
-\symDefine{\symSetCSuffix}{c}
 \symDefine{\symSetXSuffix}{x}
-\symDefine{\symCountMatrix}{\mathbf{c}}
 \symDefine{\symPowerSeriesFunc}{\xi}
 \symDefine{\symSmallCorrectionFunc}{\sigma}
 \symDefine{\symLargeCorrectionFunc}{\tau}
@@ -177,7 +167,7 @@ $\boldsymbol{\symRegValVariate}_2 = (\symRegValVariate_{21},\ldots,\symRegValVar
 \end{algorithm}
 
 
-At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch can be compressed into a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied (see \cref{alg:compress}). This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
+At any time a $(\symPrecision, \symRegRange)$-HyperLogLog sketch can be reduced to a $(\symPrecision', \symRegRange')$-HyperLogLog data structure, if $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$ is satisfied (see \cref{alg:compress}). This transformation is lossless in a sense that the resulting HyperLogLog sketch is the same as if all elements would have been recorded by a $(\symPrecision', \symRegRange')$-HyperLogLog sketch right from the beginning.
 
 \begin{algorithm}
 \caption{Compression of a $(\symPrecision, \symRegRange)$-HyperLogLog sketch with register values $\boldsymbol{\symRegValVariate}=(\symRegValVariate_1,\ldots,\symRegValVariate_\symNumReg)$ into a $(\symPrecision', \symRegRange')$-HyperLogLog sketch with $\symPrecision'\leq\symPrecision$ and $\symPrecision'+\symRegRange' \leq\symPrecision + \symRegRange$.}
@@ -627,14 +617,6 @@ which we call the improved raw estimator. Here $\symNumReg\,\symSmallCorrectionF
 \symX^{2^\symRegVal} 2^{\symRegVal-1}
 \end{equation}
 and
-%\begin{equation}
-%\symLargeCorrectionFunc(\symX)
-%:=
-%\sum_{\symRegVal=1}^\infty
-%\symX^{2^{-\symRegVal}}
-%\left(1-\symX^{2^{-\symRegVal}}\right)
-%2^{-\symRegVal}.
-%\end{equation}
 \begin{equation}
 \label{equ:tau}
 \symLargeCorrectionFunc(\symX)
@@ -650,20 +632,6 @@ and
 \right)
 .
 \end{equation}
-%=
-%\frac{1}{3}
-%\left(
-%1
-%-
-%\symX
-%-
-%\sum_{\symRegVal=1}^\infty
-%\left(
-%1-
-%\symX^{2^{-\symRegVal}}
-%\right)^2
-%2^{-\symRegVal}
-%\right)
 
 We can cross-check the new estimator for the linear counting case with $\symRegRange=0$. Using the identity 
 \begin{equation}
@@ -686,29 +654,6 @@ which is as expected almost identical to the linear counting estimator \eqref{eq
 \subsection{Improved raw estimation algorithm}
 The improved raw estimator \eqref{equ:correctedestimator} can be directly translated into a new cardinality estimation algorithm for HyperLogLog sketches as shown in \cref{alg:corrected_raw_estimation}. Since the series \eqref{equ:sigma} converges quadratically for all $\symX\in[0,1)$ and its terms can be recursively calculated using elementary operations, the function $\symSmallCorrectionFunc$ can be quickly calculated to machine precision. The case $\symX=1$ must be handled separately, because the series diverges and causes an infinite denominator in \eqref{equ:correctedestimator} and therefore a vanishing cardinality estimate. As this case only occurs if all register values are zero ($\symCountVariate_0=\symNumReg$), this is exactly what is expected. Among the remaining possible arguments $\lbrace0,\frac{1}{\symNumReg},\frac{2}{\symNumReg},\ldots,\frac{\symNumReg-1}{\symNumReg}\rbrace$ we have slowest convergence for $\symX=\frac{\symNumReg-1}{\symNumReg}$. However, even in this case we have a manageable amount of iteration cycles. For example, if double-precision floating-point arithmetic is used, the routine for calculating  $\symSmallCorrectionFunc$ converges after \num{18} and \num{26} iteration cycles for $\symPrecision=12$ and $\symPrecision=20$, respectively.
 
-%
-%The case $\symX=1$, for which the series does not converge, occurs only if all register values are zero ($\symCountVariate_0=\symNumReg$). However, the resulting positive infinite denominator in \eqref{equ:correctedestimator} yields zero for the cardinality estimate as expected. In order to estimate the number of iteration cycles needed to determine $\symSmallCorrectionFunc$ up to some precision $\symStopDelta$, we consider the case $\symX = 1-\frac{1}{\symNumReg}$ for which we have slowest convergence speed among all relevant argument values $\lbrace0,\frac{1}{\symNumReg},\frac{2}{\symNumReg},\ldots,1-\frac{1}{\symNumReg}\rbrace$. We can stop summation, if two subsequent terms differ by a factor more than $\symStopDelta$. This is the case, if $\frac{\symX^{2^{\symRegVal+1}} 2^{\symRegVal}}{\symX^{2^\symRegVal} 2^{\symRegVal-1}} < \symStopDelta$ which is equivalent to $
-%\symRegVal > \frac{
-%\log(\log(2/\symStopDelta))
-%-
-%\log(-\log(1-\frac{1}{\symNumReg}))
-%}
-%{
-%\log(2)
-%}
-%$. Due to the inequality $-\log(1-\frac{1}{\symNumReg})\geq \frac{1}{\symNumReg}$ this is also satisfied, if $
-%\symRegVal > \frac{
-%\log(\log(2/\symStopDelta))
-%}
-%{
-%\log(2)
-%}
-%+
-%\symPrecision
-%$
-%holds. Therefore, not more than $\symPrecision + 5$ iterations are necessary to achieve double-precision $\symStopDelta = 2^{-53}$.
-
-
 The calculation of $\symLargeCorrectionFunc$ is more expensive, because it involves square root evaluations. $\symLargeCorrectionFunc$ can also be written in a numerically more favorable way as 
 \begin{equation}
 \label{equ:tau2}
@@ -727,70 +672,6 @@ The calculation of $\symLargeCorrectionFunc$ is more expensive, because it invol
 \right).
 \end{equation}
 This representation shows faster convergence for $\symX>0$, because $1-\symX^{2^{-\symRegVal}}\leq -\log(\symX) 2^{-\symRegVal}$. Therefore, the convergence speed is comparable to a geometric series with ratio $1/8$. Disregarding the trivial case $\symLargeCorrectionFunc(0)=0$, $\symX=\frac{1}{\symNumReg}$ shows slowest convergence speed among all other possible parameters. For this case and if double-precision floating-point numbers are used, the function $\symLargeCorrectionFunc$ presented in \cref{alg:corrected_raw_estimation} converges after \num{21} and \num{22} iteration cycles for considered precisions $\symPrecision=12$ and $\symPrecision=20$, respectively.
-%
-%Since $\symLargeCorrectionFunc(0)$ and $\symLargeCorrectionFunc(1)$ are both equal to zero, we focus on the remaining relevant arguments $\symX\in[\frac{1}{\symNumReg},1-\frac{1}{\symNumReg}]$. Obviously, we have slowest convergence for $\symX = \frac{1}{\symNumReg}$. Since the left factor in \eqref{equ:tau2} is monotone increasing we can find
-%\begin{equation}
-%1-
-%\left(1-\frac{1}{\symNumReg}\right)
-%\sum_{\symRegVal=1}^\infty
-%\prod_{\symIndexI=1}^\symRegVal
-%\frac{1}
-%{
-%2
-%\left(
-%1+
-%{\frac{1}{\symNumReg}}^{2^{-\symRegVal}}
-%\right)^2
-%}
-%\geq
-%1-
-%\frac{1-\frac{1}{\symNumReg}}
-%{
-%\left(
-%1+
-%{\frac{1}{\sqrt{\symNumReg}}}
-%\right)^2
-%}
-%\sum_{\symRegVal=1}^\infty
-%\frac{1}
-%{
-%2^\symRegVal
-%}
-%=
-%\frac{2}{\sqrt{\symNumReg}+1}
-%\end{equation}
-%as lower bound for $\symX\geq\frac{1}{\symNumReg}$. 
-%
-%
-%
-% for which the smallest value is obtained for $\symX = 1-\frac{1}{\symNumReg}$. 
-%It can be shown that $\symLargeCorrectionFunc(1-\frac{1}{\symNumReg})\geq \frac{1}{4\symNumReg}$. Hence, summation in \eqref{equ:sigma} can be stopped, if $\left(
-%1-
-%\symX^{2^{-\symRegVal}}
-%\right)^2
-%2^{-\symRegVal}
-%< \frac{\symStopDelta}{4\symNumReg}
-%$. Since we have slowest convergence for $\symX=\frac{1}{\symNumReg}$, $\left(
-%1-
-%\symNumReg^{-2^{-\symRegVal}}
-%\right)^2
-%2^{-\symRegVal}
-%< \frac{\symStopDelta}{4\symNumReg}
-%$ is also a sufficient condition to achieve the desired precision $\symStopDelta$. Furthermore, $1-
-%\symNumReg^{-2^{-\symRegVal}}
-%=
-%1-e^{-\log(\symNumReg)2^{-\symRegVal}}
-%\leq
-%\log(\symNumReg)2^{-\symRegVal}
-%$ which allows to write 
-%$(\log(\symNumReg))^2 8^{-\symRegVal}
-%< \frac{\symStopDelta}{4\symNumReg}
-%$ and finally $\symRegVal > \frac{\symPrecision}{3} + \frac{2\log(\symPrecision)}{\log(8)} + 
-%\frac{\log(\log(16)/\symStopDelta)}{\log(8)}$.
-%
-%
-%
-%
 
 If performance matters $\symSmallCorrectionFunc$ and $\symLargeCorrectionFunc$
 can also be precalculated for all possible values of $\symCountVariate_0$ and $\symCountVariate_{\symRegRange+1}$. As their value range is $\{0,1,\ldots, \symNumReg\}$, the function values can be kept in lookup tables of size $\symNumReg+1$. In this way a complete branch-free cardinality estimation can be realized. It is also thinkable to calculate $\symLargeCorrectionFunc$ using the approximation $\symLargeCorrectionFunc(\symX)\approx \symAlpha_\infty/\log(1/\symX)-\symSmallCorrectionFunc(\symX)$ which can be obtained from \eqref{equ:sigma_tau_relationship}. The advantage is that the calculation of $\symSmallCorrectionFunc$ and the additional logarithm is slightly faster than the calculation of $\symLargeCorrectionFunc$. 
@@ -918,7 +799,7 @@ the estimator $\symCardinalityRawEstimate':=\symBiasCorrectionFunc(\symCardinali
 \label{fig:stdev_comparison}
 \end{figure}
 
-The new estimation algorithm also works well for other HyperLogLog configurations. First we considered configurations using a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24}, \cref{fig:raw_corrected_estimation_error_16_16}, and \cref{fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision parameter $\symPrecision$. Again, the new algorithm gives essentially unbiased estimates. Only for very high precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
+The new estimation algorithm also works well for other HyperLogLog configurations. First we considered configurations using a 32-bit hash function ($\symPrecision + \symRegRange = 32$). The relative estimation error for precisions $\symPrecision=8$, $\symPrecision=16$, and $\symPrecision=22$ are shown in \cref{fig:raw_corrected_estimation_error_8_24,fig:raw_corrected_estimation_error_16_16,fig:raw_corrected_estimation_error_22_10}, respectively. As expected, since  $\symPrecision + \symRegRange = 32$ is kept constant, the operating range remains more or less the same, while the relative error decreases with increasing precision parameter $\symPrecision$. Again, the new algorithm gives essentially unbiased estimates. Only for very high precisions, an oscillating bias becomes apparent (compare \cref{fig:raw_corrected_estimation_error_22_10}), that is caused by approximating the periodic function $\symPowerSeriesFunc$ by a constant (see \cref{sec:derivation_raw_estimator}).
 
 \begin{figure}
 \centering
@@ -980,8 +861,8 @@ The numbers presented in \cref{fig:corrected_raw_avg_exec_time} do not include t
 \label{sec:max_likelihood_estimation}
 We know from \cref{sec:depoissonization} that any unbiased estimator for the Poisson parameter is also an unbiased estimator for the cardinality. Moreover, we know that under suitable regularity conditions of the probability mass function the maximum likelihood estimator is asymptotically efficient \cite{Casella2002}. This means, if the number of registers $\symNumReg$ is large enough, the maximum likelihood method should give us an unbiased estimator for the cardinality.
 
-For HyperLogLog sketches that have been obtained without stochastic averaging (see \cref{sec:data_element_insertion}) the maximum likelihood method was already previously considered for cardinality estimation \cite{Clifford2012}. However, in this case the register values are statistically independent by nature which 
-allows factorization of the joint probability mass function and a straightforward calculation of the maximum likelihood estimate. The practically more relevant stochastic averaging case, which is considered in this paper, would lead to a more complicated likelihood function. However, the Poisson approximation makes the maximum likelihood method feasible again and we are finally able to derive another new robust and efficient cardinality estimation algorithm. Furthermore, in the course of the derivation we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
+For HyperLogLog sketches that have been obtained without stochastic averaging (see \cref{sec:data_element_insertion}) the maximum likelihood method was already previously considered \cite{Clifford2012}. The register values are statistically independent by nature in this case, which 
+allows factorization of the joint probability mass function and a straightforward calculation of the maximum likelihood estimate. The practically more relevant case which uses stochastic averaging and which is considered in this paper, would lead to a more complicated likelihood function (compare \eqref{equ:multinomialProbabilityMass}). However, the Poisson approximation makes the maximum likelihood method feasible again and we are finally able to derive another new robust and efficient cardinality estimation algorithm. Furthermore, in the course of the derivation we will demonstrate that consequent application of the maximum likelihood method reveals that the cardinality estimate needs to be roughly proportional to the harmonic mean for intermediate cardinality values. The history of the HyperLogLog algorithm shows that the raw estimator \eqref{equ:raw_estimator} was first found after several attempts using the geometric mean \cite{Flajolet2007, Durand2003}.
 
 \subsection{Log-likelihood function}
 
@@ -1034,14 +915,14 @@ where the function $\symHelper(\symX)$ is defined as
 \label{equ:helper}
 \symHelper(\symX):=1-\frac{\symX}{e^{\symX}-1}.
 \end{equation}
-$\symHelper(\symX)$ is strictly increasing and concave as can be seen in \cref{fig:helper_function}. For non-negative values this function ranges from $\symHelper(0)=0$ to $\symHelper(\symX\rightarrow \infty)=1$.
+$\symHelper(\symX)$ is strictly increasing and concave as can be seen in \cref{fig:helper_function}. For nonnegative values this function ranges from $\symHelper(0)=0$ to $\symHelper(\symX\rightarrow \infty)=1$.
 \begin{figure}
 \centering
 \includegraphics[width=0.6\textwidth]{helper}
 \caption{The function $\symHelper(\symX)$.}
 \label{fig:helper_function}
 \end{figure}
-Since the function $\symFunc(x)$ is also strictly increasing, it is obvious that there exists a unique root $\symXEstimate$ for which $\symFunc(\symXEstimate)=0$. The function is non-positive at 0 since $\symFunc(0)=\symCountVariate_0-\symNumReg\leq 0$ and, in case $\symCountVariate_{\symRegRange+1}<\symNumReg$ which implies $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}>0$, the function is at least linearly increasing. $\symCountVariate_{\symRegRange+1}=\symNumReg$ corresponds to the case with all registers equal to the maximum value $\symRegRange+1$, for which the maximum likelihood estimate would be positive infinite.
+Since the function $\symFunc(x)$ is also strictly increasing, it is obvious that there exists a unique root $\symXEstimate$ for which $\symFunc(\symXEstimate)=0$. The function is nonpositive at 0 since $\symFunc(0)=\symCountVariate_0-\symNumReg\leq 0$ and, in case $\symCountVariate_{\symRegRange+1}<\symNumReg$ which implies $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}>0$, the function is at least linearly increasing. $\symCountVariate_{\symRegRange+1}=\symNumReg$ corresponds to the case with all registers equal to the maximum value $\symRegRange+1$, for which the maximum likelihood estimate would be positive infinite.
 
 It is easy to see that the estimate $\symPoissonRateEstimate$ remains equal or becomes larger, when inserting an element into the HyperLogLog sketch following \cref{alg:insert}. An update potentially changes the multiplicity vector $(\symCountVariate_0,\ldots,\symCountVariate_{\symRegRange+1})$ to $(\symCountVariate_0,\ldots,\symCountVariate_\symIndexI-1,\ldots,\symCountVariate_\symIndexJ+1,\ldots,\symCountVariate_{\symRegRange+1})$ where $\symIndexI < \symIndexJ$. Writing \eqref{equ:func} as 
 \begin{multline}
@@ -1173,7 +1054,7 @@ If the HyperLogLog sketch is in the intermediate range, where $\symCountVariate_
 
 \subsection{Computation of the maximum likelihood estimate}
 \label{sec:comp_ml_estimate}
-Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and the secant method, will converge to the root, provided that the function is negative for the starting points. In the following we start from the secant method to derive the new cardinality estimation algorithm. Even though the secant method has the disadvantage of slower convergence, a single iteration is simpler to calculate as it does not require the evaluation of the first derivative. An iteration step of the secant method can be written as
+Since $\symFunc$ is concave and increasing, both, Newton-Raphson iteration and the secant method, will converge to the root, provided that the function is negative for the chosen starting points. We will use the secant method to derive the new cardinality estimation algorithm. Even though the secant method has the disadvantage of slower convergence, a single iteration is simpler to calculate as it does not require the evaluation of the first derivative. An iteration step of the secant method can be written as
 \begin{equation}
 \symX_{\symIndexI} = 
 \symX_{\symIndexI-1} -
@@ -1204,21 +1085,16 @@ the iteration scheme can also be written as
 The iteration can be stopped, if $\Delta\symX_{\symIndexI} \leq \symStopDelta\cdot \symX_{\symIndexI}$. Since the expected statistical errror for the HyperLogLog data structure scales according to $\frac{1}{\sqrt{\symNumReg}}$ \cite{Flajolet2007}, it makes sense to choose $\symStopDelta = \frac{\symStopEpsilon}{\sqrt{\symNumReg}}$ with some constant $\symStopEpsilon$. For all results presented later in \cref{sec:maximum_likelihood_estimation_error} we used $\symStopEpsilon = 10^{-2}$.
 
 \subsection{Maximum likelihood estimation algorithm}
-In order to get a fast cardinality estimation algorithm, it is crucial to minimize evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of computational effort:
+To get a fast cardinality estimation algorithm, it is crucial to minimize evaluation costs for \eqref{equ:funcprime}. A couple of optimizations allow significant reduction of computational effort:
 \begin{itemize}
-\item Only a fraction of all count values $\symCountVariate_\symRegVal$ is non-zero. If we denote $\symRegValVariate_\text{min}:=\min(\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace)$ and $\symRegValVariate_\text{max}:=\max(\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace)$,  it is sufficient to loop over all indices in the range $[\symRegValVariate_\text{min}, \symRegValVariate_\text{max}]$.
+\item Only a fraction of all count values $\symCountVariate_\symRegVal$ is nonzero. If we denote $\symRegValVariate_\text{min}:=\min(\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace)$ and $\symRegValVariate_\text{max}:=\max(\lbrace \symRegVal\vert\symCountVariate_\symRegVal>0\rbrace)$,  it is sufficient to loop over all indices in the range $[\symRegValVariate_\text{min}, \symRegValVariate_\text{max}]$.
 \item The sum $\sum_{\symRegVal=0}^\symRegRange \frac{\symCountVariate_\symRegVal}{2^\symRegVal}$ in \eqref{equ:funcprime} can be precalculated and reused for all function evaluations.
 \item Many programming languages allow the efficient multiplication and division by any integral power of two using special functions, such as $\operatorname{ldexp}$ in C/C++ or $\operatorname{scalb}$ in Java.
-\item The function $\symHelper(\symX)$ only needs to be evaluated at values $\left\lbrace\frac{\symX}{2^{\symRegValVariate'_\text{max}}},\frac{\symX}{2^{\symRegValVariate'_\text{max}-1}},\ldots,\frac{\symX}{2^{\symRegValVariate_\text{min}}}\right\rbrace$ where $\symRegValVariate'_\text{max} := \min(\symRegValVariate_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio two. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we know $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
+\item The function $\symHelper(\symX)$ only needs to be evaluated at points $\left\lbrace\frac{\symX}{2^{\symRegValVariate'_\text{max}}},\frac{\symX}{2^{\symRegValVariate'_\text{max}-1}},\ldots,\frac{\symX}{2^{\symRegValVariate_\text{min}}}\right\rbrace$ where $\symRegValVariate'_\text{max} := \min(\symRegValVariate_\text{max}, \symRegRange)$. This series corresponds to a geometric series with ratio two. A straightforward calculation using \eqref{equ:helper} is very expensive because of the exponential function. However, if we know $\symHelper\!\left(\frac{\symX}{2^{\symRegValVariate'_\text{max}}}\right)$ all other required function values can be easily obtained using the identity
 \begin{equation}
 \label{equ:helper_recursion1}
 \symHelper(4\symX) = \frac{\symX+\symHelper(2\symX)\left(1-\symHelper(2\symX)\right)}{\symX+\left(1-\symHelper(2\symX)\right)}.
 \end{equation}
-%or
-%\begin{equation}
-%\label{equ:helper_recursion2}
-%\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right) = \frac{\frac{\symX}{2^{\symRegVal+2}}+\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\left(1-\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}{\frac{\symX}{2^{\symRegVal+2}}+\left(1-\symHelper\!\left(\frac{\symX}{2^{\symRegVal+1}}\right)\right)}
-%\end{equation}
 This recursive formula is stable in a sense that the relative error of $\symHelper(4\symX)$ is smaller than that of $\symHelper(2\symX)$ as shown in \cref{app:helper_stable}.
 
 \item If $\symX$ is smaller than 0.5, the function $\symHelper(\symX)$ can be well approximated by a Taylor series around $\symX=0$
@@ -1317,25 +1193,25 @@ is satisfied. The threshold value of $1.5$ was found to be a reasonable choice i
 \comm{0.31}{secant method iteration\\
 $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$, $\symStopEpsilon = 10^{-2}$}
 \State $\symKappa \gets 2+\lfloor\log_2(\symX)\rfloor$
-\State $\symXNormalized \gets
+\State $\symX' \gets
 \symX \cdot2^{-\max(\symRegValVariate'_\text{max}, \symKappa)-1}$
-\comm{0.31}{$\symXNormalized \in [0, 0.25]$}
-\State $\symX''\gets \symXNormalized\cdot\symXNormalized$
+\comm{0.31}{$\symX' \in [0, 0.25]$}
+\State $\symX''\gets \symX'\cdot\symX'$
 \State $\symHelper \gets
 \symX' - \symX''/3 + \left(\symX''\cdot \symX''\right)\cdot\left(1/45-\symX''/472.5\right)$
 \comm{0.31}{Taylor approximation \eqref{equ:taylor}}
 \For{$\symRegVal\gets (\symKappa - 1),\symRegValVariate'_\text{max}$}
-\State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
-\State $\symXNormalized \gets 2\symXNormalized$
+\State $\symHelper \gets \frac{\symX'+\symHelper\cdot(1-\symHelper)}{\symX'+(1-\symHelper)}$
+\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symX' = \frac{\symX}{2^{\symRegVal+2}}$}
+\State $\symX' \gets 2\symX'$
 \EndFor
 \State $\symFuncPrime \gets \symCount\cdot\symHelper$
 \comm{0.31}{compare \eqref{equ:funcprime}}
 \For{$\symRegVal\gets(\symRegValVariate'_\text{max}-1),\symRegValVariate'_\text{min}$}
-\State $\symHelper \gets \frac{\symXNormalized+\symHelper\cdot(1-\symHelper)}{\symXNormalized+(1-\symHelper)}$
-\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symXNormalized = \frac{\symX}{2^{\symRegVal+2}}$}
+\State $\symHelper \gets \frac{\symX'+\symHelper\cdot(1-\symHelper)}{\symX'+(1-\symHelper)}$
+\comm{0.31}{calculate $\symHelper\!\left(\frac{\symX}{2^{\symRegVal}}\right)$, see \eqref{equ:helper_recursion1}, at this point $\symX' = \frac{\symX}{2^{\symRegVal+2}}$}
 \State $\symFuncPrime\gets \symFuncPrime + \symCountVariate_\symRegVal\cdot\symHelper$
-\State $\symXNormalized \gets 2\symXNormalized$
+\State $\symX' \gets 2\symX'$
 \EndFor
 \State $\symFuncPrime\gets \symFuncPrime + \symX\cdot\symA$
 \If{$\symFuncPrime > \symFuncPrime_\text{prev} \wedge \symNumReg' \geq\symFuncPrime$}
@@ -1354,7 +1230,8 @@ $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$, $\symStopEpsilon = 10^{-2}$}
 
 \subsection{Estimation error}
 \label{sec:maximum_likelihood_estimation_error}
-We have investigated the estimation error of the maximum likelihood estimation algorithm for the same HyperLogLog configurations as for the improved raw estimation algorithm in \cref{sec:corrected_raw_estimation_error}. \cref{fig:max_likelihood_estimation_error_12_20}, \cref{fig:max_likelihood_estimation_error_8_24},  \cref{fig:max_likelihood_estimation_error_16_16}, \cref{fig:max_likelihood_estimation_error_22_10}, \cref{fig:max_likelihood_estimation_error_12_52}, and \cref{fig:max_likelihood_estimation_error_12_14} show very similar results for same HyperLogLog parameters. 
+We have investigated the estimation error of the maximum likelihood estimation algorithm for the same HyperLogLog configurations as for the improved raw estimation algorithm in \cref{sec:corrected_raw_estimation_error}. 
+\cref{fig:max_likelihood_estimation_error_12_20,fig:max_likelihood_estimation_error_8_24,fig:max_likelihood_estimation_error_16_16,fig:max_likelihood_estimation_error_22_10,fig:max_likelihood_estimation_error_12_52,fig:max_likelihood_estimation_error_12_14} show very similar results for same HyperLogLog parameters. 
 What is different for the maximum likelihood estimation approach is a somewhat smaller median bias with less oscillations around zero for small cardinalities. The standard deviation of the relative error is also slightly better for the maximum likelihood estimator than for the improved raw estimator as shown in \cref{fig:stdev_comparison}. Furthermore, contrary to the raw estimator which reveals a small oscillating bias for the mean (see \cref{fig:raw_corrected_estimation_error_22_10}), the maximum likelihood estimator seems to be completely unbiased (see \cref{fig:max_likelihood_estimation_error_22_10}).
 
 \begin{figure}
@@ -1490,8 +1367,7 @@ Their joint cumulative probability function is given as
 \symRegValVariate_\symSetXSuffix \leq \min\!\left(\symRegVal_1, \symRegVal_2\right)
 \right).
 \end{align}
-Here the last transformation used the independence of $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$, because by definition, the sets $\symSetA$, $\symSetB$, and $\symSetX$ are pairwise disjoint. Furthermore, under the Poisson model $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ obey 
-\eqref{equ:register_value_distribution}. If we take into account that pairwise distinct elements are added to $\symSetA$, $\symSetB$, and $\symSetX$ at rates $\symPoissonRate_\symSetXSuffix$, $\symPoissonRate_\symSetASuffix$, and $\symPoissonRate_\symSetBSuffix$, respectively, the probability that a certain register has a value less than or equal to $\symRegVal_1$ in the first HyperLogLog sketch and simultaneously a value less than or equal to $\symRegVal_2$ in the second one can be written as
+Here the last transformation used the independence of $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$, because by definition, the sets $\symSetA$, $\symSetB$, and $\symSetX$ are pairwise disjoint. Furthermore, under the Poisson model $\symRegValVariate_\symSetASuffix$, $\symRegValVariate_\symSetBSuffix$, and $\symRegValVariate_\symSetXSuffix$ can be described by \eqref{equ:register_value_distribution}. If we take into account that pairwise distinct elements are added to $\symSetA$, $\symSetB$, and $\symSetX$ at rates $\symPoissonRate_\symSetXSuffix$, $\symPoissonRate_\symSetASuffix$, and $\symPoissonRate_\symSetBSuffix$, respectively, the probability that a certain register has a value less than or equal to $\symRegVal_1$ in the first HyperLogLog sketch and simultaneously a value less than or equal to $\symRegVal_2$ in the second one can be written as
 \begin{equation}
 \symProbability(
 \symRegValVariate_1 \leq \symRegVal_1
@@ -1903,7 +1779,7 @@ $\sum_{\symRegVal=0}^{\symRegRange+1}{\symCountVariate^{<}_{1\symRegVal}}
 +
 {\symCountVariate^{<}_{2\symRegVal}}=\symNumReg$.
 
-Since \eqref{equ:log_likelihood_pair} is the generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assume $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$ each of which correspond to \eqref{equ:log_likelihood_single} as expected. Or, consider two sketches representing identical sets. In this case all registers are equal, which means  that $\symCountVariate^{>}_{1\symRegVal}=\symCountVariate^{>}_{2\symRegVal}=
+Since \eqref{equ:log_likelihood_pair} is a generalization of \eqref{equ:log_likelihood_single} for two HyperLogLog sketches, the log-likelihood function for a single HyperLogLog sketch can be obtained by considering special cases. For example, assume $\symPoissonRate_\symSetXSuffix=0$, which means that both sketches represent disjoint sets, \eqref{equ:log_likelihood_pair} can be splitted into the sum of two unary functions with parameters $\symPoissonRate_\symSetASuffix$ and $\symPoissonRate_\symSetBSuffix$ each of which correspond to \eqref{equ:log_likelihood_single} as expected. Or, consider two sketches representing identical sets. In this case all registers are equal, which means  that $\symCountVariate^{>}_{1\symRegVal}=\symCountVariate^{>}_{2\symRegVal}=
 \symCountVariate^{<}_{1\symRegVal}=\symCountVariate^{<}_{2\symRegVal}=0$ for all $\symRegVal$, and therefore the maximum likelihood method yields $\symPoissonRateEstimate_\symSetASuffix = \symPoissonRateEstimate_\symSetBSuffix = 0$ and the value for $\symPoissonRateEstimate_\symSetXSuffix$ will be equal to the single HyperLogLog maximum likelihood estimate \eqref{equ:log_likelihood_single}.
 
 The log-likelihood function \eqref{equ:log_likelihood_pair} does not always have a strict global maximum point. For example, if all register values of the first HyperLogLog sketch are larger than the corresponding values in the second HyperLogLog sketch, that is $\symCountVariate_{1\symRegVal}^{<}
@@ -1920,7 +1796,7 @@ $(\boldsymbol\symCountVariate^{<}_{2} + \boldsymbol\symCountVariate^{=} + \bolds
 $(\boldsymbol\symCountVariate^{>}_{1} + \boldsymbol\symCountVariate^{=} + \boldsymbol\symCountVariate^{>}_{2})$. In contrast, the maximum likelihood method uses more information as it incorporates all the individual values of the sufficient statistic.
 
 \subsection{Computation of the maximum likelihood estimates}
-The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all non-negative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
+The maximum likelihood estimates can be obtained by maximizing \eqref{equ:log_likelihood_pair}. Since the three parameters are all nonnegative, this is a constrained optimization problem. In order to get rid of these constraints, we use the transformation $\symPoissonRate=e^{\symPhi}$. This mapping has also the nice property that relative accuracy limits are translated into absolute ones, because $\Delta\symPhi = \Delta\symPoissonRate/\symPoissonRate$. Many optimization algorithm implementations allow the definition of absolute limits rather than relative ones.
 
 The transformed log-likelihood function can be written as
 \begin{multline}
@@ -2028,7 +1904,7 @@ Here we introduced the following expressions for simplification:
 \symZ_{\ast\symRegVal} := 1 - \symY_{\ast\symRegVal}.
 \end{equation}
 
-Quasi-Newton methods are commonly used for finding the maximum of such multi-dimensional functions. They require the calculation of the gradient $\nabla\symFunc = \left(\frac{\partial\symFunc}{\partial\symPhi_\symSetASuffix}, \frac{\partial\symFunc}{\partial\symPhi_\symSetBSuffix},
+Quasi-Newton methods are commonly used to find the maximum of multi-dimensional functions. They require the calculation of the gradient $\nabla\symFunc = \left(\frac{\partial\symFunc}{\partial\symPhi_\symSetASuffix}, \frac{\partial\symFunc}{\partial\symPhi_\symSetBSuffix},
 \frac{\partial\symFunc}{\partial\symPhi_\symSetXSuffix}\right)$ which is, using 
 \begin{equation}
 \frac{\partial\symX_{\ast\symRegVal}}{\partial\symPhi_\ast} =
@@ -2289,7 +2165,7 @@ $\boldsymbol\symCountVariate^{<}_{2}$, and
 $\boldsymbol\symCountVariate^{=}$ is extracted. Next, a case is distinguished, where
 all registers have a value equal to zero in at least one of both HyperLogLog sketches, that is $\symCountVariate^{<}_{10}+\symCountVariate^{=}_0+\symCountVariate^{<}_{20} = \symNumReg$. In this case it is certain that the HyperLogLog sketches represent disjoint sets and their corresponding  cardinality estimates can be  used for $\symPoissonRateEstimate_{\symSetASuffix}$ and $\symPoissonRateEstimate_{\symSetBSuffix}$, respectively.
 
-For the general case, the three-dimensional function $\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix)$ needs to be optimized numerically. A very popular algorithm for such non-linear optimization problems is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007}. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}. Good initial guess values are important to ensure fast convergence for the optimization algorithm. An obvious choice are the cardinality estimates obtained by application of the inclusion-exclusion principle \eqref{equ:conventional_approach}. However, in order to ensure that their logarithms are all defined, we require that the initial values are not smaller than 1. Within the optimization loop the function $\symFunc$ and its gradient $\nabla\symFunc$ need to evaluated using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by the optimization algorithm. The optimization loop is continued as long as the absolute change of at least one parameter is larger than a predefined threshold $\symStopDelta$. The threshold is again set proportional to $1/\sqrt{\symNumReg}$ (compare \cref{sec:comp_ml_estimate}). For the results presented below we have used $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ with $\symStopEpsilon = 10^{-2}$.
+For the general case, the three-dimensional function $\symFunc(\symPhi_\symSetASuffix,\symPhi_\symSetBSuffix,\symPhi_\symSetXSuffix)$ needs to be optimized numerically. A very popular algorithm for such nonlinear optimization problems is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm \cite{Press2007}. In particular, we used the implementation provided by the Dlib C++ library \cite{King2009}. Good initial guess values are important to ensure fast convergence for the optimization algorithm. An obvious choice are the cardinality estimates obtained by application of the inclusion-exclusion principle \eqref{equ:conventional_approach}. However, in order to ensure that their logarithms are all defined, we require that the initial values are not smaller than 1. Within the optimization loop the function $\symFunc$ and its gradient $\nabla\symFunc$ need to evaluated using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by the optimization algorithm. The optimization loop is continued as long as the absolute change of at least one parameter is larger than a predefined threshold $\symStopDelta$. The threshold is again set proportional to $1/\sqrt{\symNumReg}$ (compare \cref{sec:comp_ml_estimate}). For the results presented below we have used $\symStopDelta=\symStopEpsilon/\sqrt{\symNumReg}$ with $\symStopEpsilon = 10^{-2}$.
 
 \begin{algorithm}
 \caption{Joint cardinality estimation.}
@@ -2380,8 +2256,7 @@ $
 \symPhi_\symSetXSuffix
 $}
 \comm{0.32}{calculate $\symFunc$ and
-$\nabla\symFunc$ as needed by optimizer using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi},
-respectively
+$\nabla\symFunc$ using \eqref{equ:max_likelihood_phi_func} and \eqref{equ:df_dphi} as needed by optimizer
 }
 \Until{
 $\max(
@@ -2410,13 +2285,13 @@ $
 
 
 \subsection{Results}
-To evaluate the estimation error of the new joint cardinality estimation approach we applied \cref{alg:joint_cardinality_estimation} to HyperLogLog sketch pairs with parameters $\symPrecision=20$ and $\symRegRange=44$ and with known cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. HyperLogLog sketch with a predefined cardinality can be quickly generated by taking a precalculated multiplicity vector with known cardinality, setting the register values accordingly, and shuffling them. Using this approach we generated three different HyperLogLog sketches with known cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. Then we merged the HyperLogLog sketches representing the disjoint sets $\symSetA$ and $\symSetX$ using \cref{alg:union} in order to get a sketch for $\symSetS_1 = \symSetA\cup\symSetX$. A second sketch was built analogously for $\symSetS_2=\symSetA\cup\symSetX$. Since three independent multiplicity vectors are needed to construct an example and we had simulated \num{10000} different HyperLogLog sketches previously as described in \cref{sec:experimental_setup}, we were able to construct \num{3333} different independent HyperLogLog pairs for a given set of known true cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$.
+To evaluate the estimation error of the new joint cardinality estimation approach we applied \cref{alg:joint_cardinality_estimation} to HyperLogLog sketch pairs with parameters $\symPrecision=20$ and $\symRegRange=44$ and with known cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. HyperLogLog sketches with predefined cardinalities can be quickly generated by taking a precalculated multiplicity vector with known cardinality, setting the register values accordingly, and shuffling them. Using this approach we generated three different HyperLogLog sketches with known cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. Then we merged the HyperLogLog sketches representing the disjoint sets $\symSetA$ and $\symSetX$ using \cref{alg:union} in order to get a sketch for $\symSetS_1 = \symSetA\cup\symSetX$. A second sketch for $\symSetS_2=\symSetA\cup\symSetX$ was built analogously. Since three independent multiplicity vectors are needed to construct a single example and we had simulated \num{10000} different HyperLogLog sketches previously as described in \cref{sec:experimental_setup}, we were able to construct \num{3333} different independent HyperLogLog pairs for a given set of known true cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$.
 
-\cref{tbl:joint_estimation_cases} lists all the different cardinality configurations for which we have evaluated the joint cardinality estimation  algorithm. \cref{tbl:joint_estimation_cases} also shows the average number of iterations of the BFGS algorithm until the stop criterion was satisfied. Each iteration step involved a function \eqref{equ:max_likelihood_phi_func} and a gradient \eqref{equ:df_dphi} evaluation.
+\cref{tbl:joint_estimation_cases} lists all the different cardinality configurations for which we have evaluated the joint cardinality estimation  algorithm. Among the considered cases there are also cardinalities that are small compared to the number of registers in order to prove that the new approach also covers the small cardinality range where many register values are equal to zero. The last column of \cref{tbl:joint_estimation_cases} shows the average number of iterations of the BFGS algorithm until the stop criterion was satisfied. Each iteration step involved a function \eqref{equ:max_likelihood_phi_func} and a gradient \eqref{equ:df_dphi} evaluation.
 
-\cref{tbl:joint_estimation_a}, \cref{tbl:joint_estimation_b}, and \cref{tbl:joint_estimation_x} compare the relative estimation error to the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error are given. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values larger than 1, the new maximum likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is clearly larger than 2. Due to the  square root scaling of the error, this means that we would need 4 times more registers to get the same error when using the conventional approach. We also considered some cases with true cardinalities smaller  than the number of registers. As the results suggest and as expected the joint estimation algorithm works well over the entire cardinality range without special handling of small cardinalities.
+\cref{tbl:joint_estimation_a,tbl:joint_estimation_b,tbl:joint_estimation_x} compare the relative estimation error for cardinalities $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$ to that of the conventional approach using single sketch cardinality estimation together with \eqref{equ:conventional_approach}. The mean, the standard deviation, and the root-mean-square error have been calculated from the cardinality estimates of \num{3333} examples. Furthermore, we calculated an improvement factor which represents the root-mean-square error ratio between both approaches. Since we only observed values greater than one, the new maximum likelihood estimation approach gives better estimates for all investigated cases. For some cases the improvement factor is even clearly greater than two. Due to the  square root scaling of the error, this means that we would need four times more registers to get the same error when using the conventional approach. As the results suggest the joint estimation algorithm works well over the entire cardinality range without the need of special handling of small cardinalities.
 
-We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \cref{alg:union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm provides another opportunity. The union can also be estimated by simply summing up the three estimates for the sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
+We also investigated, if the new approach could give better estimates for the union operation. The conventional approach merges both HyperLogLog sketches using \cref{alg:union} and estimates the union size using single sketch cardinality estimation. The joint cardinality estimation algorithm provides another opportunity. The union can also be estimated by simply summing up the three estimates for sets $|\symSetA|$, $|\symSetB|$, and $|\symSetX|$. The corresponding results are shown in \cref{tbl:joint_estimation_abx}. As can be clearly seen, the joint estimation algorithm is also able to improve the cardinality estimation of unions by a significant amount.
 
 \begin{table}
 \centering
@@ -2457,7 +2332,7 @@ avgNumFunctionEvaluations=\avgNumFunctionEvaluations
 
 \begin{table}
 \centering
-\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error for all cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA|$ using the conventional approach and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_a}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2498,7 +2373,7 @@ improvementRmseA=\improvementRmseA
 
 \begin{table}
 \centering
-\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error for all cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetB|$ using the conventional approach and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_b}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2539,7 +2414,7 @@ improvementRmseB=\improvementRmseB
 
 \begin{table}
 \centering
-\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error for all cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetX|$ using the conventional approach and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_x}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2580,7 +2455,7 @@ improvementRmseX=\improvementRmseX
 
 \begin{table}
 \centering
-\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error are given for all the cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively. The root-mean-square error improvement factor of the maximum likelihood method is shown in the last column.}
+\captionabove{The mean, the standard deviation, and the root-mean-square error of the relative estimation error for all cases given in \cref{tbl:joint_estimation_cases} when estimating $|\symSetA\cup\symSetB\cup\symSetX|$ using the conventional approach and the maximum likelihood method, respectively.}
 \label{tbl:joint_estimation_abx}
 \csvreader[before reading=\scriptsize, tabular=r|rrr|rrr|r, table head=
  & 
@@ -2623,7 +2498,7 @@ improvementRmseABX=\improvementRmseABX
 \label{sec:future_work}
 As described in \cref{sec:depoissonization} an unbiased estimator for the rate in the Poisson model, is also unbiased estimator for the cardinality. We have shown that this approach works well for the improved raw estimator as well as for the maximum likelihood estimator even though both are only approximately unbiased. Therefore, it would be interesting what conditions on an approximately unbiased Poisson rate estimator are sufficient to guarantee approximate unbiasedness, if used as cardinality estimator.
 
-Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the improved raw estimator which is almost as accurate as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
+Using the maximum likelihood method we have been able to improve the cardinality estimates for the results of set operations between two HyperLogLog sketches. Unfortunately, joint cardinality estimation is much more expensive than for a single HyperLogLog sketch, because it requires maximization of a multi-dimensional function. Since we have found the improved raw estimator which is almost as precise as the maximum likelihood estimator for the single HyperLogLog case, we could imagine that there also exists a faster algorithm for the two HyperLogLog case. It is expected that such a new algorithm makes use of all the information given by the sufficient statistic \eqref{equ:sufficient_joint_statistic}.
 
 The presented maximum likelihood method could also be used to estimate the cardinality of set operations between more than two HyperLogLog sketches. However, further research is necessary to determine, if this is feasible from a practical point of view. As for the inclusion-exclusion principle, the effort would scale at least exponentially with the number of involved HyperLogLog sketches.
 
@@ -2803,7 +2678,7 @@ The variable transformation $\symY = 2^\symX$ yields
 \end{equation}
 where $\Gamma$ denotes the gamma function. Obviously, the constant term in the Fourier series is equal to $1$, because $\symA_0=2$. 
 
-In order to investigate the maximum deviation of $\symPowerSeriesFunc(\symX)$ from this value we consider all further coefficients $\symA_\symIndexL$ with $\symIndexL\geq 1$. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
+To investigate the maximum deviation of $\symPowerSeriesFunc(\symX)$ from this value we consider all further coefficients $\symA_\symIndexL$ with $\symIndexL\geq 1$. Using the identity $\left|\Gamma(1+\symImaginary\symX)\right| = 
 \sqrt{\frac{\pi\symX}{\sinh(\pi\symX)}}
 $
 we are able to write for the absolute values of the coefficients
