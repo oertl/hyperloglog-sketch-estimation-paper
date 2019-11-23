@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <functional>
+#include <numeric>
 
 #ifdef CARDINALITY_ESTIMATION_USE_CERES
 #include "ceres/ceres.h"

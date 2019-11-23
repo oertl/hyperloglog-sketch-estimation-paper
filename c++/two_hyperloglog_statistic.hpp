@@ -10,6 +10,8 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <numeric>
+#include <cmath>
 
 class TwoHyperLogLogStatistic {
 
